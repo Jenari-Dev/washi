@@ -28,7 +28,10 @@ makedepends=(
   'gettext'
   'pkgconf'
 )
+# The disc-label tests render text and need any installed font.
+checkdepends=('noto-fonts')
 optdepends=(
+  'noto-fonts-cjk: Japanese text in the interface and on disc labels'
   'libreoffice: printing Office documents (they are converted to PDF first)'
   'tesseract: text recognition (OCR) when scanning'
   'tesseract-data-eng: English OCR data'
@@ -40,7 +43,9 @@ optdepends=(
 # cxx-qt generates code that does not survive link-time optimisation.
 options=('!lto')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('92c4930bed3a63adcf109c714111c3b67c5166226becbff4b55328814211be63')
+# A tarball cannot contain its own checksum: this in-repo copy keeps SKIP, the AUR copy pins
+# the real sum with `updpkgsums` (see README.md).
+sha256sums=('SKIP')
 
 prepare() {
   cd "$pkgname-$pkgver"

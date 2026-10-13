@@ -22,7 +22,8 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             base-devel diffutils git rust gettext \
-            qt6-base qt6-declarative qt6-svg ki18n poppler dbus hicolor-icon-theme
+            qt6-base qt6-declarative qt6-svg ki18n poppler dbus hicolor-icon-theme \
+            noto-fonts
 
       - uses: actions/checkout@v7.0.1
 
