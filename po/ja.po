@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 00:16+0900\n"
+"POT-Creation-Date: 2026-10-14 01:13+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -1366,70 +1366,6 @@ msgid "Washi has not found a printer. Make sure it is switched on and on the sam
 msgstr "Washi はプリンターを見つけられていません。電源が入っていて同じネットワークにつながっていることを確認してから、追加してください。"
 
 #, no-javascript-format
-msgid "Previous printer"
-msgstr "前のプリンター"
-
-#, no-javascript-format
-msgid "No printer"
-msgstr "プリンターなし"
-
-#, no-javascript-format
-msgid "Add a printer to get started."
-msgstr "まず、プリンターを登録してください。"
-
-#, no-javascript-format
-msgid "Change"
-msgstr "変更"
-
-#, no-javascript-format
-msgid "Updating…"
-msgstr "更新中…"
-
-#, no-javascript-format
-msgid "Update Information"
-msgstr "情報を更新"
-
-#, no-javascript-format
-msgid "Next printer"
-msgstr "次のプリンター"
-
-#, no-javascript-format
-msgid "Remove Printer"
-msgstr "プリンターを削除"
-
-#, no-javascript-format
-msgid "Remove %1 from the list? Washi forgets it; nothing is changed on the printer itself. You can add it again with “Add Printer”."
-msgstr "%1 を一覧から削除しますか？Washi がこのプリンターの登録を忘れるだけで、プリンター本体は何も変更されません。「プリンターを登録」でもう一度追加できます。"
-
-#, no-javascript-format
-msgid "Removed for now. This printer comes from the command line or config.toml, or the service is read-only, so it returns when the service restarts."
-msgstr "いったん削除しました。このプリンターはコマンドラインか config.toml で指定されている、またはサービスが読み取り専用のため、サービスを再起動すると一覧に戻ります。"
-
-#, no-javascript-format
-msgid "No printers yet. Use “Add Printer” to find one."
-msgstr "プリンターがまだありません。「プリンターを登録」で探してください。"
-
-#, no-javascript-format
-msgid "Online"
-msgstr "オンライン"
-
-#, no-javascript-format
-msgid "Sleeping"
-msgstr "スリープ中"
-
-#, no-javascript-format
-msgid "Offline"
-msgstr "オフライン"
-
-#, no-javascript-format
-msgid "Remove this printer from the list"
-msgstr "このプリンターを一覧から削除"
-
-#, no-javascript-format
-msgid "Click a printer to make it the one Washi works with."
-msgstr "プリンターをクリックすると、Washi で操作する対象になります。"
-
-#, no-javascript-format
 msgid "Printing"
 msgstr "印刷中"
 
@@ -1852,6 +1788,70 @@ msgstr "モノクロ"
 #, no-javascript-format
 msgid "Copies"
 msgstr "部数"
+
+#, no-javascript-format
+msgid "Previous printer"
+msgstr "前のプリンター"
+
+#, no-javascript-format
+msgid "No printer"
+msgstr "プリンターなし"
+
+#, no-javascript-format
+msgid "Add a printer to get started."
+msgstr "まず、プリンターを登録してください。"
+
+#, no-javascript-format
+msgid "Change"
+msgstr "変更"
+
+#, no-javascript-format
+msgid "Updating…"
+msgstr "更新中…"
+
+#, no-javascript-format
+msgid "Update Information"
+msgstr "情報を更新"
+
+#, no-javascript-format
+msgid "Next printer"
+msgstr "次のプリンター"
+
+#, no-javascript-format
+msgid "Remove Printer"
+msgstr "プリンターを削除"
+
+#, no-javascript-format
+msgid "Remove %1 from the list? Washi forgets it; nothing is changed on the printer itself. You can add it again with “Add Printer”."
+msgstr "%1 を一覧から削除しますか？Washi がこのプリンターの登録を忘れるだけで、プリンター本体は何も変更されません。「プリンターを登録」でもう一度追加できます。"
+
+#, no-javascript-format
+msgid "Removed for now. This printer comes from the command line or config.toml, or the service is read-only, so it returns when the service restarts."
+msgstr "いったん削除しました。このプリンターはコマンドラインか config.toml で指定されている、またはサービスが読み取り専用のため、サービスを再起動すると一覧に戻ります。"
+
+#, no-javascript-format
+msgid "No printers yet. Use “Add Printer” to find one."
+msgstr "プリンターがまだありません。「プリンターを登録」で探してください。"
+
+#, no-javascript-format
+msgid "Online"
+msgstr "オンライン"
+
+#, no-javascript-format
+msgid "Sleeping"
+msgstr "スリープ中"
+
+#, no-javascript-format
+msgid "Offline"
+msgstr "オフライン"
+
+#, no-javascript-format
+msgid "Remove this printer from the list"
+msgstr "このプリンターを一覧から削除"
+
+#, no-javascript-format
+msgid "Click a printer to make it the one Washi works with."
+msgstr "プリンターをクリックすると、Washi で操作する対象になります。"
 
 #, no-javascript-format
 msgid "Print photos from Washi."

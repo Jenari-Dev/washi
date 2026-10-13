@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 00:21+0900\n"
+"POT-Creation-Date: 2026-10-14 01:13+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1487,74 +1487,6 @@ msgid ""
 msgstr ""
 
 #, no-javascript-format
-msgid "Previous printer"
-msgstr ""
-
-#, no-javascript-format
-msgid "No printer"
-msgstr ""
-
-#, no-javascript-format
-msgid "Add a printer to get started."
-msgstr ""
-
-#, no-javascript-format
-msgid "Change"
-msgstr ""
-
-#, no-javascript-format
-msgid "Updating…"
-msgstr ""
-
-#, no-javascript-format
-msgid "Update Information"
-msgstr ""
-
-#, no-javascript-format
-msgid "Next printer"
-msgstr ""
-
-#, no-javascript-format
-msgid "Remove Printer"
-msgstr ""
-
-#, no-javascript-format
-msgid ""
-"Remove %1 from the list? Washi forgets it; nothing is changed on the printer "
-"itself. You can add it again with “Add Printer”."
-msgstr ""
-
-#, no-javascript-format
-msgid ""
-"Removed for now. This printer comes from the command line or config.toml, or "
-"the service is read-only, so it returns when the service restarts."
-msgstr ""
-
-#, no-javascript-format
-msgid "No printers yet. Use “Add Printer” to find one."
-msgstr ""
-
-#, no-javascript-format
-msgid "Online"
-msgstr ""
-
-#, no-javascript-format
-msgid "Sleeping"
-msgstr ""
-
-#, no-javascript-format
-msgid "Offline"
-msgstr ""
-
-#, no-javascript-format
-msgid "Remove this printer from the list"
-msgstr ""
-
-#, no-javascript-format
-msgid "Click a printer to make it the one Washi works with."
-msgstr ""
-
-#, no-javascript-format
 msgid "Printing"
 msgstr ""
 
@@ -1982,6 +1914,74 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Copies"
+msgstr ""
+
+#, no-javascript-format
+msgid "Previous printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "No printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add a printer to get started."
+msgstr ""
+
+#, no-javascript-format
+msgid "Change"
+msgstr ""
+
+#, no-javascript-format
+msgid "Updating…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Update Information"
+msgstr ""
+
+#, no-javascript-format
+msgid "Next printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove Printer"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Remove %1 from the list? Washi forgets it; nothing is changed on the printer "
+"itself. You can add it again with “Add Printer”."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Removed for now. This printer comes from the command line or config.toml, or "
+"the service is read-only, so it returns when the service restarts."
+msgstr ""
+
+#, no-javascript-format
+msgid "No printers yet. Use “Add Printer” to find one."
+msgstr ""
+
+#, no-javascript-format
+msgid "Online"
+msgstr ""
+
+#, no-javascript-format
+msgid "Sleeping"
+msgstr ""
+
+#, no-javascript-format
+msgid "Offline"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove this printer from the list"
+msgstr ""
+
+#, no-javascript-format
+msgid "Click a printer to make it the one Washi works with."
 msgstr ""
 
 #, no-javascript-format

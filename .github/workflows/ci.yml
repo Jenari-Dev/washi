@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm --needed \
-            base-devel git rust python gettext \
+            base-devel diffutils git rust python gettext \
             qt6-base qt6-declarative qt6-svg ki18n \
             poppler tesseract tesseract-data-eng \
             dbus noto-fonts noto-fonts-cjk
@@ -67,7 +67,7 @@ jobs:
     container: archlinux:latest
     steps:
       - name: Install dependencies
-        run: pacman -Syu --noconfirm --needed git python python-yaml appstream desktop-file-utils pacman-contrib
+        run: pacman -Syu --noconfirm --needed diffutils git python python-yaml appstream desktop-file-utils pacman-contrib
 
       - uses: actions/checkout@v7.0.1
 

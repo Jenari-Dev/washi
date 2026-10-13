@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm --needed \
-            base-devel git rust gettext \
+            base-devel diffutils git rust gettext \
             qt6-base qt6-declarative qt6-svg ki18n poppler dbus hicolor-icon-theme
 
       - uses: actions/checkout@v7.0.1

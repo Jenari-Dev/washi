@@ -20,7 +20,7 @@ extract() {
         --flag=i18ncp:2:no-javascript-format --flag=i18ncp:3:no-javascript-format \
         --package-name=washi --copyright-holder=JenAriDev \
         --msgid-bugs-address="" \
-        -o "$1" $(ls crates/washi-gui/qml/*.qml) 2> >(grep -v "msgid-bugs-address\|Makevars\|MSGID_BUGS\|^ *the MSGID\|Warning: " >&2 || true)
+        -o "$1" $(LC_ALL=C ls crates/washi-gui/qml/*.qml | LC_ALL=C sort) 2> >(grep -v "msgid-bugs-address\|Makevars\|MSGID_BUGS\|^ *the MSGID\|Warning: " >&2 || true)
 }
 
 if [ "${1:-}" = "--check" ]; then
