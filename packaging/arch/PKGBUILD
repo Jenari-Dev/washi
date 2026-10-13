@@ -40,7 +40,7 @@ optdepends=(
 # cxx-qt generates code that does not survive link-time optimisation.
 options=('!lto')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('92c4930bed3a63adcf109c714111c3b67c5166226becbff4b55328814211be63')
 
 prepare() {
   cd "$pkgname-$pkgver"
