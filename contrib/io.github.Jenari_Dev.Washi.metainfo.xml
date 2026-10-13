@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 JenAriDev. The metadata in this file is released under CC0-1.0. -->
+<component type="desktop-application">
+  <id>io.github.Jenari_Dev.Washi</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+
+  <name>Washi</name>
+  <summary>Status, maintenance, printing and scanning for Canon inkjet printers</summary>
+  <summary xml:lang="ja">Canon製インクジェットプリンターの状態確認、メンテナンス、印刷、スキャン</summary>
+
+  <developer id="io.github.jenari_dev">
+    <name>JenAriDev</name>
+  </developer>
+
+  <description>
+    <p>Washi is a Linux replacement for Canon's "Canon PRINT" app. It talks to a Canon inkjet printer directly over your local network, with no Canon driver and no cloud account, and covers the everyday jobs:</p>
+    <p xml:lang="ja">Washiは、Canonの「Canon PRINT」アプリの代わりに使えるLinux用アプリです。Canon製インクジェットプリンターとローカルネットワークで直接やり取りするので、Canonのドライバーもクラウドのアカウントも必要ありません。普段使う機能をひととおり備えています。</p>
+    <ul>
+      <li>Printer status, ink levels per tank and support codes with a short explanation</li>
+      <li xml:lang="ja">プリンターの状態、タンクごとのインク残量、サポート番号とその簡単な説明</li>
+      <li>Maintenance: cleaning, deep cleaning, nozzle check and print head alignment</li>
+      <li xml:lang="ja">メンテナンス（クリーニング、強力クリーニング、ノズルチェック、プリントヘッド位置調整）</li>
+      <li>Settings such as quiet mode, auto power on and off, and ink drying time</li>
+      <li xml:lang="ja">静音モード、自動電源オン・オフ、インク乾燥時間などの設定</li>
+      <li>Printing of photos (including borderless) and PDF or Office documents</li>
+      <li xml:lang="ja">写真（フチなしを含む）やPDF、Officeファイルの印刷</li>
+      <li>Scanning with several pages, crop, slant and colour correction, and optional text recognition</li>
+      <li xml:lang="ja">複数ページのスキャン、切り抜き、傾き補正、色補正、文字認識（任意）</li>
+      <li>A designer for printable discs, including text that follows the ring of the disc</li>
+      <li xml:lang="ja">ディスクレーベルのデザインと印刷（ディスクの円に沿ったテキストにも対応）</li>
+      <li>Desktop notifications when a tank runs low or the printer reports an error</li>
+      <li xml:lang="ja">インクが少なくなったときやエラーが出たときのデスクトップ通知</li>
+    </ul>
+    <p>Anything that uses ink or paper asks for confirmation first, and the app can run in a read-only mode. The interface is available in English and Japanese. Washi sends no telemetry.</p>
+    <p xml:lang="ja">インクや用紙を使う操作は、実行前に必ず確認します。読み取り専用モードでの起動もできます。画面は日本語と英語に対応しており、利用状況などの情報は一切送信しません。</p>
+    <p>Verified on the PIXUS XK140. Other Canon inkjet printers that offer the same management interface may work but are untested.</p>
+    <p xml:lang="ja">動作確認済みのモデルはPIXUS XK140です。同じ管理インターフェースを持つほかのCanon製インクジェットプリンターでも動く可能性はありますが、未確認です。</p>
+    <p>Washi is an independent project. It is not affiliated with or endorsed by Canon Inc. Canon, PIXUS and Canon PRINT are trademarks of Canon Inc.</p>
+    <p xml:lang="ja">Washiは個人による非公式のプロジェクトで、キヤノン株式会社とは関係がなく、同社の承認も受けていません。Canon、PIXUS、Canon PRINTはキヤノン株式会社の商標です。</p>
+  </description>
+
+  <launchable type="desktop-id">io.github.Jenari_Dev.Washi.desktop</launchable>
+
+  <provides>
+    <binary>washi-app</binary>
+    <binary>washi</binary>
+    <binary>washid</binary>
+    <dbus type="user">io.github.Jenari_Dev.Washi</dbus>
+  </provides>
+
+  <url type="homepage">https://github.com/Jenari-Dev/washi</url>
+  <url type="bugtracker">https://github.com/Jenari-Dev/washi/issues</url>
+  <url type="vcs-browser">https://github.com/Jenari-Dev/washi</url>
+  <url type="contribute">https://github.com/Jenari-Dev/washi/blob/main/CONTRIBUTING.md</url>
+  <url type="translate">https://github.com/Jenari-Dev/washi/blob/main/CONTRIBUTING.md#translations</url>
+  <url type="help">https://github.com/Jenari-Dev/washi/blob/main/README.md</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The home page with the printer and its ink levels</caption>
+      <caption xml:lang="ja">プリンターとインク残量を表示するホーム画面</caption>
+      <image type="source" width="1040" height="600">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/home-en.png</image>
+      <image type="source" width="1040" height="600" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/home-ja.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Ink level of every tank</caption>
+      <caption xml:lang="ja">タンクごとのインク残量</caption>
+      <image type="source" width="1040" height="760">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/consumables-en.png</image>
+      <image type="source" width="1040" height="760" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/consumables-ja.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Maintenance and printer settings</caption>
+      <caption xml:lang="ja">メンテナンス操作と各種設定</caption>
+      <image type="source" width="1040" height="820">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/utilities-en.png</image>
+      <image type="source" width="1040" height="820" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/utilities-ja.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Photo printing with a preview of the sheet</caption>
+      <caption xml:lang="ja">用紙のプレビューを見ながら写真を印刷</caption>
+      <image type="source" width="1040" height="760">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/photo-print-en.png</image>
+      <image type="source" width="1040" height="760" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/photo-print-ja.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Scanning several pages and editing them before saving</caption>
+      <caption xml:lang="ja">複数ページをスキャンして保存前に編集</caption>
+      <image type="source" width="1040" height="760">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/scan-editor-en.png</image>
+      <image type="source" width="1040" height="760" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/scan-editor-ja.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The disc label designer, with text that follows the ring</caption>
+      <caption xml:lang="ja">ディスクレーベルのデザイン（円に沿ったテキスト）</caption>
+      <image type="source" width="1040" height="760">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/disc-label-en.png</image>
+      <image type="source" width="1040" height="760" xml:lang="ja">https://raw.githubusercontent.com/Jenari-Dev/washi/main/docs/screenshots/disc-label-ja.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.1.0" date="2026-10-14">
+      <description>
+        <p>First public release.</p>
+        <p xml:lang="ja">最初の公開リリースです。</p>
+        <ul>
+          <li>Status, ink levels, device information, support codes and firmware status</li>
+          <li xml:lang="ja">状態、インク残量、プリンター情報、サポート番号、ファームウェアの状況</li>
+          <li>Maintenance and settings, read back after every change</li>
+          <li xml:lang="ja">メンテナンスと設定（変更のたびに読み戻して確認）</li>
+          <li>Photo and document printing, scanning, disc labels</li>
+          <li xml:lang="ja">写真・文書の印刷、スキャン、ディスクレーベル</li>
+          <li>English and Japanese interface and notifications</li>
+          <li xml:lang="ja">日本語と英語の画面と通知</li>
+        </ul>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+
+  <keywords>
+    <keyword>Canon</keyword>
+    <keyword>printer</keyword>
+    <keyword>inkjet</keyword>
+    <keyword>ink</keyword>
+    <keyword>scanner</keyword>
+    <keyword>PIXUS</keyword>
+    <keyword>PIXMA</keyword>
+    <keyword>disc label</keyword>
+    <keyword xml:lang="ja">プリンター</keyword>
+    <keyword xml:lang="ja">印刷</keyword>
+    <keyword xml:lang="ja">インク</keyword>
+    <keyword xml:lang="ja">スキャナー</keyword>
+    <keyword xml:lang="ja">スキャン</keyword>
+    <keyword xml:lang="ja">キヤノン</keyword>
+    <keyword xml:lang="ja">ディスクレーベル</keyword>
+    <keyword xml:lang="ja">和紙</keyword>
+  </keywords>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">600</display_length>
+  </requires>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#c9defa</color>
+    <color type="primary" scheme_preference="dark">#1e50b4</color>
+  </branding>
+</component>

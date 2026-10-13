@@ -1,0 +1,34 @@
+[package]
+name = "washi-gui"
+description = "Washi desktop app: a Qt Quick desktop app for the washid daemon"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "washi-app"
+path = "src/main.rs"
+
+# All printer access goes through washid over D-Bus (JSON strings). The GUI links washi-core only
+# for its host-side image work: the scan editing pipeline (rotate, crop, correct, save), the
+# print and disc-label previews, and the paper and media tables.
+[dependencies]
+washi-core.workspace = true
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp"] }
+serde.workspace = true
+dirs.workspace = true
+tempfile.workspace = true
+cxx = "1.0.198"
+cxx-qt = "0.10.0"
+cxx-qt-lib = { version = "0.10.0", features = ["qt_gui", "qt_qml", "qt_quickcontrols"] }
+serde_json.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+futures-util = "0.3"
+
+[build-dependencies]
+cxx-qt-build = "0.10.0"

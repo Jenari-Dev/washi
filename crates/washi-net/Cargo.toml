@@ -1,0 +1,17 @@
+[package]
+name = "washi-net"
+description = "CHMP transport (minimal HTTP/1.1 over TCP), IPP and eSCL clients and mDNS discovery for Canon inkjets"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+washi-ivec.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+uuid.workspace = true
+mdns-sd.workspace = true

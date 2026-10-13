@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-test:
+    name: Build, lint and test
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel git rust python gettext \
+            qt6-base qt6-declarative qt6-svg ki18n \
+            poppler tesseract tesseract-data-eng \
+            dbus noto-fonts noto-fonts-cjk
+
+      - uses: actions/checkout@v7.0.1
+
+      - name: Cache cargo downloads and build output
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace --locked
+
+      - name: Translations
+        run: python3 po/check.py
+
+      - name: QML tests
+        run: QT_QPA_PLATFORM=offscreen crates/washi-gui/tests/qml/run.sh
+
+      - name: Third-party licence list is current
+        run: |
+          cargo fetch --locked
+          python3 tools/third-party-licenses.py --check
+
+  metadata:
+    name: Packaging metadata
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm --needed git python python-yaml appstream desktop-file-utils pacman-contrib
+
+      - uses: actions/checkout@v7.0.1
+
+      - name: AppStream and desktop entry
+        run: |
+          appstreamcli validate --no-net contrib/io.github.Jenari_Dev.Washi.metainfo.xml
+          desktop-file-validate contrib/io.github.Jenari_Dev.Washi.desktop
+
+      - name: Manifests and workflows parse
+        run: |
+          python3 - <<'PY'
+          import glob, yaml
+          for path in ["packaging/flatpak/io.github.Jenari_Dev.Washi.yml", *glob.glob(".github/workflows/*.yml")]:
+              yaml.safe_load(open(path))
+              print("ok", path)
+          PY
+
+      - name: Flatpak cargo sources can be generated
+        run: python3 tools/flatpak-cargo-sources.py -o /tmp/cargo-sources.json
+
+      - name: PKGBUILD and .SRCINFO agree
+        run: |
+          useradd -m builder
+          chown -R builder:builder .
+          su builder -c 'cd packaging/arch && makepkg --printsrcinfo | diff - .SRCINFO'

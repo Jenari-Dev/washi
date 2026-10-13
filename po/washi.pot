@@ -1,0 +1,2804 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR JenAriDev
+# This file is distributed under the same license as the washi package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: washi\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-14 00:21+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#, no-javascript-format
+msgid "App Settings"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printers"
+msgstr ""
+
+#, no-javascript-format
+msgid "Look for printers automatically"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"When no printer is set up, Washi searches your network for Canon printers as "
+"soon as it starts."
+msgstr ""
+
+#, no-javascript-format
+msgid "Notifications"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The Washi service sends desktop notifications for low ink, printer errors "
+"and a printer coming back online. The switches are saved in ~/.config/washi/"
+"config.toml."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The service is not running, so the notification switches are not available."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The service runs in read-only mode and keeps no settings. Start it without --"
+"read-only to change these."
+msgstr ""
+
+#, no-javascript-format
+msgid "Reading the notification settings…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Send notifications"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink is low or empty"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer reports an error"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer is back online"
+msgstr ""
+
+#, no-javascript-format
+msgid "About Washi"
+msgstr ""
+
+#, no-javascript-format
+msgid "Version %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Service (washid): version %1, read-only"
+msgstr ""
+
+#, no-javascript-format
+msgid "Service (washid): version %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Service (washid): not running"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi talks to your printer only over your local network and sends nothing "
+"to anyone else. Links such as Manual first ask, then open in your web "
+"browser."
+msgstr ""
+
+#, no-javascript-format
+msgid "Show License Information"
+msgstr ""
+
+#, no-javascript-format
+msgid "OK"
+msgstr ""
+
+#, no-javascript-format
+msgid "Cancel"
+msgstr ""
+
+#, no-javascript-format
+msgid "This computer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Wi-Fi"
+msgstr ""
+
+#, no-javascript-format
+msgid "Wired LAN"
+msgstr ""
+
+#, no-javascript-format
+msgid "Network"
+msgstr ""
+
+#, no-javascript-format
+msgid "About ink"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Each tank reports how much ink is left, in steps of 10 %. Replace a tank "
+"when it shows low or empty. Use the model number below when you buy a new "
+"one."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer is asleep, so these levels were read over the network (IPP). "
+"Tank model numbers are remembered from the last time it was awake."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer could not be reached. These are the levels from the last reading."
+msgstr ""
+
+#, no-javascript-format
+msgid "No ink information is available yet."
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink Model Number"
+msgstr ""
+
+#, no-javascript-format
+msgid "Order Ink"
+msgstr ""
+
+#, no-javascript-format
+msgid "Network (over IP)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer name"
+msgstr ""
+
+#, no-javascript-format
+msgid "Model name"
+msgstr ""
+
+#, no-javascript-format
+msgid "Firmware version"
+msgstr ""
+
+#, no-javascript-format
+msgid "An update is available."
+msgstr ""
+
+#, no-javascript-format
+msgid "Up to date."
+msgstr ""
+
+#, no-javascript-format
+msgid "IP address"
+msgstr ""
+
+#, no-javascript-format
+msgid "Connection"
+msgstr ""
+
+#, no-javascript-format
+msgid "Total pages fed"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink tank replacements"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print head replacements"
+msgstr ""
+
+#, no-javascript-format
+msgid "Read-only mode"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer is working on something else."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer has to be awake and reachable to update."
+msgstr ""
+
+#, no-javascript-format
+msgid "Firmware"
+msgstr ""
+
+#, no-javascript-format
+msgid "A firmware update is available (installed: %1)."
+msgstr ""
+
+#, no-javascript-format
+msgid "The firmware is up to date (%1). The printer reports no update."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer does not say whether a firmware update is available (installed: "
+"%1)."
+msgstr ""
+
+#, no-javascript-format
+msgid "Checking…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Check for Updates"
+msgstr ""
+
+#, no-javascript-format
+msgid "Update Firmware…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Some values are from the last time the printer was awake."
+msgstr ""
+
+#, no-javascript-format
+msgid "Open Remote UI"
+msgstr ""
+
+#, no-javascript-format
+msgid "Manual"
+msgstr ""
+
+#, no-javascript-format
+msgid "The Washi service is not running."
+msgstr ""
+
+#, no-javascript-format
+msgid "Add a printer first."
+msgstr ""
+
+#, no-javascript-format
+msgid "Read-only mode: the service will not print."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer cannot be reached."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer is busy: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add a picture or some text first."
+msgstr ""
+
+#, no-javascript-format
+msgid "Your text"
+msgstr ""
+
+#, no-javascript-format
+msgid "Only JPEG, PNG and BMP pictures can be used here."
+msgstr ""
+
+#, no-javascript-format
+msgid "disc label"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print Disc Label"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print this label in %1? Disc type: %2. The disc tray must be loaded."
+msgstr ""
+
+#, no-javascript-format
+msgid "Select Picture"
+msgstr ""
+
+#, no-javascript-format
+msgid "Give the design a name made of letters and digits."
+msgstr ""
+
+#, no-javascript-format
+msgid "The design could not be saved."
+msgstr ""
+
+#, no-javascript-format
+msgid "Saved “%1”."
+msgstr ""
+
+#, no-javascript-format
+msgid "That file is not a Washi disc design."
+msgstr ""
+
+#, no-javascript-format
+msgid "Opened “%1”."
+msgstr ""
+
+#, no-javascript-format
+msgid "Save Design"
+msgstr ""
+
+#, no-javascript-format
+msgid "Designs are kept in %1."
+msgstr ""
+
+#, no-javascript-format
+msgid "Name of the design"
+msgstr ""
+
+#, no-javascript-format
+msgid "Save"
+msgstr ""
+
+#, no-javascript-format
+msgid "Open Design"
+msgstr ""
+
+#, no-javascript-format
+msgid "No saved designs yet. They appear here after you save one."
+msgstr ""
+
+#, no-javascript-format
+msgid "Delete this design"
+msgstr ""
+
+#, no-javascript-format
+msgid "Close"
+msgstr ""
+
+#, no-javascript-format
+msgid "The preview could not be made: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Preview as printed"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"This is the image that is sent to the printer, drawn the way the printer "
+"driver draws it. White stays unprinted."
+msgstr ""
+
+#, no-javascript-format
+msgid "Disc Label"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add Text"
+msgstr ""
+
+#, no-javascript-format
+msgid "Change Picture"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add Picture"
+msgstr ""
+
+#, no-javascript-format
+msgid "Drop a picture here"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Click an item to select it. Drag it to move, the square corner to resize, "
+"the round handle to turn. Only the ring between the dashed circles is "
+"printed. You can drop a picture onto the disc."
+msgstr ""
+
+#, no-javascript-format
+msgid "Disc Type"
+msgstr ""
+
+#, no-javascript-format
+msgid "Outer diameter: %1 mm"
+msgstr ""
+
+#, no-javascript-format
+msgid "Inner diameter: %1 mm"
+msgstr ""
+
+#, no-javascript-format
+msgid "Background Color"
+msgstr ""
+
+#, no-javascript-format
+msgid "Items"
+msgstr ""
+
+#, no-javascript-format
+msgid "Picture"
+msgstr ""
+
+#, no-javascript-format
+msgid "Text %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove"
+msgstr ""
+
+#, no-javascript-format
+msgid "Nothing on the label yet. Add a picture or some text."
+msgstr ""
+
+#, no-javascript-format
+msgid "Text"
+msgstr ""
+
+#, no-javascript-format
+msgid "Font"
+msgstr ""
+
+#, no-javascript-format
+msgid "Default"
+msgstr ""
+
+#, no-javascript-format
+msgid "Follow the ring"
+msgstr ""
+
+#, no-javascript-format
+msgid "Radius (mm)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Start angle (°)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Direction"
+msgstr ""
+
+#, no-javascript-format
+msgid "Clockwise"
+msgstr ""
+
+#, no-javascript-format
+msgid "Counter-clockwise"
+msgstr ""
+
+#, no-javascript-format
+msgid "Letter spacing (pt)"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Angles count clockwise from the top of the disc. The alignment below says "
+"whether the text starts, is centered or ends at the start angle. Clockwise "
+"letters stand on the circle; counter-clockwise ones hang from it, which "
+"reads upright along the bottom edge."
+msgstr ""
+
+#, no-javascript-format
+msgid "Size (pt)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Turn (°)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Across (mm)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Down (mm)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Alignment"
+msgstr ""
+
+#, no-javascript-format
+msgid "Left"
+msgstr ""
+
+#, no-javascript-format
+msgid "Center"
+msgstr ""
+
+#, no-javascript-format
+msgid "Right"
+msgstr ""
+
+#, no-javascript-format
+msgid "Color"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fit"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fill the disc"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fit inside"
+msgstr ""
+
+#, no-javascript-format
+msgid "Size: %1%"
+msgstr ""
+
+#, no-javascript-format
+msgid "Save Design…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Open…"
+msgstr ""
+
+#, no-javascript-format
+msgid "How to load the disc tray"
+msgstr ""
+
+#, no-javascript-format
+msgid "Other printable disc"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printable disc (recommended)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add Printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Looking for printers on your network…"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"No printer found. Check that it is on and on this network, or enter its "
+"address below."
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 printer known."
+msgid_plural "%1 printers known."
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "new"
+msgstr ""
+
+#, no-javascript-format
+msgid "In use"
+msgstr ""
+
+#, no-javascript-format
+msgid "Use this printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Enter an address"
+msgstr ""
+
+#, no-javascript-format
+msgid "Host name or IP address"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add"
+msgstr ""
+
+#, no-javascript-format
+msgid "Search Again"
+msgstr ""
+
+#, no-javascript-format
+msgid "Sending the update request to the printer…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Update Firmware"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer downloads and installs new firmware by itself, from Canon's "
+"servers."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Do not switch the printer off, unplug it or cut its network connection until "
+"it has finished. An interrupted update can make the printer unusable."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The update takes several minutes. The printer restarts and cannot be used "
+"until it is back. An update cannot be undone."
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer: %1 (firmware %2)"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"This feature is new in Washi and has not yet been tried on a real printer."
+msgstr ""
+
+#, no-javascript-format
+msgid "I have read this and want to update the firmware now."
+msgstr ""
+
+#, no-javascript-format
+msgid "Do not switch the printer off. This takes several minutes."
+msgstr ""
+
+#, no-javascript-format
+msgid "Finished."
+msgstr ""
+
+#, no-javascript-format
+msgid "It did not work."
+msgstr ""
+
+#, no-javascript-format
+msgctxt "two sentences, one after the other"
+msgid "%1 %2"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "separator between the parts of a summary"
+msgid ", "
+msgstr ""
+
+#, no-javascript-format
+msgctxt "ink color"
+msgid "Black"
+msgstr ""
+
+#, no-javascript-format
+msgid "Pigment black"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "ink color"
+msgid "Cyan"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "ink color"
+msgid "Magenta"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "ink color"
+msgid "Yellow"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "ink color"
+msgid "Grey"
+msgstr ""
+
+#, no-javascript-format
+msgid "Rear tray"
+msgstr ""
+
+#, no-javascript-format
+msgid "Cassette"
+msgstr ""
+
+#, no-javascript-format
+msgid "Letter"
+msgstr ""
+
+#, no-javascript-format
+msgid "Legal"
+msgstr ""
+
+#, no-javascript-format
+msgid "Postcard"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "a kind of paper, in the middle of a sentence"
+msgid "plain paper"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "a kind of paper, in the middle of a sentence"
+msgid "photo paper"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "a kind of paper, in the middle of a sentence"
+msgid "envelope"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 sheet"
+msgid_plural "%1 sheets"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "Unknown error"
+msgstr ""
+
+#, no-javascript-format
+msgid "The Washi service is in read-only mode, so nothing can be changed."
+msgstr ""
+
+#, no-javascript-format
+msgid "The service did not answer in time."
+msgstr ""
+
+#, no-javascript-format
+msgid "Washi could not reach the desktop's message bus: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Washi ran into an internal problem: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "The rear tray is out of paper. Load some, then press OK on the printer."
+msgstr ""
+
+#, no-javascript-format
+msgid "The cassette is out of paper. Load some, then press OK on the printer."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The paper could not be fed, or it does not match the paper settings. Check "
+"the paper and the paper settings on the printer."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"A cover or tray is in the wrong position. Close the cover, or open the "
+"output tray, as the printer shows."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Paper is jammed. Remove it carefully; switch the printer off only if its "
+"display tells you to."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"This paper size cannot be printed on both sides. Print on one side or choose "
+"another size."
+msgstr ""
+
+#, no-javascript-format
+msgid "The print head is not recognized. Reseat it, then restart the printer."
+msgstr ""
+
+#, no-javascript-format
+msgid "An ink tank is not recognized. Press it in until it clicks."
+msgstr ""
+
+#, no-javascript-format
+msgid "An ink tank is in the wrong slot. Match the tanks to the colour labels."
+msgstr ""
+
+#, no-javascript-format
+msgid "An ink tank is empty. Replace it to keep printing."
+msgstr ""
+
+#, no-javascript-format
+msgid "An ink tank is missing. Install it."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The level of an ink tank cannot be determined, or it may have run out. Check "
+"the tanks and the printer's display; printing may still be possible."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The ink absorber is nearly full. Printing continues for now; plan to have "
+"the printer serviced."
+msgstr ""
+
+#, no-javascript-format
+msgid "Packing material may still be on the print head holder. Remove it."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Automatic print head alignment did not succeed. Run a nozzle check, clean "
+"the print head if needed, then try again."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The alignment sheet could not be read. Make sure it lies correctly on the "
+"glass, then try again."
+msgstr ""
+
+#, no-javascript-format
+msgid "This job cannot be printed. Cancel it and try again."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer reported a hardware error. Switch it off and on again; if the "
+"code comes back, contact the maker's support."
+msgstr ""
+
+#, no-javascript-format
+msgid "The ink absorber has filled up. The printer needs service by the maker."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer has a notice for you. See its display, or use the help link for "
+"details."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer reports support code %1. See the printer's display, or use the "
+"help link."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"No photo was found on the glass. Check that the photos lie face down on it."
+msgstr ""
+
+#, no-javascript-format
+msgid "The photos could not be cut out: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "On, after %1 minute"
+msgid_plural "On, after %1 minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "Scheduled %1 – %2"
+msgstr ""
+
+#, no-javascript-format
+msgid "On"
+msgstr ""
+
+#, no-javascript-format
+msgid "Off"
+msgstr ""
+
+#, no-javascript-format
+msgid "Automatic"
+msgstr ""
+
+#, no-javascript-format
+msgid "Wide"
+msgstr ""
+
+#, no-javascript-format
+msgid "(not reported)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto power on"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto power off"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto power off (not connected)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Quiet mode"
+msgstr ""
+
+#, no-javascript-format
+msgid "Paper gap"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink drying time"
+msgstr ""
+
+#, no-javascript-format
+msgid "Automatic firmware update"
+msgstr ""
+
+#, no-javascript-format
+msgid "Cloud link"
+msgstr ""
+
+#, no-javascript-format
+msgid "Functions"
+msgstr ""
+
+#, no-javascript-format
+msgid "Everything Washi can do with your printer."
+msgstr ""
+
+#, no-javascript-format
+msgid "Buy tanks with these model numbers for %1."
+msgstr ""
+
+#, no-javascript-format
+msgid "not known yet"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Model numbers appear once the printer has been awake while Washi was running."
+msgstr ""
+
+#, no-javascript-format
+msgid "Language"
+msgstr ""
+
+#, no-javascript-format
+msgid "License Information"
+msgstr ""
+
+#, no-javascript-format
+msgid "Washi %1"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi is free software. You can redistribute it and change it under the "
+"terms of the GNU General Public License, version 2 or (at your option) any "
+"later version. It comes with no warranty."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi is an independent project. It is not affiliated with, endorsed by or "
+"sponsored by Canon Inc. Canon, PIXUS, PIXMA and Canon PRINT are trademarks "
+"of Canon Inc., named here only to say which printers and which app Washi "
+"works with. No Canon code, firmware or artwork is included."
+msgstr ""
+
+#, no-javascript-format
+msgid "Read the License"
+msgstr ""
+
+#, no-javascript-format
+msgid "Help for Support Code %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Help"
+msgstr ""
+
+#, no-javascript-format
+msgid "Canon Support"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer Web Page"
+msgstr ""
+
+#, no-javascript-format
+msgid "Maintenance on the Printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Web Page"
+msgstr ""
+
+#, no-javascript-format
+msgid "the tank models listed under Consumables"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"This opens a Canon web page in your web browser (%1). The address names your "
+"printer model; Washi sends nothing else."
+msgstr ""
+
+#, no-javascript-format
+msgid "This opens the printer's own web page in your web browser (%1)."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer gave no address of its own for this, so this opens the printer's "
+"own web page in your web browser (%1)."
+msgstr ""
+
+#, no-javascript-format
+msgid "Look for: %1."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer asks for its administrator password there. Washi does not see or "
+"store it."
+msgstr ""
+
+#, no-javascript-format
+msgid "Open Web Page"
+msgstr ""
+
+#, no-javascript-format
+msgid "Open Printer Page"
+msgstr ""
+
+#, no-javascript-format
+msgid "Load the disc tray"
+msgstr ""
+
+#, no-javascript-format
+msgid "How to load paper"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Pull out the disc tray guide from the printer's front, the way the printer's "
+"display shows."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put the printable disc in the tray with the printable side up and press it "
+"flat."
+msgstr ""
+
+#, no-javascript-format
+msgid "Slide the tray in until it stops, then press Print here."
+msgstr ""
+
+#, no-javascript-format
+msgid "Do not touch the printed side until the ink has dried."
+msgstr ""
+
+#, no-javascript-format
+msgid "Pull out the cassette and slide the paper guides apart."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put plain paper in with the print side down, and slide the guides against "
+"the paper."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Push the cassette back in until it clicks and set the paper size on the "
+"printer if it asks."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Open the rear tray's cover and pull out its support, then slide the paper "
+"guides apart."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put photo paper in with the glossy (print) side facing you, and slide the "
+"guides against it."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put the paper in with the print side facing you, and slide the guides "
+"against it."
+msgstr ""
+
+#, no-javascript-format
+msgid "Tell the printer the paper size and type if its display asks."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Your printer's manual has pictures for these steps. Washi does not send "
+"anything to Canon to show them."
+msgstr ""
+
+#, no-javascript-format
+msgid "Don't show this next time"
+msgstr ""
+
+#, no-javascript-format
+msgid "Open the Manual"
+msgstr ""
+
+#, no-javascript-format
+msgid "Paper is loaded"
+msgstr ""
+
+#, no-javascript-format
+msgid "Roller Cleaning"
+msgstr ""
+
+#, no-javascript-format
+msgid "Bottom Plate Cleaning"
+msgstr ""
+
+#, no-javascript-format
+msgid "Deep Cleaning"
+msgstr ""
+
+#, no-javascript-format
+msgid "Cleaning"
+msgstr ""
+
+#, no-javascript-format
+msgid "Nozzle Check"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print Head Alignment"
+msgstr ""
+
+#, no-javascript-format
+msgid "Alignment Check"
+msgstr ""
+
+#, no-javascript-format
+msgid "Maintenance"
+msgstr ""
+
+#, no-javascript-format
+msgid "It prints on %1 of %2 %3 from the %4. Load that paper first."
+msgstr ""
+
+#, no-javascript-format
+msgid "It prints on %1 of %2 %3. Load that paper first."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer runs its paper feed rollers to clean them. It may ask you to "
+"take out or load paper: follow its display."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer cleans the inside of its bottom plate, where ink can collect and "
+"smear the back of the paper. It may ask for a sheet of paper: follow its "
+"display."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Deep cleaning uses a lot more ink than normal cleaning and takes longer. Use "
+"it only when normal cleaning did not help."
+msgstr ""
+
+#, no-javascript-format
+msgid "Cleaning uses a little ink."
+msgstr ""
+
+#, no-javascript-format
+msgid "This prints a test pattern with a small amount of ink."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer prints alignment patterns, reads them and adjusts the print head "
+"by itself. This uses ink and paper."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"This prints a sheet that shows how well the print head is aligned, using a "
+"little ink."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer runs its paper feed rollers to clean them."
+msgstr ""
+
+#, no-javascript-format
+msgid "All colours"
+msgstr ""
+
+#, no-javascript-format
+msgid "Group 1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Group 2"
+msgstr ""
+
+#, no-javascript-format
+msgid "Sending the job to the printer…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Choose how to clean the print head."
+msgstr ""
+
+#, no-javascript-format
+msgid "Deep Cleaning (uses more ink)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink group"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink group: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Please keep the printer switched on and its covers closed until this "
+"finishes."
+msgstr ""
+
+#, no-javascript-format
+msgid "Print a nozzle check to see whether the cleaning helped."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Look at the printed pattern. Is every line complete, in every colour, and "
+"are the grids straight? Missing or faint lines call for a cleaning; crooked "
+"or shifted grids call for a print head alignment."
+msgstr ""
+
+#, no-javascript-format
+msgid "Look at the printed pattern. Is every line complete, in every colour?"
+msgstr ""
+
+#, no-javascript-format
+msgid "You can print the alignment check sheet to see the result."
+msgstr ""
+
+#, no-javascript-format
+msgid "Next"
+msgstr ""
+
+#, no-javascript-format
+msgid "Start"
+msgstr ""
+
+#, no-javascript-format
+msgid "Lines missing or faint"
+msgstr ""
+
+#, no-javascript-format
+msgid "Lines crooked or shifted"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print Nozzle Check"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print Alignment Check"
+msgstr ""
+
+#, no-javascript-format
+msgid "Looks good"
+msgstr ""
+
+#, no-javascript-format
+msgid "Consumables"
+msgstr ""
+
+#, no-javascript-format
+msgid "Status"
+msgstr ""
+
+#, no-javascript-format
+msgid "Device Information"
+msgstr ""
+
+#, no-javascript-format
+msgid "Utilities"
+msgstr ""
+
+#, no-javascript-format
+msgid "Set %1 (%2 to %3)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Set %1"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The whole alignment uses %1 of %2 %3 from the %4. Load that paper first."
+msgstr ""
+
+#, no-javascript-format
+msgid "The whole alignment uses %1 of %2 %3. Load that paper first."
+msgstr ""
+
+#, no-javascript-format
+msgid "Manual Print Head Alignment"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer prints a pattern sheet for each set of values. For every letter "
+"on a sheet, find the square with the least visible stripes and enter its "
+"number here. Washi then saves the numbers to the printer and reads them back."
+msgstr ""
+
+#, no-javascript-format
+msgid "Which sets?"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Automatic alignment is easier and usually enough. Use this when the "
+"automatic one leaves the grids crooked."
+msgstr ""
+
+#, no-javascript-format
+msgid "This prints the pattern sheet for this set with a little ink."
+msgstr ""
+
+#, no-javascript-format
+msgid "Saving the values and reading them back…"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"For each letter, enter the number of the square with the least visible "
+"stripes."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer holds the new values."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer already had these values; nothing was written."
+msgstr ""
+
+#, no-javascript-format
+msgid "Next: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print the alignment check sheet to see the result."
+msgstr ""
+
+#, no-javascript-format
+msgid "Print pattern"
+msgstr ""
+
+#, no-javascript-format
+msgid "I have the sheet"
+msgstr ""
+
+#, no-javascript-format
+msgid "Apply"
+msgstr ""
+
+#, no-javascript-format
+msgid "Done"
+msgstr ""
+
+#, no-javascript-format
+msgid "Next set"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer's online manual (opens in your web browser)."
+msgstr ""
+
+#, no-javascript-format
+msgid "Remote UI"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer's own web page for settings and maintenance."
+msgstr ""
+
+#, no-javascript-format
+msgid "Automatic printer search, notifications, version."
+msgstr ""
+
+#, no-javascript-format
+msgid "Washi is free software under the GPL."
+msgstr ""
+
+#, no-javascript-format
+msgid "More"
+msgstr ""
+
+#, no-javascript-format
+msgid "Back"
+msgstr ""
+
+#, no-javascript-format
+msgid "Menu"
+msgstr ""
+
+#, no-javascript-format
+msgid "Home"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Print"
+msgstr ""
+
+#, no-javascript-format
+msgid "Document Print"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer Management"
+msgstr ""
+
+#, no-javascript-format
+msgid "Recommended Apps"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printer List"
+msgstr ""
+
+#, no-javascript-format
+msgid "No printer yet"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi has not found a printer. Make sure it is switched on and on the same "
+"network, then add it."
+msgstr ""
+
+#, no-javascript-format
+msgid "Previous printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "No printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Add a printer to get started."
+msgstr ""
+
+#, no-javascript-format
+msgid "Change"
+msgstr ""
+
+#, no-javascript-format
+msgid "Updating…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Update Information"
+msgstr ""
+
+#, no-javascript-format
+msgid "Next printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove Printer"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Remove %1 from the list? Washi forgets it; nothing is changed on the printer "
+"itself. You can add it again with “Add Printer”."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Removed for now. This printer comes from the command line or config.toml, or "
+"the service is read-only, so it returns when the service restarts."
+msgstr ""
+
+#, no-javascript-format
+msgid "No printers yet. Use “Add Printer” to find one."
+msgstr ""
+
+#, no-javascript-format
+msgid "Online"
+msgstr ""
+
+#, no-javascript-format
+msgid "Sleeping"
+msgstr ""
+
+#, no-javascript-format
+msgid "Offline"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove this printer from the list"
+msgstr ""
+
+#, no-javascript-format
+msgid "Click a printer to make it the one Washi works with."
+msgstr ""
+
+#, no-javascript-format
+msgid "Printing"
+msgstr ""
+
+#, no-javascript-format
+msgid "Checking what the printer accepts…"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer accepts the job."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer took the job. It prints now…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printing…"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer finished the job."
+msgstr ""
+
+#, no-javascript-format
+msgid "Sending the job to the service…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Printing disc label"
+msgstr ""
+
+#, no-javascript-format
+msgid "Stopping…"
+msgstr ""
+
+#, no-javascript-format
+msgid "The job was stopped."
+msgstr ""
+
+#, no-javascript-format
+msgid "Keep the printer switched on until this finishes."
+msgstr ""
+
+#, no-javascript-format
+msgid "It did not print."
+msgstr ""
+
+#, no-javascript-format
+msgid "Plain paper"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo paper"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope"
+msgstr ""
+
+#, no-javascript-format
+msgid "Detect automatically"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Pro Platinum"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Pro Crystal"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Pro Luster"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Glossy"
+msgstr ""
+
+#, no-javascript-format
+msgid "Matte Photo Paper"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Plus Glossy II"
+msgstr ""
+
+#, no-javascript-format
+msgid "High Resolution Paper"
+msgstr ""
+
+#, no-javascript-format
+msgid "Glossy postcard (Hagaki)"
+msgstr ""
+
+#, no-javascript-format
+msgid "T-shirt transfers"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Paper Plus Semi-gloss"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fine Art Paper"
+msgstr ""
+
+#, no-javascript-format
+msgid "Card stock"
+msgstr ""
+
+#, no-javascript-format
+msgid "Inkjet postcard (Hagaki)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Postcard (Hagaki)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Canon paper (%1)"
+msgstr ""
+
+#, no-javascript-format
+msgid "L photo"
+msgstr ""
+
+#, no-javascript-format
+msgid "2L / 5x7 in"
+msgstr ""
+
+#, no-javascript-format
+msgid "Square 5x5 in"
+msgstr ""
+
+#, no-javascript-format
+msgid "Square 89 mm"
+msgstr ""
+
+#, no-javascript-format
+msgid "Business card"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope DL"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope #10"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope You 4"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope You 6"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope Chou 3"
+msgstr ""
+
+#, no-javascript-format
+msgid "Envelope Chou 4"
+msgstr ""
+
+#, no-javascript-format
+msgid "Disc 120 mm"
+msgstr ""
+
+#, no-javascript-format
+msgid "1 photo per sheet"
+msgstr ""
+
+#, no-javascript-format
+msgid "1 page per sheet"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 in 1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto"
+msgstr ""
+
+#, no-javascript-format
+msgid "High"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fast (draft)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Long-edge binding"
+msgstr ""
+
+#, no-javascript-format
+msgid "Short-edge binding"
+msgstr ""
+
+#, no-javascript-format
+msgid "Pictures (*.jpg *.jpeg *.png *.bmp)"
+msgstr ""
+
+#, no-javascript-format
+msgid "PDF documents (*.pdf)"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Office documents (*.doc *.docx *.xls *.xlsx *.ppt *.pptx *.odt *.ods *.odp "
+"*.rtf *.txt)"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Documents (*.pdf *.doc *.docx *.xls *.xlsx *.ppt *.pptx *.odt *.ods *.odp "
+"*.rtf *.txt)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Use page numbers and ranges such as 1-6, 3, 12-14."
+msgstr ""
+
+#, no-javascript-format
+msgid "A range must go from the lower page to the higher one."
+msgstr ""
+
+#, no-javascript-format
+msgid "The document does not have that page."
+msgstr ""
+
+#, no-javascript-format
+msgid "Enter the pages to print."
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 copy of %2 on %3 (%4)"
+msgid_plural "%1 copies of %2 on %3 (%4)"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "borderless"
+msgstr ""
+
+#, no-javascript-format
+msgid "black and white"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 per sheet"
+msgstr ""
+
+#, no-javascript-format
+msgid "two-sided"
+msgstr ""
+
+#, no-javascript-format
+msgid "Could not read what the printer prints on: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Reading what the printer prints on…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Select a document to print."
+msgstr ""
+
+#, no-javascript-format
+msgid "Select photos to print."
+msgstr ""
+
+#, no-javascript-format
+msgid "Printing PDFs needs poppler (pdftoppm and pdfinfo)."
+msgstr ""
+
+#, no-javascript-format
+msgid "Printing Office files needs LibreOffice."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer offers no paper for this size."
+msgstr ""
+
+#, no-javascript-format
+msgid "Only PDF and Office documents can be printed here."
+msgstr ""
+
+#, no-javascript-format
+msgid "Only JPEG, PNG and BMP pictures can be printed here."
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 photo"
+msgid_plural "%1 photos"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid ""
+"Print %1?\n"
+"\n"
+"Printer: %2. This uses paper and ink."
+msgstr ""
+
+#, no-javascript-format
+msgid "Select Document"
+msgstr ""
+
+#, no-javascript-format
+msgid "Select Photos"
+msgstr ""
+
+#, no-javascript-format
+msgid "Select a PDF or an Office document to preview and print it."
+msgstr ""
+
+#, no-javascript-format
+msgid "Select a PDF to preview and print it."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Printing PDFs needs poppler (pdftoppm and pdfinfo), which is not installed."
+msgstr ""
+
+#, no-javascript-format
+msgid "Select photos (JPEG, PNG or BMP) to preview and print them."
+msgstr ""
+
+#, no-javascript-format
+msgid "You can also drag files from your file manager onto this area."
+msgstr ""
+
+#, no-javascript-format
+msgid "Drop to select"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Office files are converted by LibreOffice when you print, so there is no "
+"preview here."
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 / %2"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 photos selected"
+msgstr ""
+
+#, no-javascript-format
+msgid "Remove this photo"
+msgstr ""
+
+#, no-javascript-format
+msgid "Page Size"
+msgstr ""
+
+#, no-javascript-format
+msgid "Orientation"
+msgstr ""
+
+#, no-javascript-format
+msgid "Portrait"
+msgstr ""
+
+#, no-javascript-format
+msgid "Landscape"
+msgstr ""
+
+#, no-javascript-format
+msgid "Pages"
+msgstr ""
+
+#, no-javascript-format
+msgid "All"
+msgstr ""
+
+#, no-javascript-format
+msgid "e.g. 1-6, 3, 12-14"
+msgstr ""
+
+#, no-javascript-format
+msgid "Media Type"
+msgstr ""
+
+#, no-javascript-format
+msgid "Paper Source"
+msgstr ""
+
+#, no-javascript-format
+msgid "Borderless"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer has no borderless setting for this paper and size."
+msgstr ""
+
+#, no-javascript-format
+msgid "Page Layout"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo Layout"
+msgstr ""
+
+#, no-javascript-format
+msgid "Quality"
+msgstr ""
+
+#, no-javascript-format
+msgid "Two-sided Printing"
+msgstr ""
+
+#, no-javascript-format
+msgid "Black and white"
+msgstr ""
+
+#, no-javascript-format
+msgid "Copies"
+msgstr ""
+
+#, no-javascript-format
+msgid "Print photos from Washi."
+msgstr ""
+
+#, no-javascript-format
+msgid "Print documents from Washi."
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan from the glass of your printer."
+msgstr ""
+
+#, no-javascript-format
+msgid "Simple Scan"
+msgstr ""
+
+#, no-javascript-format
+msgid "A free scanning app from the GNOME project."
+msgstr ""
+
+#, no-javascript-format
+msgid "GIMP"
+msgstr ""
+
+#, no-javascript-format
+msgid "Free photo editor for retouching before you print."
+msgstr ""
+
+#, no-javascript-format
+msgid "Inkscape"
+msgstr ""
+
+#, no-javascript-format
+msgid "Free vector drawing, good for posters and labels."
+msgstr ""
+
+#, no-javascript-format
+msgid "Scribus"
+msgstr ""
+
+#, no-javascript-format
+msgid "Free page layout for flyers, booklets and posters."
+msgstr ""
+
+#, no-javascript-format
+msgid "LibreOffice"
+msgstr ""
+
+#, no-javascript-format
+msgid "Free office suite that exports PDF for printing."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi's own pages, and free programs that work well with your printer. Links "
+"open in your web browser."
+msgstr ""
+
+#, no-javascript-format
+msgid "Website"
+msgstr ""
+
+#, no-javascript-format
+msgid "Open"
+msgstr ""
+
+#, no-javascript-format
+msgid "Image Correction"
+msgstr ""
+
+#, no-javascript-format
+msgid "Color Correction"
+msgstr ""
+
+#, no-javascript-format
+msgid "Reduce Show-through"
+msgstr ""
+
+#, no-javascript-format
+msgid "Color Mode"
+msgstr ""
+
+#, no-javascript-format
+msgid "Unsharp Mask"
+msgstr ""
+
+#, no-javascript-format
+msgid "Rotate/Crop"
+msgstr ""
+
+#, no-javascript-format
+msgid "Rotate left"
+msgstr ""
+
+#, no-javascript-format
+msgid "Rotate right"
+msgstr ""
+
+#, no-javascript-format
+msgid "Slant Correction"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1°"
+msgstr ""
+
+#, no-javascript-format
+msgid "Straighten automatically"
+msgstr ""
+
+#, no-javascript-format
+msgid "Trimming Aspect Ratio"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Drag the corners of the frame to choose what is kept. The rest is cut off "
+"when you press OK."
+msgstr ""
+
+#, no-javascript-format
+msgid "The scanned page could not be read: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "The scanned page could not be read."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The scan looks empty. Check that the original is face down on the glass."
+msgstr ""
+
+#, no-javascript-format
+msgid "This looks like a photo: it is saved as JPEG."
+msgstr ""
+
+#, no-javascript-format
+msgid "This looks like a document: it is saved as PDF."
+msgstr ""
+
+#, no-javascript-format
+msgid "The two scans could not be joined: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "The file could not be saved: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "L (89 x 127 mm)"
+msgstr ""
+
+#, no-javascript-format
+msgid "2L (127 x 178 mm)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Grayscale"
+msgstr ""
+
+#, no-javascript-format
+msgid "Fast and small, for a quick look."
+msgstr ""
+
+#, no-javascript-format
+msgid "Good for reading on a screen."
+msgstr ""
+
+#, no-javascript-format
+msgid "Sharp enough for documents. A good default."
+msgstr ""
+
+#, no-javascript-format
+msgid "For photos and fine detail. Bigger files."
+msgstr ""
+
+#, no-javascript-format
+msgid "For enlargements. Very big files, and slow."
+msgstr ""
+
+#, no-javascript-format
+msgid "Custom"
+msgstr ""
+
+#, no-javascript-format
+msgid "Original aspect ratio"
+msgstr ""
+
+#, no-javascript-format
+msgid "Square"
+msgstr ""
+
+#, no-javascript-format
+msgid "PDF (searchable, OCR)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Text (OCR)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan one original with the settings on the right."
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto scan"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Scan the whole glass, find out whether it is a document or a photo, and "
+"prepare it accordingly."
+msgstr ""
+
+#, no-javascript-format
+msgid "Multi-photo crop"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan several photos at once and cut each one out as its own page."
+msgstr ""
+
+#, no-javascript-format
+msgid "Stitch"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan an original bigger than the glass in two parts and join them."
+msgstr ""
+
+#, no-javascript-format
+msgid "Text recognition (OCR)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan a document and turn it into a searchable PDF or a text file."
+msgstr ""
+
+#, no-javascript-format
+msgid "None"
+msgstr ""
+
+#, no-javascript-format
+msgid "For document"
+msgstr ""
+
+#, no-javascript-format
+msgid "For photo"
+msgstr ""
+
+#, no-javascript-format
+msgid "For magazine"
+msgstr ""
+
+#, no-javascript-format
+msgid "Delete this page"
+msgstr ""
+
+#, no-javascript-format
+msgid "Join"
+msgstr ""
+
+#, no-javascript-format
+msgctxt "short button label under the page thumbnails"
+msgid "+ Next scan"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scan settings"
+msgstr ""
+
+#, no-javascript-format
+msgid "Page %1 of %2"
+msgstr ""
+
+#, no-javascript-format
+msgid "Saving…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Revert to original"
+msgstr ""
+
+#, no-javascript-format
+msgid "Format"
+msgstr ""
+
+#, no-javascript-format
+msgid "Range"
+msgstr ""
+
+#, no-javascript-format
+msgid "Save all pages"
+msgstr ""
+
+#, no-javascript-format
+msgid "Save current page"
+msgstr ""
+
+#, no-javascript-format
+msgid "Combine all pages into one file"
+msgstr ""
+
+#, no-javascript-format
+msgid "Saved %1."
+msgstr ""
+
+#, no-javascript-format
+msgid "Saved %1 file."
+msgid_plural "Saved %1 files."
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "Open folder"
+msgstr ""
+
+#, no-javascript-format
+msgid "New scan"
+msgstr ""
+
+#, no-javascript-format
+msgid "Text (*.txt)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Next scan"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put the next original on the glass, face down, then press Scan. It is added "
+"as page %1."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Put several photos on the glass with space between them. Each one becomes "
+"its own page."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Scan the first part, then the second with “%1”. Washi joins them where they "
+"overlap."
+msgstr ""
+
+#, no-javascript-format
+msgid "Put the original on the glass, then choose the settings on the right."
+msgstr ""
+
+#, no-javascript-format
+msgid "Open the cover and lay the original face down on the glass."
+msgstr ""
+
+#, no-javascript-format
+msgid "Line up its corner with the arrow mark on the glass edge."
+msgstr ""
+
+#, no-javascript-format
+msgid "Close the cover gently so the original does not move."
+msgstr ""
+
+#, no-javascript-format
+msgid "More scan modes"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scanning…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Original Type"
+msgstr ""
+
+#, no-javascript-format
+msgid "Document"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Document asks the scanner to favour text; Photo favours colour and tone. The "
+"image is not changed otherwise."
+msgstr ""
+
+#, no-javascript-format
+msgid "Original Size"
+msgstr ""
+
+#, no-javascript-format
+msgid "The whole glass is scanned and Washi finds what is on it."
+msgstr ""
+
+#, no-javascript-format
+msgid "Resolution"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 dpi"
+msgstr ""
+
+#, no-javascript-format
+msgid "Read-only mode: the service will not scan."
+msgstr ""
+
+#, no-javascript-format
+msgid "Reading the printer…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Scanning. This can take a minute at a high resolution."
+msgstr ""
+
+#, no-javascript-format
+msgid "The Washi service is not running"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Washi talks to your printer through a small background service. Start it "
+"from a terminal with the command below; this window connects by itself as "
+"soon as it is up."
+msgstr ""
+
+#, no-javascript-format
+msgid "Copy"
+msgstr ""
+
+#, no-javascript-format
+msgid "To start it at every login: systemctl --user enable --now washid"
+msgstr ""
+
+#, no-javascript-format
+msgid "Waiting for the service…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto Power Off"
+msgstr ""
+
+#, no-javascript-format
+msgid "Quiet Mode"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink Drying Time"
+msgstr ""
+
+#, no-javascript-format
+msgid "Paper Gap"
+msgstr ""
+
+#, no-javascript-format
+msgid "Auto Power On"
+msgstr ""
+
+#, no-javascript-format
+msgid "Automatic Firmware Update"
+msgstr ""
+
+#, no-javascript-format
+msgid "Setting"
+msgstr ""
+
+#, no-javascript-format
+msgid "When the printer is connected to a network"
+msgstr ""
+
+#, no-javascript-format
+msgid "Turn off automatically"
+msgstr ""
+
+#, no-javascript-format
+msgid "after %1 minute"
+msgid_plural "after %1 minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "When it is not connected to a network"
+msgstr ""
+
+#, no-javascript-format
+msgid "Quiet mode lowers printing noise by printing more slowly."
+msgstr ""
+
+#, no-javascript-format
+msgid "Scheduled"
+msgstr ""
+
+#, no-javascript-format
+msgid "From"
+msgstr ""
+
+#, no-javascript-format
+msgid "to"
+msgstr ""
+
+#, no-javascript-format
+msgid "Enter times as 24-hour HH:MM, for example 21:00."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"A longer wait lets the ink dry between pages, which helps if prints smear. "
+"Printing takes longer."
+msgstr ""
+
+#, no-javascript-format
+msgid "Shorter"
+msgstr ""
+
+#, no-javascript-format
+msgid "Level %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Longer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Choose Wide if thick or curled paper gets scuffed by the print head."
+msgstr ""
+
+#, no-javascript-format
+msgid "Turn on “%1” for %2?"
+msgstr ""
+
+#, no-javascript-format
+msgid "Turn off “%1” for %2?"
+msgstr ""
+
+#, no-javascript-format
+msgid "Saving to the printer and reading it back…"
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer did not accept the change."
+msgstr ""
+
+#, no-javascript-format
+msgid "Nothing changed: the printer already had these values."
+msgstr ""
+
+#, no-javascript-format
+msgid "Saved. The printer now reports:"
+msgstr ""
+
+#, no-javascript-format
+msgid "%1: %2  →  %3"
+msgstr ""
+
+#, no-javascript-format
+msgid "No printer selected."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer is asleep."
+msgstr ""
+
+#, no-javascript-format
+msgid "Support code %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "An ink tank is empty."
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink is running low."
+msgstr ""
+
+#, no-javascript-format
+msgid "No new notices."
+msgstr ""
+
+#, no-javascript-format
+msgid "Add a printer to see its status."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Check that it is switched on and connected to the same network as this "
+"computer."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"It saved power with auto power-off and wakes up by itself when a job arrives."
+msgstr ""
+
+#, no-javascript-format
+msgid "Replace the empty tank to keep printing."
+msgstr ""
+
+#, no-javascript-format
+msgid "You can keep printing, but have a new tank ready."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer is ready."
+msgstr ""
+
+#, no-javascript-format
+msgid "Low or empty: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Support code %1: %2"
+msgstr ""
+
+#, no-javascript-format
+msgid "Help for this Support Code"
+msgstr ""
+
+#, no-javascript-format
+msgid "Go to Consumables"
+msgstr ""
+
+#, no-javascript-format
+msgid "Last read at %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Busy"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink low"
+msgstr ""
+
+#, no-javascript-format
+msgid "Ink empty"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer is in auto power-off. It wakes up by itself when a job arrives."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer cannot be reached on the network."
+msgstr ""
+
+#, no-javascript-format
+msgctxt "tile on the Home page"
+msgid "Printer Status"
+msgstr ""
+
+#, no-javascript-format
+msgid "Customize"
+msgstr ""
+
+#, no-javascript-format
+msgid "Click a tile to remove it from Home, or to bring it back."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Read-only mode: Washi can look at the printer but will not change anything. "
+"Start washid without --read-only to clean, test or change settings."
+msgstr ""
+
+#, no-javascript-format
+msgid "After %1 minute"
+msgid_plural "After %1 minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#, no-javascript-format
+msgid "Clears clogged nozzles to get rid of streaks and faded colours."
+msgstr ""
+
+#, no-javascript-format
+msgid "Prints a test pattern so you can see whether any nozzle is blocked."
+msgstr ""
+
+#, no-javascript-format
+msgid "Corrects shifted colours and wavy lines by realigning the print head."
+msgstr ""
+
+#, no-javascript-format
+msgid "Alignment check"
+msgstr ""
+
+#, no-javascript-format
+msgid "Manual…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Cleans the paper feed rollers when sheets slip or smudge."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Cleans the inside of the printer so that ink does not smear the back of the "
+"paper."
+msgstr ""
+
+#, no-javascript-format
+msgid "Switches the printer on by itself when a print job arrives."
+msgstr ""
+
+#, no-javascript-format
+msgid "Not connected: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Turns the printer off after it has been idle for a while."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Makes printing quieter, all the time or during set hours. Printing gets "
+"slower."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Adds a pause between pages so the ink can dry before the next one lands on "
+"it."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Widens the space between print head and paper to avoid scuffs on thick paper."
+msgstr ""
+
+#, no-javascript-format
+msgid "Lets the printer install new firmware by itself when it is available."
+msgstr ""
+
+#, no-javascript-format
+msgid "More maintenance on the printer's web page"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Some maintenance is only on the printer's own web page. The printer asks for "
+"its administrator password there."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer is asleep. Cleaning and test prints wake it up by themselves, "
+"and settings can still be changed. You can also wake it first."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer cannot be reached, so nothing can be started right now."
+msgstr ""
+
+#, no-javascript-format
+msgid "Showing what the printer reported the last time it answered."
+msgstr ""
+
+#, no-javascript-format
+msgid "Could not read what this printer offers: %1"
+msgstr ""
+
+#, no-javascript-format
+msgid "Try again"
+msgstr ""
+
+#, no-javascript-format
+msgid "Reading what the printer offers…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Settings"
+msgstr ""
+
+#, no-javascript-format
+msgid "Waking…"
+msgstr ""
+
+#, no-javascript-format
+msgid "Wake request sent"
+msgstr ""
+
+#, no-javascript-format
+msgid "Wake printer"
+msgstr ""
+
+#, no-javascript-format
+msgid "Read-only mode: the service sends nothing to the printer."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The printer should wake up within a few seconds. If it does not, press its "
+"power button or send a print job."
+msgstr ""
+
+#, no-javascript-format
+msgid "Wake"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Ask %1 to wake up? This sends the PowerOn command, which has not been tried "
+"on a real printer yet. Starting a print or a cleaning wakes the printer too."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer did not wake up"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"A sleeping printer may refuse the wake command. Press its power button, or "
+"start a print or a cleaning: those wake it by themselves."
+msgstr ""

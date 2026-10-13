@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/" xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetCapabilityResponse</ivec:operation>
+<ivec:param_set servicetype="device">
+<ivec:response>OK</ivec:response>
+<ivec:response_detail/>
+<ivec:manufacturer>CANON</ivec:manufacturer>
+<ivec:model>XK140 series</ivec:model>
+<ivec:serialnumber>0000000</ivec:serialnumber>
+<ivec:service>print,maintenance,pli,eis</ivec:service>
+<ivec:product_serialnumber>XXXXXXXXX</ivec:product_serialnumber>
+<ivec:firmver>1.060</ivec:firmver>
+<vcn:pdr>1</vcn:pdr>
+<vcn:hri>3</vcn:hri>
+<ivec:function_info>
+<vcn:remote_ui>
+<vcn:backtoapplication/>
+<vcn:guide>
+<vcn:item>certification</vcn:item>
+</vcn:guide>
+<vcn:pagelink page="maintenance"><![CDATA[index.html?page=PAGE_UTIL]]></vcn:pagelink>
+<vcn:pagelink page="ijcpcregistration"><![CDATA[index.html?page=PAGE_IJCPC]]></vcn:pagelink>
+<vcn:pagelink page="downloadcertificate"><![CDATA[index.html?page=PAGE_CERT]]></vcn:pagelink>
+<vcn:pagelink page="printerstatus"><![CDATA[index.html?page=PAGE_INFO]]></vcn:pagelink>
+<vcn:pagelink page="inkinfo_smartpc"><![CDATA[inkinfo.html]]></vcn:pagelink>
+<vcn:pagelink page="ijcpcregistration_typeB"><![CDATA[wfchklg.cgi?page=PAGE_IJCPC&namae=]]></vcn:pagelink>
+<vcn:pagelink page="maintenance_typeB"><![CDATA[wfchklg.cgi?page=PAGE_UTIL&namae=]]></vcn:pagelink>
+<vcn:pagelink page="printerstatus_typeB"><![CDATA[wfchklg.cgi?page=PAGE_INFO&namae=]]></vcn:pagelink>
+<vcn:password_skip_wifi>typeA</vcn:password_skip_wifi>
+<vcn:showable_webview/>
+</vcn:remote_ui>
+<vcn:bininfo_settable/>
+<vcn:wireless_connect_button/>
+</ivec:function_info>
+<ivec:datetime/>
+<ivec:autopoweron>ON,OFF</ivec:autopoweron>
+<ivec:autopoweroff>
+<ivec:mode>ON,OFF</ivec:mode>
+<ivec:time>15,30,60,120,240</ivec:time>
+</ivec:autopoweroff>
+<ivec:autopoweroff_standalone>
+<ivec:mode>ON,OFF</ivec:mode>
+<ivec:time>15,30,60,120,240</ivec:time>
+</ivec:autopoweroff_standalone>
+<ivec:silentmode>
+<ivec:mode>ON,OFF,time</ivec:mode>
+<ivec:starttime/>
+<ivec:endtime/>
+</ivec:silentmode>
+<ivec:papergap>auto,wide</ivec:papergap>
+<ivec:drylevel>1,2,3,4,5</ivec:drylevel>
+<ivec:setregistration id="1">
+<ivec:item sign="A">-5:5</ivec:item>
+<ivec:item sign="B">-5:5</ivec:item>
+<ivec:item sign="C">-5:5</ivec:item>
+<ivec:item sign="D">-5:5</ivec:item>
+<ivec:item sign="E">-5:5</ivec:item>
+<ivec:item sign="F">-5:5</ivec:item>
+<ivec:item sign="G">-3:3</ivec:item>
+<ivec:item sign="H">-3:3</ivec:item>
+</ivec:setregistration>
+<ivec:setregistration id="2">
+<ivec:item sign="I">-5:5</ivec:item>
+<ivec:item sign="J">-5:5</ivec:item>
+<ivec:item sign="K">-5:5</ivec:item>
+<ivec:item sign="L">-5:5</ivec:item>
+<ivec:item sign="M">-5:5</ivec:item>
+</ivec:setregistration>
+<ivec:setregistration id="3">
+<ivec:item sign="a">-2:2</ivec:item>
+<ivec:item sign="b">-2:2</ivec:item>
+<ivec:item sign="c">-2:2</ivec:item>
+<ivec:item sign="d">-2:2</ivec:item>
+<ivec:item sign="e">-2:2</ivec:item>
+</ivec:setregistration>
+<vcn:questionnaire_state>notanswer,answer,reject</vcn:questionnaire_state>
+<vcn:mqtt_connection>ON,OFF</vcn:mqtt_connection>
+<vcn:host_application_id>0000:9999</vcn:host_application_id>
+<vcn:printer_setup_on_printer/>
+<vcn:auto_printer_rom_update>ON,OFF</vcn:auto_printer_rom_update>
+<vcn:purpose_agreement_service>unknown,agree,disagree</vcn:purpose_agreement_service>
+<vcn:purpose_agreement_analysis>unknown,agree,disagree</vcn:purpose_agreement_analysis>
+<vcn:purpose_agreement_version>000:255</vcn:purpose_agreement_version>
+<vcn:cpc_version>25.0</vcn:cpc_version>
+<vcn:SetConfigurationWithoutStartJob>
+<vcn:host_application_id>0000:9999</vcn:host_application_id>
+<vcn:purpose_agreement_service>unknown,agree,disagree</vcn:purpose_agreement_service>
+<vcn:purpose_agreement_analysis>unknown,agree,disagree</vcn:purpose_agreement_analysis>
+<vcn:purpose_agreement_version>000:255</vcn:purpose_agreement_version>
+</vcn:SetConfigurationWithoutStartJob>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

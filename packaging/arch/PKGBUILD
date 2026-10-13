@@ -1,0 +1,96 @@
+# Maintainer: JenAriDev <45949349+Jenari-Dev@users.noreply.github.com>
+#
+# Washi: status, maintenance, printing and scanning for Canon inkjet printers.
+# Build from a release tarball:   makepkg -si      (in this directory)
+# The project is GPL-2.0-or-later; because some Rust crates are Apache-2.0 only, the binaries are
+# distributed under the terms of the GPL-3.0-or-later (see NOTICE.md and THIRD-PARTY-LICENSES.md).
+
+pkgname=washi
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Status, maintenance, printing and scanning for Canon inkjet printers (a Canon PRINT replacement)'
+arch=('x86_64')
+url='https://github.com/Jenari-Dev/washi'
+license=('GPL-2.0-or-later')
+depends=(
+  'dbus'
+  'gcc-libs'
+  'glibc'
+  'hicolor-icon-theme'
+  'ki18n'
+  'poppler'
+  'qt6-base'
+  'qt6-declarative'
+  'qt6-svg'
+)
+makedepends=(
+  'cargo'
+  'gettext'
+  'pkgconf'
+)
+optdepends=(
+  'libreoffice: printing Office documents (they are converted to PDF first)'
+  'tesseract: text recognition (OCR) when scanning'
+  'tesseract-data-eng: English OCR data'
+  'tesseract-data-jpn: Japanese OCR data'
+  'qt6-webengine: faster PDF preview in Document Print (QtPdf)'
+  'qt6-wayland: native Wayland support'
+  'xdg-utils: opening web links in your browser'
+)
+# cxx-qt generates code that does not survive link-time optimisation.
+options=('!lto')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  # Keep the build directory out of the binaries (the C++ side of cxx-qt records __FILE__ paths).
+  export CXXFLAGS+=" -ffile-prefix-map=$PWD=."
+  cargo build --locked --offline --release -p washi -p washid -p washi-gui
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  export CXXFLAGS+=" -ffile-prefix-map=$PWD=."
+  # The Qt app is covered by the QML tests in CI; these need no printer and no display.
+  cargo test --locked --offline --release --workspace --exclude washi-gui
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  install -Dm755 target/release/washi target/release/washid target/release/washi-app \
+    -t "$pkgdir/usr/bin"
+
+  # Translations: build.rs compiles po/*.po with msgfmt into target/release/share/locale.
+  local mo lang
+  for mo in target/release/share/locale/*/LC_MESSAGES/washi.mo; do
+    lang=${mo#target/release/share/locale/}
+    lang=${lang%%/*}
+    install -Dm644 "$mo" "$pkgdir/usr/share/locale/$lang/LC_MESSAGES/washi.mo"
+  done
+
+  install -Dm644 contrib/io.github.Jenari_Dev.Washi.desktop -t "$pkgdir/usr/share/applications"
+  install -Dm644 contrib/io.github.Jenari_Dev.Washi.svg \
+    -t "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+  install -Dm644 contrib/io.github.Jenari_Dev.Washi.metainfo.xml -t "$pkgdir/usr/share/metainfo"
+
+  # D-Bus activation and the systemd user unit: `systemctl --user enable --now washid`
+  install -Dm644 packaging/dbus/io.github.Jenari_Dev.Washi.service -t "$pkgdir/usr/share/dbus-1/services"
+  install -Dm644 packaging/systemd/washid.service -t "$pkgdir/usr/lib/systemd/user"
+
+  install -Dm644 LICENSE LICENSES/GPL-3.0-or-later.txt NOTICE.md THIRD-PARTY-LICENSES.md \
+    -t "$pkgdir/usr/share/licenses/$pkgname"
+  install -Dm644 README.md README.ja.md CHANGELOG.md docs/USAGE.md docs/DBUS-API.md docs/PROTOCOL.md \
+    docs/ARCHITECTURE.md contrib/testpage.pdf -t "$pkgdir/usr/share/doc/$pkgname"
+}

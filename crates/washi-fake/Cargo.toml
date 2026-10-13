@@ -1,0 +1,19 @@
+[package]
+name = "washi-fake"
+description = "Scriptable in-process fake Canon printer (CHMP/IVEC, eSCL, IPP) for tests; never talks to a real device"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+washi-net.workspace = true
+image = { version = "0.25.9", default-features = false, features = ["jpeg"] }
+
+[[bin]]
+name = "washi-fake-printer"
+path = "src/bin/washi-fake-printer.rs"

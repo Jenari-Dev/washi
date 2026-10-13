@@ -1,0 +1,116 @@
+# Flatpak manifest for Washi.
+#
+#   python3 tools/flatpak-cargo-sources.py          # writes packaging/flatpak/cargo-sources.json
+#   flatpak-builder --user --install --force-clean build-dir packaging/flatpak/io.github.Jenari_Dev.Washi.yml
+#
+# The release workflow (.github/workflows/release.yml) does the same and attaches the bundle.
+app-id: io.github.Jenari_Dev.Washi
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+# The extension's branch is the one the SDK names (org.kde.Sdk 6.11 is built on freedesktop 25.08).
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: washi-app
+
+finish-args:
+  # The printer is on the local network (CHMP, IPP, eSCL, mDNS discovery).
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Desktop notifications from the daemon.
+  - --talk-name=org.freedesktop.Notifications
+  # Files come and go through the portals (the file dialogs); no filesystem access is requested.
+  - --env=QT_QPA_PLATFORMTHEME=xdgdesktopportal
+
+modules:
+  # Character-set and CJK font mapping data that poppler needs for PDFs with non-embedded fonts.
+  - name: poppler-data
+    buildsystem: cmake-ninja
+    sources:
+      - type: git
+        url: https://gitlab.freedesktop.org/poppler/poppler-data.git
+        tag: POPPLER_DATA_0_4_12
+        commit: af9f452b427d5ce8abe81ff98cc40c5f39fad90b
+        x-checker-data:
+          type: git
+          tag-pattern: ^POPPLER_DATA_(\d+_\d+_\d+)$
+
+  # Only `pdftoppm` and `pdfinfo` are needed: Document Print rasterises PDF pages with them.
+  - name: poppler
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_SHARED_LIBS=ON
+      - -DENABLE_UTILS=ON
+      - -DENABLE_CPP=OFF
+      - -DENABLE_GLIB=OFF
+      - -DENABLE_GOBJECT_INTROSPECTION=OFF
+      - -DENABLE_QT5=OFF
+      - -DENABLE_QT6=OFF
+      - -DENABLE_BOOST=OFF
+      - -DENABLE_NSS3=OFF
+      - -DENABLE_GPGME=OFF
+      - -DENABLE_LIBCURL=OFF
+      - -DENABLE_CMS=none
+      - -DENABLE_LIBOPENJPEG=none
+      - -DENABLE_DCT_DECODER=libjpeg
+      - -DENABLE_UNSTABLE_API_ABI_HEADERS=OFF
+      - -DENABLE_TESTING=OFF
+      - -DBUILD_GTK_TESTS=OFF
+      - -DBUILD_QT5_TESTS=OFF
+      - -DBUILD_QT6_TESTS=OFF
+      - -DBUILD_CPP_TESTS=OFF
+      - -DBUILD_MANUAL_TESTS=OFF
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share/man
+    sources:
+      - type: git
+        url: https://gitlab.freedesktop.org/poppler/poppler.git
+        tag: poppler-26.08.0
+        commit: d663f8fe0237073fadf43e4e19acc46b3ba3e80a
+        x-checker-data:
+          type: git
+          tag-pattern: ^poppler-(\d+\.\d+\.\d+)$
+
+  - name: washi
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        # cargo-sources.json puts the crates in $CARGO_HOME/vendor and a config that uses them.
+        CARGO_HOME: /run/build/washi/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo build --locked --offline --release -p washi -p washid -p washi-gui
+      - install -Dm755 target/release/washi target/release/washid target/release/washi-app -t /app/bin
+      # Translations: build.rs compiles po/*.po with msgfmt into target/release/share/locale.
+      - |
+        for mo in target/release/share/locale/*/LC_MESSAGES/washi.mo; do
+          lang=${mo#target/release/share/locale/}; lang=${lang%%/*}
+          install -Dm644 "$mo" "/app/share/locale/$lang/LC_MESSAGES/washi.mo"
+        done
+      - install -Dm644 contrib/io.github.Jenari_Dev.Washi.desktop -t /app/share/applications
+      - install -Dm644 contrib/io.github.Jenari_Dev.Washi.svg -t /app/share/icons/hicolor/scalable/apps
+      - install -Dm644 contrib/io.github.Jenari_Dev.Washi.metainfo.xml -t /app/share/metainfo
+      # D-Bus activation of the daemon (Flatpak rewrites Exec when it exports the file). No
+      # systemd unit: a Flatpak cannot install one.
+      - install -Dm644 packaging/flatpak/io.github.Jenari_Dev.Washi.service -t /app/share/dbus-1/services
+      - install -Dm644 LICENSE LICENSES/GPL-3.0-or-later.txt NOTICE.md THIRD-PARTY-LICENSES.md -t /app/share/licenses/io.github.Jenari_Dev.Washi
+      - install -Dm644 README.md README.ja.md CHANGELOG.md docs/USAGE.md docs/DBUS-API.md docs/PROTOCOL.md docs/ARCHITECTURE.md contrib/testpage.pdf -t /app/share/doc/io.github.Jenari_Dev.Washi
+    sources:
+      # The checkout this manifest is in. For Flathub, use a `type: git` source with the release tag.
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - target
+          - build-dir
+          - flatpak_app
+          - .flatpak-builder
+          - repo
+      - cargo-sources.json

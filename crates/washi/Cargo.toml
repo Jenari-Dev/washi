@@ -1,0 +1,31 @@
+[package]
+name = "washi"
+description = "Command-line control for Canon CHMP/IVEC inkjet printers (open Canon PRINT replacement)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "washi"
+path = "src/main.rs"
+
+[dependencies]
+washi-ivec.workspace = true
+washi-net.workspace = true
+washi-core.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+zbus.workspace = true
+tokio.workspace = true
+futures-util = "0.3"
+image = { version = "0.25.9", default-features = false, features = ["png", "jpeg"] }
+
+[dev-dependencies]
+washi-fake.workspace = true
+tempfile.workspace = true

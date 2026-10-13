@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Washi's own mark: a sheet of paper with a folded corner (washi = Japanese paper) on a soft
+       blue-to-mint tile, with a printed line and a drop of ink. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9defa"/>
+      <stop offset="1" stop-color="#cdeedd"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <path d="M19 11h18l10 10v31a2 2 0 0 1-2 2H19a2 2 0 0 1-2-2V13a2 2 0 0 1 2-2z" fill="#ffffff" stroke="#1b2f5e" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M37 11v10h10" fill="none" stroke="#1b2f5e" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M23 31h16M23 37h12" fill="none" stroke="#9fb3d6" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M38 41c3 3.6 5 6 5 8.6a5 5 0 0 1-10 0c0-2.6 2-5 5-8.6z" fill="#1e50b4"/>
+</svg>

@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=io.github.Jenari_Dev.Washi
+Exec=/app/bin/washid

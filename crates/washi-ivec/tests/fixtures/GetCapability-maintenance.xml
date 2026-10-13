@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/" xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetCapabilityResponse</ivec:operation>
+<ivec:param_set servicetype="maintenance">
+<ivec:response>OK</ivec:response>
+<ivec:response_detail/>
+<ivec:username/>
+<ivec:computername/>
+<ivec:job_description/>
+<ivec:datetime/>
+<vcn:host_environment>windows,mac,linux,windows_mobile,ios,android,other</vcn:host_environment>
+<ivec:Cleaning>
+<ivec:type value="regular">
+<ivec:inkgroup>all,group1,group2</ivec:inkgroup>
+</ivec:type>
+<ivec:type value="deep">
+<ivec:inkgroup>all,group1,group2</ivec:inkgroup>
+</ivec:type>
+</ivec:Cleaning>
+<ivec:TestPrint>
+<ivec:type value="nozzle_check">
+<ivec:inputbin>inputbin_p2</ivec:inputbin>
+<ivec:papersize>iso_a4_210x297mm</ivec:papersize>
+<ivec:papertype>stationery</ivec:papertype>
+<ivec:papernum papersize="iso_a4_210x297mm">1</ivec:papernum>
+</ivec:type>
+<ivec:type value="auto_registration">
+<ivec:inputbin>inputbin_p2</ivec:inputbin>
+<ivec:papersize>iso_a4_210x297mm</ivec:papersize>
+<ivec:papertype>stationery</ivec:papertype>
+<ivec:papernum papersize="iso_a4_210x297mm">2</ivec:papernum>
+</ivec:type>
+<ivec:type value="manual_registration">
+<ivec:inputbin>inputbin_p2</ivec:inputbin>
+<ivec:papersize>iso_a4_210x297mm</ivec:papersize>
+<ivec:papertype>stationery</ivec:papertype>
+<ivec:papernum papersize="iso_a4_210x297mm">3</ivec:papernum>
+<ivec:id/>
+<ivec:required_param>id</ivec:required_param>
+<ivec:optional_param/>
+</ivec:type>
+<ivec:type value="regi_check">
+<ivec:inputbin>inputbin_p2</ivec:inputbin>
+<ivec:papersize>iso_a4_210x297mm</ivec:papersize>
+<ivec:papertype>stationery</ivec:papertype>
+<ivec:papernum papersize="iso_a4_210x297mm">1</ivec:papernum>
+</ivec:type>
+</ivec:TestPrint>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Washi
+Name[ja]=Washi
+GenericName=Canon printer utility
+GenericName[ja]=Canonプリンター用ユーティリティ
+Comment=Printer status, ink levels, maintenance and settings for Canon inkjet printers
+Comment[ja]=Canon製インクジェットプリンターの状態、インク残量、メンテナンス、設定
+Exec=washi-app
+Icon=io.github.Jenari_Dev.Washi
+Categories=Settings;HardwareSettings;Printing;Qt;
+Keywords=canon;printer;ink;pixus;pixma;scan;
+Keywords[ja]=canon;キヤノン;プリンター;印刷;インク;スキャン;pixus;pixma;
+StartupWMClass=io.github.Jenari_Dev.Washi

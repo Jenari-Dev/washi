@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/" xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetConfigurationResponse</ivec:operation>
+<ivec:param_set servicetype="device">
+<ivec:response>OK</ivec:response>
+<ivec:response_detail/>
+<ivec:datetime/>
+<ivec:autopoweron>ON</ivec:autopoweron>
+<ivec:autopoweroff>
+<ivec:mode>ON</ivec:mode>
+<ivec:time>30</ivec:time>
+</ivec:autopoweroff>
+<ivec:autopoweroff_standalone>
+<ivec:mode>ON</ivec:mode>
+<ivec:time>30</ivec:time>
+</ivec:autopoweroff_standalone>
+<ivec:silentmode>
+<ivec:mode>OFF</ivec:mode>
+<ivec:starttime>2100</ivec:starttime>
+<ivec:endtime>0700</ivec:endtime>
+</ivec:silentmode>
+<ivec:papergap>auto</ivec:papergap>
+<ivec:drylevel>3</ivec:drylevel>
+<ivec:setregistration id="1">
+<ivec:item sign="A">0</ivec:item>
+<ivec:item sign="B">0</ivec:item>
+<ivec:item sign="C">0</ivec:item>
+<ivec:item sign="D">1</ivec:item>
+<ivec:item sign="E">1</ivec:item>
+<ivec:item sign="F">0</ivec:item>
+<ivec:item sign="G">0</ivec:item>
+<ivec:item sign="H">0</ivec:item>
+</ivec:setregistration>
+<ivec:setregistration id="2">
+<ivec:item sign="I">0</ivec:item>
+<ivec:item sign="J">0</ivec:item>
+<ivec:item sign="K">0</ivec:item>
+<ivec:item sign="L">0</ivec:item>
+<ivec:item sign="M">0</ivec:item>
+</ivec:setregistration>
+<ivec:setregistration id="3">
+<ivec:item sign="a">0</ivec:item>
+<ivec:item sign="b">0</ivec:item>
+<ivec:item sign="c">0</ivec:item>
+<ivec:item sign="d">0</ivec:item>
+<ivec:item sign="e">0</ivec:item>
+</ivec:setregistration>
+<vcn:questionnaire_state>reject</vcn:questionnaire_state>
+<vcn:mqtt_connection>ON</vcn:mqtt_connection>
+<vcn:host_application_id>0000</vcn:host_application_id>
+<vcn:auto_printer_rom_update>ON</vcn:auto_printer_rom_update>
+<vcn:purpose_agreement_service>agree</vcn:purpose_agreement_service>
+<vcn:purpose_agreement_analysis>agree</vcn:purpose_agreement_analysis>
+<vcn:purpose_agreement_version>001</vcn:purpose_agreement_version>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

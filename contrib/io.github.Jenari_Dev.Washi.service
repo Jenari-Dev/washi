@@ -1,0 +1,7 @@
+# D-Bus activation: lets a client (the future GUI, busctl, ...) start washid on demand.
+# Install to ~/.local/share/dbus-1/services/. The unit does the real work; adjust Exec if
+# washid is not in ~/.local/bin and you do not use systemd.
+[D-BUS Service]
+Name=io.github.Jenari_Dev.Washi
+SystemdService=washid.service
+Exec=/usr/bin/false

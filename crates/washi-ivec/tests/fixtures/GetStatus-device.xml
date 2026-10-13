@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/" xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetStatusResponse</ivec:operation>
+<ivec:param_set servicetype="device">
+<ivec:response>OK</ivec:response>
+<ivec:response_detail/>
+<vcn:printer_setup_on_printer/>
+<vcn:eid>
+<vcn:url_id>00</vcn:url_id>
+<vcn:redirect_url>REDACTED</vcn:redirect_url>
+</vcn:eid>
+<ivec:network_interface>
+<ivec:interface_set id="wireless0">
+<vcn:communication_method>
+<vcn:item>infrastructure_mode</vcn:item>
+</vcn:communication_method>
+<ivec:ip>
+<ivec:hwaddress>REDACTED</ivec:hwaddress>
+</ivec:ip>
+</ivec:interface_set>
+<ivec:interface_set id="wireless1">
+<vcn:communication_method>
+<vcn:item>access_point_mode</vcn:item>
+<vcn:item>wi_fi_direct_mode</vcn:item>
+</vcn:communication_method>
+<ivec:ip>
+<ivec:hwaddress>REDACTED</ivec:hwaddress>
+</ivec:ip>
+</ivec:interface_set>
+</ivec:network_interface>
+<vcn:total_paper_num physicalinputbin="inputbin_p1">6</vcn:total_paper_num>
+<vcn:total_paper_num physicalinputbin="inputbin_p2">54</vcn:total_paper_num>
+<vcn:ink_replacement_count color="M">1</vcn:ink_replacement_count>
+<vcn:ink_replacement_count color="BK">1</vcn:ink_replacement_count>
+<vcn:ink_replacement_count color="Y">1</vcn:ink_replacement_count>
+<vcn:ink_replacement_count color="PGBK">1</vcn:ink_replacement_count>
+<vcn:ink_replacement_count color="C">1</vcn:ink_replacement_count>
+<vcn:genuineink_replacement_count color="M">1</vcn:genuineink_replacement_count>
+<vcn:genuineink_replacement_count color="BK">1</vcn:genuineink_replacement_count>
+<vcn:genuineink_replacement_count color="Y">1</vcn:genuineink_replacement_count>
+<vcn:genuineink_replacement_count color="PGBK">1</vcn:genuineink_replacement_count>
+<vcn:genuineink_replacement_count color="C">1</vcn:genuineink_replacement_count>
+<vcn:head_replacement_count>1</vcn:head_replacement_count>
+<ivec:networkupdate_available>unavailable</ivec:networkupdate_available>
+<vcn:ars_contract_status>OFF</vcn:ars_contract_status>
+<vcn:ink_subscription_status>unknown</vcn:ink_subscription_status>
+<vcn:cpc_contract_status>ON</vcn:cpc_contract_status>
+<vcn:extended_warranty_status>active</vcn:extended_warranty_status>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

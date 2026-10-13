@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/">
+<ivec:contents>
+<ivec:operation>GetStatusResponse</ivec:operation>
+<ivec:param_set servicetype="unknown">
+<ivec:response>NG</ivec:response>
+<ivec:response_detail>NotSupportService</ivec:response_detail>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

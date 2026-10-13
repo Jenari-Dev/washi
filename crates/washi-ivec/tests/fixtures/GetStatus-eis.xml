@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/"
+xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetStatusResponse</ivec:operation>
+<ivec:param_set servicetype="eis">
+<ivec:response>NG</ivec:response>
+<ivec:response_detail>DataError</ivec:response_detail>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

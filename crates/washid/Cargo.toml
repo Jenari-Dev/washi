@@ -1,0 +1,36 @@
+[package]
+name = "washid"
+description = "Washi daemon: polls the printer, serves the D-Bus API, sends desktop notifications"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "washid"
+path = "src/lib.rs"
+
+[[bin]]
+name = "washid"
+path = "src/main.rs"
+
+[dependencies]
+washi-core.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+dirs.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+washi-fake.workspace = true
+tempfile.workspace = true
+image = { version = "0.25.9", default-features = false, features = ["png"] }

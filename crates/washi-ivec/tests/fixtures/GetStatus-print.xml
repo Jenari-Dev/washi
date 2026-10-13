@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cmd xmlns:ivec="http://www.canon.com/ns/cmd/2008/07/common/" xmlns:vcn="http://www.canon.com/ns/cmd/2008/07/canon/">
+<ivec:contents>
+<ivec:operation>GetStatusResponse</ivec:operation>
+<ivec:param_set servicetype="print">
+<ivec:response>OK</ivec:response>
+<ivec:response_detail/>
+<ivec:status>idle</ivec:status>
+<ivec:status_detail/>
+<ivec:current_support_code/>
+<vcn:eid>
+<vcn:url_id>00</vcn:url_id>
+</vcn:eid>
+<ivec:currentpapertype physicalinputbin="inputbin_p1">stationery</ivec:currentpapertype>
+<ivec:currentpapersize physicalinputbin="inputbin_p1">iso_a4_210x297mm</ivec:currentpapersize>
+<ivec:current_papersize_width physicalinputbin="inputbin_p1">21000</ivec:current_papersize_width>
+<ivec:current_papersize_height physicalinputbin="inputbin_p1">29700</ivec:current_papersize_height>
+<ivec:currentpapertype physicalinputbin="inputbin_p2">stationery</ivec:currentpapertype>
+<ivec:currentpapersize physicalinputbin="inputbin_p2">iso_a4_210x297mm</ivec:currentpapersize>
+<ivec:current_papersize_width physicalinputbin="inputbin_p2">21000</ivec:current_papersize_width>
+<ivec:current_papersize_height physicalinputbin="inputbin_p2">29700</ivec:current_papersize_height>
+<ivec:marker_info>
+<ivec:ink>
+<ivec:model><![CDATA[XKI-N21<M>SETUP]]></ivec:model>
+<ivec:color>M</ivec:color>
+<ivec:icon>none</ivec:icon>
+<ivec:level>60</ivec:level>
+<vcn:tca>AC</vcn:tca>
+<ivec:order>1</ivec:order>
+</ivec:ink>
+<ivec:ink>
+<ivec:model><![CDATA[XKI-N21<BK>SETUP]]></ivec:model>
+<ivec:color>BK</ivec:color>
+<ivec:icon>none</ivec:icon>
+<ivec:level>80</ivec:level>
+<vcn:tca>AC</vcn:tca>
+<ivec:order>2</ivec:order>
+</ivec:ink>
+<ivec:ink>
+<ivec:model><![CDATA[XKI-N21<Y>SETUP]]></ivec:model>
+<ivec:color>Y</ivec:color>
+<ivec:icon>none</ivec:icon>
+<ivec:level>70</ivec:level>
+<vcn:tca>AC</vcn:tca>
+<ivec:order>3</ivec:order>
+</ivec:ink>
+<ivec:ink>
+<ivec:model><![CDATA[XKI-N20<PGBK>SETUP]]></ivec:model>
+<ivec:color>PGBK</ivec:color>
+<ivec:icon>none</ivec:icon>
+<ivec:level>60</ivec:level>
+<vcn:tca>AC</vcn:tca>
+<ivec:order>4</ivec:order>
+</ivec:ink>
+<ivec:ink>
+<ivec:model><![CDATA[XKI-N21<C>SETUP]]></ivec:model>
+<ivec:color>C</ivec:color>
+<ivec:icon>none</ivec:icon>
+<ivec:level>60</ivec:level>
+<vcn:tca>AC</vcn:tca>
+<ivec:order>5</ivec:order>
+</ivec:ink>
+</ivec:marker_info>
+<ivec:status_detail_list/>
+<vcn:hri>3</vcn:hri>
+<vcn:pdr>1</vcn:pdr>
+<vcn:hrc>00</vcn:hrc>
+<vcn:isu>0</vcn:isu>
+<vcn:msi>
+<vcn:item type="A">ON</vcn:item>
+<vcn:item type="B">30</vcn:item>
+<vcn:item type="P">30</vcn:item>
+<vcn:item type="D">auto</vcn:item>
+<vcn:item type="E">3</vcn:item>
+<vcn:item type="J">OFF</vcn:item>
+<vcn:item type="K">21000700</vcn:item>
+</vcn:msi>
+<ivec:jobinfo/>
+<vcn:gci>
+<vcn:gcia>REDACTED</vcn:gcia>
+<vcn:gcib>REDACTED</vcn:gcib>
+<vcn:gcic>REDACTED</vcn:gcic>
+<vcn:gcid>REDACTED</vcn:gcid>
+<vcn:gcie>0</vcn:gcie>
+</vcn:gci>
+</ivec:param_set>
+</ivec:contents>
+</cmd>

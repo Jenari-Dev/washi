@@ -1,0 +1,16 @@
+[Unit]
+Description=Washi daemon (Canon inkjet status, maintenance and notifications)
+Documentation=https://github.com/Jenari-Dev/washi
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=io.github.Jenari_Dev.Washi
+ExecStart=/usr/bin/washid
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=graphical-session.target

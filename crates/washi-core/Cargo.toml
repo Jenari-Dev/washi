@@ -1,0 +1,27 @@
+[package]
+name = "washi-core"
+description = "Printer model, configuration, maintenance, scanning, printing and disc-label flows shared by the Washi front-ends"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+washi-ivec.workspace = true
+washi-net.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+dirs.workspace = true
+image = { version = "0.25.9", default-features = false, features = ["jpeg", "png", "bmp"] }
+flate2 = "1.1.10"
+ab_glyph = "0.2.32"
+tempfile.workspace = true
+moxcms = "0.8"
+
+[dev-dependencies]
+washi-fake.workspace = true
