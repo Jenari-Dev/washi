@@ -53,6 +53,16 @@ jobs:
       - name: Translations
         run: python3 po/check.py
 
+      - name: Locales for the language tests
+        # gettext only switches languages under a real locale. The archlinux image strips the
+        # locale sources (NoExtract), so restore them and generate English and Japanese.
+        run: |
+          sed -i '/^NoExtract/d' /etc/pacman.conf
+          pacman -S --noconfirm glibc
+          printf 'en_US.UTF-8 UTF-8\nja_JP.UTF-8 UTF-8\n' >> /etc/locale.gen
+          locale-gen
+          locale -a
+
       - name: QML tests
         run: QT_QPA_PLATFORM=offscreen crates/washi-gui/tests/qml/run.sh
 
