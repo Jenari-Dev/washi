@@ -21,12 +21,13 @@ use tokio::sync::broadcast;
 use tracing::{debug, info, warn};
 use washi_core::disc::{self, DiscSpec};
 use washi_core::ivec::IvecError;
+use washi_core::net::ipp::normalize_language;
 use washi_core::print::{self, PrintProgress, PrintSpec, RunOptions};
 use washi_core::scan::flow::{ScanProgress, ScanSpec, run_scan_streaming};
 use washi_core::{
-    Config, Confirm, FirmwareProgress, Language, LanguageSetting, MaintOp, MaintSpec,
-    NotificationConfig, Power, Printer, PrinterSnapshot, Progress, SettingsSpec, SnapshotCache,
-    Tools, WebSources, config_changes, printer_key,
+    Config, Confirm, FirmwareProgress, Language, LanguageSetting, LocalizationCache, MaintOp,
+    MaintSpec, NotificationConfig, Power, Printer, PrinterSnapshot, Progress, SettingsSpec,
+    SnapshotCache, Tools, WebSources, config_changes, printer_key, unix_now,
 };
 
 use crate::messages::{self, JobKind, Text};
@@ -43,6 +44,11 @@ const PRINT_CAPS_MAX_AGE: Duration = Duration::from_secs(30 * 60);
 
 /// How long what the printer says about its web pages is reused.
 const WEB_SOURCES_MAX_AGE: Duration = Duration::from_secs(30 * 60);
+
+/// After a failed read of the printer's strings or picture, the next try waits this long.
+const LOCALIZATION_RETRY_AFTER: Duration = Duration::from_secs(60);
+/// How long a read of the printer's strings or picture waits for the printer's other work.
+const LOCALIZATION_LOCK_WAIT: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Error)]
 pub enum ServiceError {
@@ -261,6 +267,17 @@ pub struct Slot {
     /// The printer's web links (`model.js`, the page links), read at most once per
     /// [`WEB_SOURCES_MAX_AGE`].
     web: Mutex<Option<(Instant, WebSources)>>,
+    /// The printer's own strings and picture, kept between runs.
+    words_cache: Option<LocalizationCache>,
+    words: Mutex<WordsState>,
+}
+
+/// What the daemon remembers about reading the printer's strings and picture: which reads are
+/// under way (so a stale copy is refreshed once, not once per call) and when one last failed.
+#[derive(Default)]
+struct WordsState {
+    reading: std::collections::HashSet<String>,
+    failed: std::collections::HashMap<String, Instant>,
 }
 
 impl Slot {
@@ -295,6 +312,60 @@ impl Slot {
         let mut snap = inner.snapshot.clone()?;
         snap.activity = inner.job.as_ref().map(|j| j.activity(lang));
         Some(snap)
+    }
+
+    /// The firmware version of the last snapshot (`None` before the printer was read).
+    fn current_firmware(&self) -> Option<String> {
+        let inner = lk(&self.inner);
+        let fw = inner.snapshot.as_ref()?.device.as_ref()?.firmware.trim().to_string();
+        (!fw.is_empty()).then_some(fw)
+    }
+
+    /// Read the strings of a language again and keep them. The caller holds the device lock.
+    fn read_strings(&self, lang: &str) {
+        let key = format!("strings-{lang}");
+        match self.printer.fetch_strings(lang) {
+            Ok(fetched) => {
+                lk(&self.words).failed.remove(&key);
+                if let Some(c) = &self.words_cache {
+                    if let Err(e) = c.store_strings(&fetched, unix_now()) {
+                        debug!("printer {}: cannot keep the strings: {e}", self.log_id);
+                    }
+                }
+            }
+            Err(e) => {
+                debug!("printer {}: strings not read: {e}", self.log_id);
+                lk(&self.words).failed.insert(key, Instant::now());
+            }
+        }
+    }
+
+    /// Read the picture again and keep it (or the fact that there is none), returning its path
+    /// (`""` for none). The caller holds the device lock.
+    fn read_icon(&self) -> washi_core::Result<String> {
+        let key = "icon";
+        match self.printer.fetch_icon() {
+            Ok(fetched) => {
+                lk(&self.words).failed.remove(key);
+                let Some(c) = &self.words_cache else {
+                    return Ok(String::new());
+                };
+                if let Err(e) = c.store_icon(&fetched, unix_now()) {
+                    debug!("printer {}: cannot keep the picture: {e}", self.log_id);
+                    return Ok(String::new());
+                }
+                Ok(if fetched.png.is_some() {
+                    c.icon_path().display().to_string()
+                } else {
+                    String::new()
+                })
+            }
+            Err(e) => {
+                debug!("printer {}: picture not read: {e}", self.log_id);
+                lk(&self.words).failed.insert(key.to_string(), Instant::now());
+                Err(e)
+            }
+        }
     }
 
     /// The remembered snapshot if it is younger than `max_age` or a job is running.
@@ -507,6 +578,10 @@ impl Service {
             Some(d) => Some(SnapshotCache::in_dir(d, printer.host(), printer.chmp_port())),
             None => printer.default_cache(),
         };
+        let words_cache = match &self.cache_dir {
+            Some(d) => Some(LocalizationCache::in_dir(d, printer.host(), printer.chmp_port())),
+            None => LocalizationCache::for_printer(printer.host(), printer.chmp_port()),
+        };
         let log_id = printer_key(printer.host(), printer.chmp_port())[..6].to_string();
         reg.slots.push(Arc::new(Slot {
             host: host.to_string(),
@@ -519,6 +594,8 @@ impl Service {
             inner: Mutex::new(SlotInner::default()),
             print_caps: Mutex::new(None),
             web: Mutex::new(None),
+            words_cache,
+            words: Mutex::new(WordsState::default()),
         }));
         true
     }
@@ -1066,6 +1143,144 @@ impl Service {
         *lk(&slot.print_caps) = Some((Instant::now(), json.clone()));
         Ok(json)
     }
+}
+
+impl Service {
+    // ---- the printer's own words and picture -----------------------------------------------------
+
+    /// The printer's display names for its keywords (`media-type.<keyword>`, ...) in a language,
+    /// as a JSON object `{"media-type.com.example": "Name", ...}`; `{}` when the printer has none
+    /// in that language. Reads only (IPP `Get-Printer-Attributes`, `GET` of the strings file), so
+    /// it works with `--read-only`.
+    ///
+    /// A copy kept from an earlier read is answered at once, even an old one: when it is older
+    /// than 30 days or was read from another firmware version than the printer reports now, it
+    /// is read again in the background and the next call gets the new one. Only the very first
+    /// call for a language waits for the printer, and a printer that could not be read is not
+    /// asked again for a minute.
+    pub async fn get_printer_strings(
+        self: &Arc<Self>,
+        host: &str,
+        language: &str,
+    ) -> Result<String> {
+        let slot = self.resolve(host)?;
+        let lang = normalize_language(language).ok_or_else(|| {
+            ServiceError::invalid(format!(
+                "{language:?} is not a language tag such as \"en\" or \"ja\""
+            ))
+        })?;
+        let key = format!("strings-{lang}");
+        let kept = slot.words_cache.as_ref().and_then(|c| c.strings(&lang));
+        if let Some(k) = kept {
+            if !k.is_current(slot.current_firmware().as_deref(), unix_now()) {
+                self.read_words_in_background(&slot, key, move |s| {
+                    s.read_strings(&lang);
+                });
+            }
+            return encode_strings(&k.strings);
+        }
+        let worker = slot.clone();
+        let strings = self
+            .read_words_now(&slot, &key, move || {
+                let fetched = worker.printer.fetch_strings(&lang)?;
+                if let Some(c) = &worker.words_cache {
+                    if let Err(e) = c.store_strings(&fetched, unix_now()) {
+                        debug!("printer {}: cannot keep the strings: {e}", worker.log_id);
+                    }
+                }
+                Ok(fetched.strings)
+            })
+            .await?;
+        encode_strings(&strings)
+    }
+
+    /// The path of a picture of the printer (PNG, the transparent margin cut off) in the cache
+    /// directory, read from the printer once and then reused; `""` when the printer offers none.
+    /// Same rules as [`Service::get_printer_strings`]: reads only, a kept copy is answered at
+    /// once and refreshed in the background when it is old or the firmware changed.
+    pub async fn get_printer_icon(self: &Arc<Self>, host: &str) -> Result<String> {
+        let slot = self.resolve(host)?;
+        let kept = slot.words_cache.as_ref().and_then(|c| c.icon());
+        if let Some(k) = kept {
+            if !k.is_current(slot.current_firmware().as_deref(), unix_now()) {
+                self.read_words_in_background(&slot, "icon".to_string(), |s| {
+                    let _ = s.read_icon();
+                });
+            }
+            return Ok(k.path.map(|p| p.display().to_string()).unwrap_or_default());
+        }
+        let worker = slot.clone();
+        self.read_words_now(&slot, "icon", move || worker.read_icon()).await
+    }
+
+    /// Run a read of the printer's words in the background (once at a time per kind), for a
+    /// copy that is only stale.
+    fn read_words_in_background(
+        self: &Arc<Self>,
+        slot: &Arc<Slot>,
+        key: String,
+        read: impl FnOnce(&Slot) + Send + 'static,
+    ) {
+        {
+            let mut w = lk(&slot.words);
+            let recently_failed =
+                w.failed.get(&key).is_some_and(|t| t.elapsed() < LOCALIZATION_RETRY_AFTER);
+            if recently_failed || !w.reading.insert(key.clone()) {
+                return;
+            }
+        }
+        let slot = slot.clone();
+        tokio::task::spawn_blocking(move || {
+            // Only when the printer is free: a refresh is never worth waiting for.
+            if slot.job_text().is_none() {
+                if let Some(_guard) = slot.lock_device(LOCALIZATION_LOCK_WAIT) {
+                    read(&slot);
+                }
+            }
+            lk(&slot.words).reading.remove(&key);
+        });
+    }
+
+    /// Read now, for a caller that has nothing kept: on the blocking pool, under the printer's
+    /// lock, with the failure of a minute ago remembered.
+    async fn read_words_now<T: Send + 'static>(
+        self: &Arc<Self>,
+        slot: &Arc<Slot>,
+        key: &str,
+        read: impl FnOnce() -> washi_core::Result<T> + Send + 'static,
+    ) -> Result<T> {
+        if lk(&slot.words).failed.get(key).is_some_and(|t| t.elapsed() < LOCALIZATION_RETRY_AFTER) {
+            return Err(ServiceError::Printer(messages::words_unavailable()));
+        }
+        if let Some(label) = slot.job_text() {
+            return Err(ServiceError::Busy(messages::busy_with(&label)));
+        }
+        let worker = slot.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let _guard = worker
+                .lock_device(LOCALIZATION_LOCK_WAIT)
+                .ok_or_else(|| ServiceError::Busy(messages::busy_printer()))?;
+            read().map_err(from_core)
+        })
+        .await
+        .map_err(ServiceError::internal)?;
+        match &result {
+            Ok(_) => {
+                lk(&slot.words).failed.remove(key);
+            }
+            // Busy is not the printer's fault: ask again next time.
+            Err(ServiceError::Busy(_)) => {}
+            Err(_) => {
+                lk(&slot.words).failed.insert(key.to_string(), Instant::now());
+            }
+        }
+        result
+    }
+}
+
+fn encode_strings(map: &std::collections::BTreeMap<String, String>) -> Result<String> {
+    serde_json::to_string(map)
+        .map_err(|e| ServiceError::internal(format!("cannot encode the strings: {e}")))
 }
 
 impl Service {

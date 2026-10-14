@@ -14,7 +14,7 @@
 //! the caller reads a new one, so nothing waits for the printer.
 
 use std::collections::BTreeMap;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -288,7 +288,9 @@ impl LocalizationCache {
         let path = if m.has_icon {
             let p = self.icon_path();
             // The file must still be the PNG that was written.
-            std::fs::read(&p).ok().filter(|b| png_size(b).is_some())?;
+            let mut head = [0u8; 33];
+            std::fs::File::open(&p).ok()?.read_exact(&mut head).ok()?;
+            png_size(&head)?;
             Some(p)
         } else {
             None

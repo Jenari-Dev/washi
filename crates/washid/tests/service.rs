@@ -10,8 +10,8 @@ use tempfile::TempDir;
 use tokio::sync::broadcast::Receiver;
 use washi_core::net::{ClientOptions, IppOptions};
 use washi_core::{
-    FirmwareOptions, Language, LanguageSetting, MaintOptions, Power, Printer, PrinterSnapshot,
-    split_host_port,
+    FirmwareOptions, Language, LanguageSetting, LocalizationCache, MaintOptions, Power, Printer,
+    PrinterSnapshot, split_host_port,
 };
 use washi_fake::FakePrinter;
 use washid::notify::{Notification, Notifier};
@@ -1277,4 +1277,198 @@ async fn the_maintenance_capability_lists_the_extra_cleaning_types() {
     let kinds: Vec<&str> =
         cap["cleaning"].as_array().unwrap().iter().map(|c| c["kind"].as_str().unwrap()).collect();
     assert_eq!(kinds, ["regular", "deep", "roller", "choke", "platen"]);
+}
+
+// ---- the printer's own words and picture ---------------------------------------------------------
+
+const WORDS_EN: &str = "\"media-type.test-glossy\" = \"Test Glossy Paper\";\n\
+                        \"media-type.test-matte\" = \"Test Matte Paper\";\n";
+const WORDS_JA: &str =
+    "\"media-type.test-glossy\" = \"\u{30c6}\u{30b9}\u{30c8}\u{5149}\u{6ca2}\u{7d19}\";\n";
+
+fn fake_with_words() -> FakePrinter {
+    let fake = FakePrinter::start();
+    fake.set_strings("en", Some(WORDS_EN.as_bytes()));
+    fake.set_strings("ja", Some(WORDS_JA.as_bytes()));
+    fake
+}
+
+/// A transparent PNG with a picture in the middle, like the printers' own.
+fn picture_png() -> Vec<u8> {
+    let mut img = image::RgbaImage::new(256, 256);
+    for y in 64..192 {
+        for x in 20..236 {
+            img.put_pixel(x, y, image::Rgba([230, 230, 230, 255]));
+        }
+    }
+    let mut out = Vec::new();
+    img.write_to(&mut std::io::Cursor::new(&mut out), image::ImageFormat::Png).unwrap();
+    out
+}
+
+fn words_cache(r: &Rig, fake: &FakePrinter) -> LocalizationCache {
+    LocalizationCache::in_dir(&r.dir.path().join("cache"), "127.0.0.1", fake.chmp.port())
+}
+
+/// Wait (up to 5 s) until `cond` holds.
+async fn eventually(cond: impl Fn() -> bool) {
+    for _ in 0..250 {
+        if cond() {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    panic!("the condition did not hold in time");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn printer_strings_are_read_once_per_language_even_when_read_only() {
+    let fake = fake_with_words();
+    let r = rig(&fake, true, Duration::from_secs(60));
+    let ja = parse(&r.svc.get_printer_strings(&r.host, "ja").await.unwrap());
+    assert_eq!(ja["media-type.test-glossy"], "\u{30c6}\u{30b9}\u{30c8}\u{5149}\u{6ca2}\u{7d19}");
+    assert!(fake.writes().is_empty(), "{:?}", fake.writes());
+    let en = parse(&r.svc.get_printer_strings("", "EN").await.unwrap());
+    assert_eq!(en["media-type.test-matte"], "Test Matte Paper");
+
+    // Kept: the printer is not asked again, in this run or in the next.
+    fake.clear_log();
+    let again = parse(&r.svc.get_printer_strings(&r.host, "ja").await.unwrap());
+    assert_eq!(again, ja);
+    assert!(fake.log().is_empty(), "{:?}", fake.log());
+    assert_eq!(words_cache(&r, &fake).strings("ja").unwrap().strings.len(), 1);
+
+    // A language it has no file for is an empty map, a bad tag is refused before anything is sent.
+    assert_eq!(
+        parse(&r.svc.get_printer_strings(&r.host, "fr").await.unwrap()),
+        serde_json::json!({})
+    );
+    for bad in ["", "ja/../x", "not a tag"] {
+        let e = r.svc.get_printer_strings(&r.host, bad).await.unwrap_err();
+        assert!(matches!(e, ServiceError::InvalidArgs(_)), "{bad:?}: {e}");
+    }
+    let e = r.svc.get_printer_strings("nowhere.test", "en").await.unwrap_err();
+    assert!(matches!(e, ServiceError::UnknownPrinter(_)));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn an_old_copy_is_answered_at_once_and_read_again_in_the_background() {
+    let fake = fake_with_words();
+    let r = rig(&fake, false, Duration::from_secs(60));
+    let cache = words_cache(&r, &fake);
+    let old = washi_core::FetchedStrings {
+        language: "en".into(),
+        strings: [("media-type.test-glossy".to_string(), "Old Name".to_string())].into(),
+        firmware: Some("1.060".into()),
+    };
+    // 40 days old.
+    cache.store_strings(&old, washi_core::unix_now() - 40 * 24 * 3600).unwrap();
+
+    let first = parse(&r.svc.get_printer_strings(&r.host, "en").await.unwrap());
+    assert_eq!(first["media-type.test-glossy"], "Old Name", "the kept copy comes first");
+    eventually(|| cache.strings("en").is_some_and(|c| c.strings.len() == 2)).await;
+    let next = parse(&r.svc.get_printer_strings(&r.host, "en").await.unwrap());
+    assert_eq!(next["media-type.test-glossy"], "Test Glossy Paper");
+    assert!(cache.strings("en").unwrap().is_current(Some("1.060"), washi_core::unix_now()));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_new_firmware_version_reads_the_strings_again() {
+    let fake = fake_with_words();
+    let r = rig(&fake, false, Duration::from_secs(60));
+    let cache = words_cache(&r, &fake);
+    // Read a minute ago, from another firmware than the printer reports now.
+    let old = washi_core::FetchedStrings {
+        language: "en".into(),
+        strings: [("media-type.test-glossy".to_string(), "Old Name".to_string())].into(),
+        firmware: Some("0.900".into()),
+    };
+    cache.store_strings(&old, washi_core::unix_now() - 60).unwrap();
+
+    // Before the printer has been read its firmware is not known: the copy is good.
+    fake.clear_log();
+    r.svc.get_printer_strings(&r.host, "en").await.unwrap();
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert!(fake.log().is_empty(), "{:?}", fake.log());
+
+    let snap = r.svc.get_snapshot("").await.unwrap();
+    assert_eq!(snap.device.as_ref().unwrap().firmware, "1.060");
+    let first = parse(&r.svc.get_printer_strings(&r.host, "en").await.unwrap());
+    assert_eq!(first["media-type.test-glossy"], "Old Name");
+    eventually(|| cache.strings("en").is_some_and(|c| c.firmware.as_deref() == Some("1.060")))
+        .await;
+    let next = parse(&r.svc.get_printer_strings(&r.host, "en").await.unwrap());
+    assert_eq!(next["media-type.test-glossy"], "Test Glossy Paper");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn an_unreachable_printer_is_not_asked_again_for_a_minute_but_a_kept_copy_still_answers() {
+    let fake = fake_with_words();
+    fake.set_ipp_down(true);
+    let r = rig(&fake, true, Duration::from_secs(60));
+    let e = r.svc.get_printer_strings(&r.host, "en").await.unwrap_err();
+    assert!(matches!(e, ServiceError::Printer(_)), "{e}");
+    let connections = fake.ipp_connections();
+    let e = r.svc.get_printer_strings(&r.host, "en").await.unwrap_err();
+    assert!(matches!(e, ServiceError::Printer(_)), "{e}");
+    assert_eq!(fake.ipp_connections(), connections, "no second try within a minute");
+    assert!(e.message(Language::Ja).contains("プリンター"));
+    // The picture has its own account of failures.
+    assert!(r.svc.get_printer_icon(&r.host).await.is_err());
+
+    // With a copy kept from an earlier run the printer being away does not matter.
+    let kept = washi_core::FetchedStrings {
+        language: "ja".into(),
+        strings: [("media-type.test-glossy".to_string(), "kept".to_string())].into(),
+        firmware: None,
+    };
+    words_cache(&r, &fake).store_strings(&kept, washi_core::unix_now()).unwrap();
+    let ja = parse(&r.svc.get_printer_strings(&r.host, "ja").await.unwrap());
+    assert_eq!(ja["media-type.test-glossy"], "kept");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_printers_picture_is_kept_as_a_file_even_when_read_only() {
+    let fake = FakePrinter::start();
+    fake.set_icons(vec![
+        ("printer_icon.png".into(), picture_png()),
+        ("printer_icon_large.png".into(), picture_png()),
+    ]);
+    let r = rig(&fake, true, Duration::from_secs(60));
+    let path = r.svc.get_printer_icon(&r.host).await.unwrap();
+    assert!(path.starts_with(r.dir.path().join("cache").to_str().unwrap()), "{path}");
+    assert!(path.ends_with("-icon.png") && !path.contains("127.0.0.1"), "{path}");
+    let bytes = std::fs::read(&path).unwrap();
+    let (w, h) = washi_core::net::web::png_size(&bytes).unwrap();
+    // 256 x 256 with a 216 x 128 picture in it, cut with a border of 5 pixels.
+    assert_eq!((w, h), (226, 138));
+    assert!(fake.writes().is_empty());
+
+    fake.clear_log();
+    assert_eq!(r.svc.get_printer_icon("").await.unwrap(), path);
+    assert!(fake.log().is_empty(), "kept: {:?}", fake.log());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_printer_without_a_picture_answers_with_an_empty_path_and_is_not_asked_again() {
+    let fake = FakePrinter::start();
+    let r = rig(&fake, true, Duration::from_secs(60));
+    assert_eq!(r.svc.get_printer_icon(&r.host).await.unwrap(), "");
+    fake.clear_log();
+    assert_eq!(r.svc.get_printer_icon(&r.host).await.unwrap(), "");
+    assert!(fake.log().is_empty(), "{:?}", fake.log());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn reading_the_words_waits_for_nothing_while_a_job_runs() {
+    let fake = fake_with_words();
+    let r = rig(&fake, false, Duration::from_secs(60));
+    fake.set_job_polls(40);
+    let job =
+        r.svc.run_maintenance(&r.host, r#"{"confirm": true, "op": "nozzle_check"}"#).await.unwrap();
+    let t = std::time::Instant::now();
+    let e = r.svc.get_printer_strings(&r.host, "en").await.unwrap_err();
+    assert!(matches!(e, ServiceError::Busy(_)), "{e}");
+    assert!(t.elapsed() < Duration::from_secs(2));
+    r.svc.cancel_job(&job);
 }

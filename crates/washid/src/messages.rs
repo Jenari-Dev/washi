@@ -557,6 +557,13 @@ pub fn busy_maintenance() -> Text {
     Text::new("a maintenance job is running", "メンテナンスを実行中です。")
 }
 
+pub fn words_unavailable() -> Text {
+    Text::new(
+        "the printer's own names and picture could not be read a moment ago; trying again shortly",
+        "プリンター自身の名称と画像を先ほど読み取れませんでした。しばらくしてからもう一度試します。",
+    )
+}
+
 pub fn busy_printer() -> Text {
     Text::new("the printer is busy", "プリンターが他の処理を実行中です。")
 }
@@ -646,6 +653,12 @@ fn headline_ja(e: &Error) -> String {
         }
         Error::Net(NetError::Ipp(other)) => {
             format!("プリンターから想定外の応答がありました（{other}）")
+        }
+        Error::Net(NetError::Strings(m)) => {
+            format!("プリンターの名称ファイルを解釈できませんでした（{m}）")
+        }
+        Error::Net(NetError::Icon(m)) => {
+            format!("プリンターの画像を利用できませんでした（{m}）")
         }
         Error::Net(NetError::Escl(EsclError::Busy)) => "スキャナーが使用中です".into(),
         Error::Net(NetError::Escl(EsclError::JobRejected { status, .. })) => {

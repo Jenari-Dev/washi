@@ -203,6 +203,26 @@ impl Washi {
         self.svc.get_web_links(&host, &code).await.map_err(|e| self.err(e))
     }
 
+    /// The printer's own display names for its keywords in a language (`en`, `ja`, ...), as a
+    /// JSON object `{"media-type.<keyword>": "Name", ...}` (`{}` when the printer has none in
+    /// that language). They come from the printer itself (IPP `printer-strings-uri`, read-only)
+    /// and are kept in `~/.cache/washi`; a kept copy is answered at once and read again in the
+    /// background after 30 days or a firmware change. Allowed in read-only mode.
+    async fn get_printer_strings(
+        &self,
+        host: String,
+        language: String,
+    ) -> Result<String, DbusError> {
+        self.svc.get_printer_strings(&host, &language).await.map_err(|e| self.err(e))
+    }
+
+    /// The path of a picture of the printer (PNG; IPP `printer-icons`, read-only), kept in
+    /// `~/.cache/washi`; `""` when the printer offers none. Refreshed like `GetPrinterStrings`.
+    /// Allowed in read-only mode.
+    async fn get_printer_icon(&self, host: String) -> Result<String, DbusError> {
+        self.svc.get_printer_icon(&host).await.map_err(|e| self.err(e))
+    }
+
     /// Update the printer's firmware (IVEC `VendorCmd UpdateFRom`, **unverified** on real
     /// printers) and follow it until the printer has restarted. WRITES: `options_json` must be
     /// `{"confirm": true}`, the daemon must not be read-only, and the printer must say an
