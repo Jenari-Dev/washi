@@ -97,6 +97,17 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.1" date="2026-10-14">
+      <description>
+        <p>The Wake button works.</p>
+        <p xml:lang="ja">「プリンターを起こす」ボタンが動くようになりました。</p>
+        <ul>
+          <li>Waking a printer in auto power-off now sends the power-on mode the printer expects, and Washi waits until the printer is awake</li>
+          <li xml:lang="ja">自動電源オフのプリンターを起こすときに、プリンターが求める電源オンのモードを送るようにし、起動するまで見届けます</li>
+        </ul>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.0" date="2026-10-14">
       <description>
         <p>First public release.</p>

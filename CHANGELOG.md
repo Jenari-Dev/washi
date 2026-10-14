@@ -4,6 +4,23 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-10-14
+
+### Fixed
+- **Wake works**: `PowerOn` now sends the power-on mode the printer expects
+  (`<ivec:poweronmode>ModeA</ivec:poweronmode>`). Without it the XK140 answered `NG ParameterError`
+  and stayed asleep. Verified on a PIXUS XK140 (firmware 1.060): the printer comes out of auto
+  power-off.
+
+### Changed
+- `washi power on --confirm` looks at the print status for up to ten seconds and says
+  `Printer woke up` as soon as it stops saying `Suspended`.
+- The service's `Wake` call waits for that follow-up status (up to about eight seconds) and
+  reports `verified: true` when the printer is awake. The Wake button and the documentation no
+  longer call the command untried; wake moves to "verified on the printer" in the README.
+- The fake printer answers `NG ParameterError` to a `PowerOn` without the power-on mode, like the
+  real one, so the tests would have caught the bug.
+
 ## [0.1.0] - 2026-10-14
 
 First public release. Verified on a PIXUS XK140 (firmware 1.060); see the hardware table in the
@@ -55,4 +72,5 @@ photo and borderless printing, disc printing, colour and multi-page scans. Rolle
 cleaning exist for models that list them (the XK140 does not). The README has the full table.
 Please report what you try, with the model and firmware.
 
+[0.1.1]: https://github.com/Jenari-Dev/washi/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Jenari-Dev/washi/releases/tag/v0.1.0

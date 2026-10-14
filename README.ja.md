@@ -64,11 +64,11 @@ Washi は、Canon 製インクジェットプリンターを Linux から扱う�
 
 ### Arch Linux
 
-[最新リリース](https://github.com/Jenari-Dev/washi/releases/latest)から `washi-0.1.0-1-x86_64.pkg.tar.zst` を
+[最新リリース](https://github.com/Jenari-Dev/washi/releases/latest)から `washi-0.1.1-1-x86_64.pkg.tar.zst` を
 ダウンロードして、次のようにインストールします。
 
 ```
-sudo pacman -U washi-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U washi-0.1.1-1-x86_64.pkg.tar.zst
 ```
 
 このリポジトリの PKGBUILD から自分でパッケージを作ることもできます。
@@ -84,12 +84,12 @@ makepkg -si
 
 ### Flatpak
 
-[最新リリース](https://github.com/Jenari-Dev/washi/releases/latest)から `Washi-0.1.0-x86_64.flatpak` を
+[最新リリース](https://github.com/Jenari-Dev/washi/releases/latest)から `Washi-0.1.1-x86_64.flatpak` を
 ダウンロードします。実行には Flathub の KDE 6.11 ランタイムが必要です。
 
 ```
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user Washi-0.1.0-x86_64.flatpak
+flatpak install --user Washi-0.1.1-x86_64.flatpak
 flatpak run io.github.Jenari_Dev.Washi
 ```
 

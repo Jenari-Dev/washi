@@ -1463,7 +1463,7 @@ checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
 
 [[package]]
 name = "washi"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1482,7 +1482,7 @@ dependencies = [
 
 [[package]]
 name = "washi-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ab_glyph",
  "dirs",
@@ -1501,7 +1501,7 @@ dependencies = [
 
 [[package]]
 name = "washi-fake"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "image",
  "washi-net",
@@ -1509,7 +1509,7 @@ dependencies = [
 
 [[package]]
 name = "washi-gui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cxx",
  "cxx-qt",
@@ -1528,7 +1528,7 @@ dependencies = [
 
 [[package]]
 name = "washi-ivec"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quick-xml",
  "serde",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "washi-net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "mdns-sd",
  "serde",
@@ -1548,7 +1548,7 @@ dependencies = [
 
 [[package]]
 name = "washid"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",

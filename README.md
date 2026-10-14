@@ -66,11 +66,11 @@ with; they use ink and paper.
 
 ### Arch Linux
 
-Download `washi-0.1.0-1-x86_64.pkg.tar.zst` from the
+Download `washi-0.1.1-1-x86_64.pkg.tar.zst` from the
 [latest release](https://github.com/Jenari-Dev/washi/releases/latest) and install it:
 
 ```
-sudo pacman -U washi-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U washi-0.1.1-1-x86_64.pkg.tar.zst
 ```
 
 or build the package yourself from the PKGBUILD in this repository:
@@ -86,13 +86,13 @@ Details and the optional dependencies (OCR, Office files, PDF preview) are in
 
 ### Flatpak
 
-Download `Washi-0.1.0-x86_64.flatpak` from the
+Download `Washi-0.1.1-x86_64.flatpak` from the
 [latest release](https://github.com/Jenari-Dev/washi/releases/latest). It needs the KDE 6.11 runtime
 from Flathub:
 
 ```
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user Washi-0.1.0-x86_64.flatpak
+flatpak install --user Washi-0.1.1-x86_64.flatpak
 flatpak run io.github.Jenari_Dev.Washi
 ```
 

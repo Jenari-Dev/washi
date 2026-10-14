@@ -1,6 +1,6 @@
 name: Release
 
-# Runs when a tag such as v0.1.0 is pushed: builds the Arch package and the Flatpak bundle and
+# Runs when a tag such as v0.1.1 is pushed: builds the Arch package and the Flatpak bundle and
 # publishes a GitHub release with both.
 on:
   push:
