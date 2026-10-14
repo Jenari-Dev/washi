@@ -120,6 +120,24 @@ Item {
             compare(m.orientation, "auto");
         }
 
+        function test_page_order_reverses_the_sheets_not_the_sides_of_a_sheet() {
+            // The same numbers as washi_core::print::document::side_order, without the blank back.
+            compare(PrintModel.sheetOrder(4, false, false).join(","), "0,1,2,3");
+            compare(PrintModel.sheetOrder(4, false, true).join(","), "3,2,1,0");
+            compare(PrintModel.sheetOrder(4, true, false).join(","), "0,1,2,3");
+            compare(PrintModel.sheetOrder(4, true, true).join(","), "2,3,0,1", "two-sided: sheets turn round, front before back");
+            compare(PrintModel.sheetOrder(5, true, true).join(","), "4,2,3,0,1", "the lone last page first, its back blank");
+            compare(PrintModel.sheetOrder(1, true, true).join(","), "0");
+            compare(PrintModel.sheetOrder(0, true, true).length, 0);
+            compare(PrintModel.pageOrderOptions().map(o => o.value).join(","), "normal,reverse");
+            // Only a reversed order is sent; the service's default is normal.
+            const o = PrintModel.buildOptions({ size: "a4", mediaType: "stationery", pageOrder: "reverse", duplex: "long" });
+            compare(o.page_order, "reverse");
+            verify(!("page_order" in PrintModel.buildOptions({ size: "a4", mediaType: "stationery", pageOrder: "normal" })));
+            verify(!("page_order" in PrintModel.buildOptions({ size: "a4", mediaType: "stationery" })));
+            verify(PrintModel.describe({ size: "a4", mediaType: "stationery", copies: 1, color: true, pageOrder: "reverse" }, "x.pdf").indexOf("last page first") > 0);
+        }
+
         function test_source_names() {
             compare(PrintModel.sourceKey("cassette"), "main");
             compare(PrintModel.sourceKey("rear"), "rear");

@@ -228,6 +228,34 @@ QtObject {
         ];
     }
 
+    function pageOrderOptions() {
+        return [
+            { value: "normal", text: i18n("Normal") },
+            { value: "reverse", text: i18n("Reverse") }
+        ];
+    }
+
+    // Which sheet side (a group of `layout` pages: one chunk) is printed in each place, as chunk
+    // numbers from 0; the blank back of a last two-sided sheet is left out. Mirrors
+    // washi_core::print::document::side_order: Reverse turns the *sheets* round, so a two-sided
+    // sheet keeps its front before its back and its two pages together: 5 chunks two-sided come
+    // out 4, 2, 3, 0, 1 (4 with a blank back, then 2 and 3, then 0 and 1).
+    function sheetOrder(chunks, duplex, reverse) {
+        const per = duplex ? 2 : 1;
+        const sheets = Math.ceil(chunks / per);
+        const out = [];
+        for (let k = 0; k < sheets; k++) {
+            const sheet = reverse ? sheets - 1 - k : k;
+            for (let j = 0; j < per; j++) {
+                const i = sheet * per + j;
+                if (i < chunks) {
+                    out.push(i);
+                }
+            }
+        }
+        return out;
+    }
+
     // ---- files ---------------------------------------------------------------------------------
     function extension(path) {
         const m = /\.([A-Za-z0-9]+)$/.exec(String(path));
@@ -307,7 +335,7 @@ QtObject {
 
     // ---- the options the service takes ---------------------------------------------------------------
     // s: {size, mediaType, source, borderless, quality, color, copies, pagesText (documents:
-    // "" = all), layout, duplex, orientation, jobName}. Everything optional falls back to the
+    // "" = all), layout, duplex, pageOrder, orientation, jobName}. Everything optional falls back to the
     // service's defaults.
     function buildOptions(s) {
         const o = {
@@ -329,6 +357,9 @@ QtObject {
         if (s.duplex) {
             o.duplex = s.duplex;
         }
+        if (s.pageOrder === "reverse") {
+            o.page_order = "reverse";
+        }
         if (s.jobName) {
             o.job_name = s.jobName;
         }
@@ -343,7 +374,8 @@ QtObject {
             s.borderless && (s.layout || 1) === 1 ? i18n("borderless") : "",
             !s.color ? i18n("black and white") : "",
             (s.layout || 1) > 1 ? i18n("%1 per sheet", s.layout) : "",
-            s.duplex ? i18n("two-sided") : ""
+            s.duplex ? i18n("two-sided") : "",
+            s.pageOrder === "reverse" ? i18n("last page first") : ""
         ]);
     }
 

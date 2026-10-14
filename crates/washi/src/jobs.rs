@@ -30,7 +30,7 @@ use washi_core::{Config, Confirm, Printer, Tools};
 
 use crate::cli::{
     Cli, CorrectArg, DiscArgs, DiscMediaArg, DuplexArg, FitArg, FormatArg, IdentifyArg, KindArg,
-    ModeArg, OrientationArg, PrintArgs, QualityArg, ScanArgs, SourceArg, StitchArg,
+    ModeArg, OrientationArg, PageOrderArg, PrintArgs, QualityArg, ScanArgs, SourceArg, StitchArg,
 };
 use crate::commands::{connect, print_json};
 use crate::render::fmt_duration;
@@ -422,6 +422,10 @@ fn print_options(a: &PrintArgs) -> Result<PrintOptions> {
             OrientationArg::Auto => print::Orientation::Auto,
             OrientationArg::Portrait => print::Orientation::Portrait,
             OrientationArg::Landscape => print::Orientation::Landscape,
+        },
+        page_order: match a.page_order {
+            PageOrderArg::Normal => print::PageOrder::Normal,
+            PageOrderArg::Reverse => print::PageOrder::Reverse,
         },
         job_name: a.name.clone(),
     })

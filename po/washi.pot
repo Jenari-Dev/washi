@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:47+0900\n"
+"POT-Creation-Date: 2026-10-14 12:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1711,6 +1711,14 @@ msgid "Short-edge binding"
 msgstr ""
 
 #, no-javascript-format
+msgid "Normal"
+msgstr ""
+
+#, no-javascript-format
+msgid "Reverse"
+msgstr ""
+
+#, no-javascript-format
 msgid "Pictures (*.jpg *.jpeg *.png *.bmp)"
 msgstr ""
 
@@ -1766,6 +1774,10 @@ msgstr ""
 
 #, no-javascript-format
 msgid "two-sided"
+msgstr ""
+
+#, no-javascript-format
+msgid "last page first"
 msgstr ""
 
 #, no-javascript-format
@@ -1930,6 +1942,10 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Two-sided Printing"
+msgstr ""
+
+#, no-javascript-format
+msgid "Page Order"
 msgstr ""
 
 #, no-javascript-format

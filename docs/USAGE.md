@@ -129,6 +129,7 @@ washi print FILE... [--size a4] [--media-type plain|photo|glossy|...|com.canon-*
             [--source auto|rear|cassette] [--borderless] [--quality draft|normal|high]
             [--color|--mono] [--copies N] [--pages 1-3,5] [--layout 1|2|4|6|9|16]
             [--duplex long|short] [--orientation auto|portrait|landscape]
+            [--page-order normal|reverse]
             [--name NAME] [--no-check] [--no-wait]
 
 washi disc [--image IMG] [--text TEXT]... [--inner 22] [--outer 116] [--media-type a|b]

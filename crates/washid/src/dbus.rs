@@ -151,7 +151,7 @@ impl Washi {
     /// so `options_json` must contain `"confirm": true`. Keys (all optional): `size`,
     /// `media_type`, `source` (auto, rear, cassette), `borderless`, `quality` (draft, normal,
     /// high), `color`, `copies`, `pages` ("1-3,5"), `layout` (1, 2, 4, 6, 9, 16), `duplex`
-    /// (long, short), `orientation` (auto, portrait, landscape), `job_name`. Progress arrives as `PrintProgress`, the end as
+    /// (long, short), `orientation` (auto, portrait, landscape), `page_order` (normal, reverse), `job_name`. Progress arrives as `PrintProgress`, the end as
     /// `PrintFinished`.
     async fn print_file(
         &self,

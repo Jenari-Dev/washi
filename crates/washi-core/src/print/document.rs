@@ -387,6 +387,8 @@ pub struct RasterSpec<'a> {
     /// `Auto` turns pages to suit their cell; `Portrait` / `Landscape` do not, and a landscape
     /// sheet is composed sideways and turned a quarter clockwise onto the paper.
     pub orientation: Orientation,
+    /// Page Order "Reverse": the last sheet comes out first (see [`side_order`]).
+    pub reverse: bool,
 }
 
 /// What was written.
@@ -409,6 +411,28 @@ pub fn count_sides(pages: usize, layout: u8, duplex: bool) -> (u32, u32) {
         sheets = sides;
     }
     (sides, sheets)
+}
+
+/// Which chunk of pages (one chunk = what one sheet side carries, `layout` pages) each side of
+/// the output holds, in printing order; `None` is the blank back of a duplex sheet that has no
+/// second chunk.
+///
+/// Reversing turns round the *sheets*, not the sides: a duplex sheet keeps its front before its
+/// back, and a sheet keeps the pages it carries in their order. So 5 pages two-sided come out as
+/// `[Some(4), None, Some(2), Some(3), Some(0), Some(1)]`: the sheet with the odd page and a blank
+/// back first, and pages 3 and 4 still on the same sheet as 1 and 2 were. A plain reversal of the
+/// chunk list would have put page 4 on the front of a sheet and page 3 on its back.
+pub fn side_order(chunks: usize, duplex: bool, reverse: bool) -> Vec<Option<usize>> {
+    let per_sheet = if duplex { 2 } else { 1 };
+    let sheets = chunks.div_ceil(per_sheet);
+    let order: Vec<usize> =
+        if reverse { (0..sheets).rev().collect() } else { (0..sheets).collect() };
+    order
+        .into_iter()
+        .flat_map(|sheet| {
+            (0..per_sheet).map(move |j| Some(sheet * per_sheet + j).filter(|i| *i < chunks))
+        })
+        .collect()
 }
 
 /// Render the selected pages and write a PWG raster stream.
@@ -447,13 +471,15 @@ pub fn rasterize<W: Write>(
 
     let mut writer = PwgWriter::new(out);
     let chunks: Vec<&[u32]> = spec.pages.chunks(usize::from(layout)).collect();
+    let order = side_order(chunks.len(), duplex, spec.reverse);
+    debug_assert_eq!(order.len() as u32, total_sides);
     for side in 0..total_sides {
         if cancelled() {
             return Err(Error::Cancelled);
         }
         progress(side, total_sides);
         let mut canvas = Canvas::white(sheet_w, sheet_h, spec.mono);
-        if let Some(chunk) = chunks.get(side as usize) {
+        if let Some(chunk) = order.get(side as usize).copied().flatten().map(|i| &chunks[i]) {
             for (page, cell) in chunk.iter().zip(&cells) {
                 let (pw_pt, ph_pt) = spec.info.size_of(*page);
                 let (pw, ph) =
@@ -651,6 +677,7 @@ mod tests {
             quality: 4,
             dpi: 100, // small sheets keep the test quick: A5 = 583 x 827 px
             orientation: Orientation::Auto,
+            reverse: false,
         }
     }
 
@@ -734,6 +761,102 @@ mod tests {
         let pages = pwg::decode(&out).unwrap();
         assert!(pages[1].header.tumble);
         assert_eq!((pages[1].header.cross_feed_transform, pages[1].header.feed_transform), (1, 1));
+    }
+
+    #[test]
+    fn reversing_turns_the_sheets_round_and_keeps_the_sides_of_a_sheet_together() {
+        let some = |v: &[usize]| v.iter().map(|i| Some(*i)).collect::<Vec<_>>();
+        // One-sided: the sheets simply run backwards.
+        assert_eq!(side_order(4, false, false), some(&[0, 1, 2, 3]));
+        assert_eq!(side_order(4, false, true), some(&[3, 2, 1, 0]));
+        // Two-sided, an even count: sheet 2 (chunks 2 and 3) first, but its front is still
+        // chunk 2 and its back chunk 3. A plain reversal would give 3, 2, 1, 0.
+        assert_eq!(side_order(4, true, false), some(&[0, 1, 2, 3]));
+        assert_eq!(side_order(4, true, true), some(&[2, 3, 0, 1]));
+        // An odd count: the last sheet carries one chunk and a blank back, and comes out first.
+        assert_eq!(
+            side_order(5, true, false),
+            vec![Some(0), Some(1), Some(2), Some(3), Some(4), None]
+        );
+        assert_eq!(
+            side_order(5, true, true),
+            vec![Some(4), None, Some(2), Some(3), Some(0), Some(1)]
+        );
+        // The number of sides is what `count_sides` says, reversed or not.
+        for chunks in 1..12usize {
+            for duplex in [false, true] {
+                for reverse in [false, true] {
+                    let o = side_order(chunks, duplex, reverse);
+                    assert_eq!(
+                        o.len() as u32,
+                        count_sides(chunks, 1, duplex).0,
+                        "{chunks} {duplex}"
+                    );
+                    let mut seen: Vec<usize> = o.iter().flatten().copied().collect();
+                    seen.sort_unstable();
+                    assert_eq!(seen, (0..chunks).collect::<Vec<_>>(), "every chunk exactly once");
+                }
+            }
+        }
+        assert!(side_order(0, true, true).is_empty());
+    }
+
+    /// The centre pixel (red channel) of every raster page of a stream.
+    fn centres(out: &[u8], w: usize, h: usize) -> Vec<u8> {
+        pwg::decode(out)
+            .unwrap()
+            .iter()
+            .map(|p| {
+                assert_eq!((p.header.width as usize, p.header.height as usize), (w, h));
+                p.pixels[(h / 2 * w + w / 2) * 3]
+            })
+            .collect()
+    }
+
+    #[test]
+    fn page_order_reverse_prints_the_last_sheet_first() {
+        let dir = tempfile::tempdir().unwrap();
+        let tools = fake_poppler(dir.path());
+        let info = pdf_info(&tools, Path::new("x.pdf")).unwrap();
+        let run = |pages: &[u32], layout: u8, sides: Sides, reverse: bool| {
+            let mut s = spec(&info, pages, layout, sides);
+            s.reverse = reverse;
+            let mut out = Vec::new();
+            let stats = rasterize(&tools, &s, &mut out, &mut |_, _| {}, &|| false).unwrap();
+            (out, stats)
+        };
+        // One-sided, one page per sheet: page 3 (R = 120), 2 (80), 1 (40).
+        let (out, stats) = run(&[1, 2, 3], 1, Sides::OneSided, true);
+        assert_eq!(stats, RasterStats { sides: 3, sheets: 3 });
+        assert_eq!(centres(&out, 583, 827), [120, 80, 40]);
+        let (out, _) = run(&[1, 2, 3], 1, Sides::OneSided, false);
+        assert_eq!(centres(&out, 583, 827), [40, 80, 120], "normal order is untouched");
+
+        // Two-sided, 3 pages: sheet 2 (page 3 and a blank back) first, then sheet 1 (pages 1
+        // front, 2 back). Not 3, 2, 1 with 3 and 2 sharing a sheet.
+        let (out, stats) = run(&[1, 2, 3], 1, Sides::TwoSidedLongEdge, true);
+        assert_eq!(stats, RasterStats { sides: 4, sheets: 2 });
+        assert_eq!(centres(&out, 583, 827), [120, 255, 40, 80]);
+        let pages = pwg::decode(&out).unwrap();
+        let duplex_flags: Vec<(bool, i32)> =
+            pages.iter().map(|p| (p.header.duplex, p.header.cross_feed_transform)).collect();
+        // The backs are still the odd-numbered sides of the stream, and carry the back turn.
+        assert_eq!(duplex_flags, [(true, 1), (true, -1), (true, 1), (true, -1)]);
+
+        // Two pages per sheet: pages 1 and 2 on sheet 1, page 3 alone on sheet 2, which now
+        // comes first; the pages keep their cells (top, bottom) within a sheet.
+        let (out, stats) = run(&[1, 2, 3], 2, Sides::OneSided, true);
+        assert_eq!(stats, RasterStats { sides: 2, sheets: 2 });
+        let pages = pwg::decode(&out).unwrap();
+        let at = |p: usize, y: usize| pages[p].pixels[(y * 583 + 291) * 3];
+        assert_eq!((at(0, 200), at(0, 620)), (120, 255), "page 3 on top, the bottom cell empty");
+        assert_eq!((at(1, 200), at(1, 620)), (40, 80), "pages 1 and 2 in their order");
+
+        // Both: 3 pages, 2-up, two-sided: 2 sides of content = one duplex sheet; reversing a
+        // single sheet changes nothing.
+        let (out, _) = run(&[1, 2, 3], 2, Sides::TwoSidedLongEdge, true);
+        let (plain, _) = run(&[1, 2, 3], 2, Sides::TwoSidedLongEdge, false);
+        assert_eq!(out, plain);
     }
 
     #[test]

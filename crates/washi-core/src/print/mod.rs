@@ -106,6 +106,36 @@ impl Orientation {
     }
 }
 
+/// "Page Order" of Document Print: which sheet comes out of the printer first.
+///
+/// * `Normal`: the first sheet first.
+/// * `Reverse`: the last sheet first, so that a printer that stacks the sheets face up delivers
+///   them in reading order. Pages keep their place on a sheet (n-up), and the two sides of a
+///   duplex sheet stay together: it is the *sheets* that are turned round, never the pages
+///   within one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum PageOrder {
+    #[default]
+    Normal,
+    Reverse,
+}
+
+impl PageOrder {
+    pub fn parse(s: &str) -> Result<PageOrder> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "" | "normal" | "forward" => Ok(PageOrder::Normal),
+            "reverse" | "reversed" => Ok(PageOrder::Reverse),
+            other => {
+                Err(Error::Invalid(format!("page order must be normal or reverse, got {other:?}")))
+            }
+        }
+    }
+
+    pub fn is_reverse(self) -> bool {
+        self == PageOrder::Reverse
+    }
+}
+
 pub fn parse_quality(s: &str) -> Result<Quality> {
     match s.trim().to_ascii_lowercase().as_str() {
         "draft" | "fast" => Ok(Quality::Draft),
@@ -193,6 +223,8 @@ pub struct PrintOptions {
     /// Documents only.
     pub duplex: Option<Duplex>,
     pub orientation: Orientation,
+    /// Documents only.
+    pub page_order: PageOrder,
     pub job_name: Option<String>,
 }
 
@@ -210,6 +242,7 @@ impl Default for PrintOptions {
             layout: 1,
             duplex: None,
             orientation: Orientation::Auto,
+            page_order: PageOrder::Normal,
             job_name: None,
         }
     }
@@ -239,6 +272,8 @@ pub struct PrintSpec {
     pub duplex: Option<String>,
     /// `auto` (default), `portrait` or `landscape`.
     pub orientation: Option<String>,
+    /// `normal` (default) or `reverse`: the last sheet first (documents).
+    pub page_order: Option<String>,
     pub job_name: Option<String>,
 }
 
@@ -274,6 +309,9 @@ impl PrintSpec {
         }
         if let Some(v) = &self.orientation {
             o.orientation = Orientation::parse(v)?;
+        }
+        if let Some(v) = &self.page_order {
+            o.page_order = PageOrder::parse(v)?;
         }
         o.job_name = self.job_name.clone();
         Ok(o)
@@ -481,6 +519,11 @@ pub fn plan_print(
                         "two-sided printing is for documents, not photos".into(),
                     ));
                 }
+                if opts.page_order.is_reverse() {
+                    return Err(Error::Invalid(
+                        "the page order is for documents, not photos".into(),
+                    ));
+                }
                 photos.push(f.clone());
             }
             kind @ (FileKind::Pdf | FileKind::Office) => {
@@ -517,11 +560,12 @@ pub fn plan_print(
                         input_pages = Some(pages.len() as u32);
                         sheets = Some(s);
                         notes.push(format!(
-                            "{} of {} page(s) -> {} sheet(s){}",
+                            "{} of {} page(s) -> {} sheet(s){}{}",
                             pages.len(),
                             info.pages,
                             s,
-                            if opts.duplex.is_some() { ", two-sided" } else { "" }
+                            if opts.duplex.is_some() { ", two-sided" } else { "" },
+                            if opts.page_order.is_reverse() { ", last sheet first" } else { "" }
                         ));
                         source = JobSource::Pdf { path: f.clone(), pages: Some(pages) };
                     }
@@ -1002,6 +1046,7 @@ fn rasterize_pdf(
         quality: job.quality.enum_value() as u32,
         dpi: 600,
         orientation: opts.orientation,
+        reverse: opts.page_order.is_reverse(),
     };
     let file = spool_file()?;
     let mut writer = BufWriter::with_capacity(

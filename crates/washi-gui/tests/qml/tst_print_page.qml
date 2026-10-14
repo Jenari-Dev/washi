@@ -313,6 +313,55 @@ Item {
             tryVerify(() => p.sheetPath === "/tmp/fake-sheet.png");
         }
 
+        function test_document_page_order_is_offered_sent_and_shown_in_the_preview() {
+            boot(false);
+            loader.sourceComponent = docComp;
+            tryVerify(() => loader.item !== null);
+            tryVerify(() => Store.printCaps !== null);
+            const p = loader.item;
+            verify(findChild(p, "pageOrderRow").visible);
+            const combo = findChild(p, "pageOrderCombo");
+            compare(combo.count, 2);
+            compare(p.pageOrder, "normal");
+            verify(!("page_order" in PrintModel.buildOptions(p.settingsObject())));
+            combo.currentIndex = 1;
+            combo.activated(1);
+            compare(p.pageOrder, "reverse");
+            compare(combo.currentValue, "reverse");
+            compare(PrintModel.buildOptions(p.settingsObject()).page_order, "reverse");
+            // The preview walks the sheets in the order they are printed (the pages are known from
+            // the range here: there is no document to read).
+            p.allPages = false;
+            p.pagesText = "1-5";
+            compare(p.sheetCount, 5);
+            compare(p.sheetOrder.join(","), "4,3,2,1,0");
+            p.layout = 2;
+            compare(p.sheetOrder.join(","), "2,1,0", "pages keep their place on a sheet; the sheets turn round");
+            p.layout = 1;
+            p.duplex = "long";
+            compare(p.sheetOrder.join(","), "4,2,3,0,1", "a two-sided sheet keeps its front and back");
+            p.pageOrder = "normal";
+            compare(p.sheetOrder.join(","), "0,1,2,3,4");
+            p.pageOrder = "reverse";
+            // It goes to the service when printing; the confirmation sentence says so.
+            p.files = ["/d/doc.pdf"];
+            tryVerify(() => p.canPrint);
+            verify(PrintModel.describe(p.settingsObject(), "doc.pdf").indexOf("last page first") > 0);
+            p.startPrinting();
+            tryVerify(() => printCalls().length === 1);
+            const o = JSON.parse(printCalls()[0].args[2]);
+            compare(o.page_order, "reverse");
+            compare(o.duplex, "long");
+            loader.sourceComponent = null;
+        }
+
+        function test_photos_have_no_page_order() {
+            const p = photoPage(["/p/beach.jpg"]);
+            verify(!findChild(p, "pageOrderRow").visible);
+            p.pageOrder = "reverse";
+            verify(!("page_order" in PrintModel.buildOptions(p.settingsObject())), "never sent for photos");
+        }
+
         function test_document_page_options() {
             boot(false);
             loader.sourceComponent = docComp;

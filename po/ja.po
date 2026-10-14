@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:47+0900\n"
+"POT-Creation-Date: 2026-10-14 12:56+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -1590,6 +1590,14 @@ msgid "Short-edge binding"
 msgstr "短辺とじ"
 
 #, no-javascript-format
+msgid "Normal"
+msgstr "通常"
+
+#, no-javascript-format
+msgid "Reverse"
+msgstr "逆順"
+
+#, no-javascript-format
 msgid "Pictures (*.jpg *.jpeg *.png *.bmp)"
 msgstr "画像 (*.jpg *.jpeg *.png *.bmp)"
 
@@ -1641,6 +1649,10 @@ msgstr "1枚に%1面"
 #, no-javascript-format
 msgid "two-sided"
 msgstr "両面印刷"
+
+#, no-javascript-format
+msgid "last page first"
+msgstr "最後のページから印刷"
 
 #, no-javascript-format
 msgid "Could not read what the printer prints on: %1"
@@ -1804,6 +1816,10 @@ msgstr "印刷品質"
 #, no-javascript-format
 msgid "Two-sided Printing"
 msgstr "両面印刷"
+
+#, no-javascript-format
+msgid "Page Order"
+msgstr "ページの順序"
 
 #, no-javascript-format
 msgid "Black and white"

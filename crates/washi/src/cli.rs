@@ -196,6 +196,12 @@ pub enum DuplexArg {
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PageOrderArg {
+    Normal,
+    Reverse,
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OrientationArg {
     Auto,
     Portrait,
@@ -350,6 +356,10 @@ pub struct PrintArgs {
     /// landscape keep content upright on the sheet used that way.
     #[arg(long, value_enum, default_value = "auto")]
     pub orientation: OrientationArg,
+    /// Page order (documents): normal prints the first sheet first, reverse the last sheet first
+    /// (pages keep their place on a sheet; the two sides of a two-sided sheet stay together).
+    #[arg(long, value_enum, default_value = "normal")]
+    pub page_order: PageOrderArg,
     /// Job name shown on the printer (default: the file name).
     #[arg(long)]
     pub name: Option<String>,

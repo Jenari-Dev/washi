@@ -197,9 +197,11 @@ fn print_dry_run_for_a_pdf_names_the_raster_format_and_the_pages() {
         "cassette",
         "--media-type",
         "plain",
+        "--page-order",
+        "reverse",
     ]);
     assert!(s.contains("document-format (mimeMediaType) = image/pwg-raster"), "{s}");
-    assert!(s.contains("3 of 4 page(s) -> 1 sheet(s), two-sided"), "{s}");
+    assert!(s.contains("3 of 4 page(s) -> 1 sheet(s), two-sided, last sheet first"), "{s}");
     assert!(
         s.contains("sides (keyword) = two-sided-long-edge")
             && s.contains("print-color-mode (keyword) = monochrome"),

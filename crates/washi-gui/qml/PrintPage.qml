@@ -33,6 +33,7 @@ RowLayout {
     property int copies: 1
     property int layout: 1
     property string duplex: ""
+    property string pageOrder: "normal"     // documents: normal | reverse (the last sheet first)
     property bool allPages: true
     property string pagesText: ""
 
@@ -58,6 +59,9 @@ RowLayout {
         }
         return pageCheck.pages;
     }
+    // The sheets as they come out of the printer: the number of the sheet side (a group of
+    // `layout` pages) for each place of the preview; Reverse turns the sheets round.
+    readonly property var sheetOrder: PrintModel.sheetOrder(Math.max(1, Math.ceil(selectedPages.length / layout)), duplex !== "", pageOrder === "reverse")
     readonly property int sheetCount: {
         if (documentMode) {
             return Math.max(1, Math.ceil(selectedPages.length / layout));
@@ -158,8 +162,21 @@ RowLayout {
         if (orient !== "") {
             orientation = orient;
         }
+        if (documentMode && (Store.env("WASHI_PAGE_ORDER") !== "" || Store.env("WASHI_DUPLEX") !== "")) {
+            docOptionsTimer.start();
+        }
         if (Store.env("WASHI_OPEN") === "media") {
             showListTimer.start();
+        }
+    }
+    // Screenshot checks of the document options (WASHI_PAGE_ORDER=reverse, WASHI_DUPLEX=long): set
+    // once the first page is up, the way a person would choose them.
+    Timer {
+        id: docOptionsTimer
+        interval: 1500
+        onTriggered: {
+            page.pageOrder = Store.env("WASHI_PAGE_ORDER") || page.pageOrder;
+            page.duplex = Store.env("WASHI_DUPLEX") || page.duplex;
         }
     }
     // Screenshot checks: WASHI_OPEN=media drops down the list of media types once the page is up.
@@ -280,6 +297,7 @@ RowLayout {
             pagesText: documentMode && !allPages ? pagesText : "",
             layout: layout,
             duplex: documentMode ? duplex : "",
+            pageOrder: documentMode ? pageOrder : "normal",
             orientation: orientation,
             jobName: files.length === 1 ? Img.baseName(files[0]) : ""
         };
@@ -523,7 +541,7 @@ RowLayout {
                     edge: page.edge
                     sheetMm: page.sheetMm
                     pages: page.selectedPages
-                    sheetIndex: Math.min(page.current, page.sheetCount - 1)
+                    sheetIndex: page.sheetOrder[Math.min(page.current, page.sheetOrder.length - 1)]
                     layout: page.layout
                     onFirstLandscapeChanged: if (pageCount > 0) page.orientation = firstLandscape ? "landscape" : "portrait"
                     onPageCountChanged: if (pageCount > 0) page.orientation = firstLandscape ? "landscape" : "portrait"
@@ -817,6 +835,20 @@ RowLayout {
                     model: PrintModel.duplexOptions()
                     selectedValue: page.duplex
                     onActivated: page.duplex = currentValue
+                }
+            }
+            FormRow {
+                objectName: "pageOrderRow"
+                visible: page.documentMode
+                label: i18n("Page Order")
+                WCombo {
+                    objectName: "pageOrderCombo"
+                    Layout.fillWidth: true
+                    textRole: "text"
+                    valueRole: "value"
+                    model: PrintModel.pageOrderOptions()
+                    selectedValue: page.pageOrder
+                    onActivated: page.pageOrder = currentValue
                 }
             }
             FormRow {

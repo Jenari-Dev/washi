@@ -589,6 +589,90 @@ fn documents_through_stand_in_programs_cover_mono_duplex_and_office() {
 }
 
 #[test]
+fn reverse_page_order_sends_the_last_sheet_first_and_keeps_duplex_sides_together() {
+    // A stand-in for poppler whose pages are told apart by colour: page n is 40 * n.
+    let tools_dir = tempfile::tempdir().unwrap();
+    let script = |name: &str, body: &str| {
+        let p = tools_dir.path().join(name);
+        std::fs::write(&p, body).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        p
+    };
+    let pdfinfo = script(
+        "pdfinfo",
+        "#!/bin/sh\necho 'Pages: 3'\nif [ \"$1\" = \"-f\" ]; then for i in 1 2 3; do echo \"Page    $i size:  100 x 140 pts\"; done; fi\n",
+    );
+    let pdftoppm = script(
+        "pdftoppm",
+        "#!/bin/sh\npage=1\nwhile [ $# -gt 0 ]; do case \"$1\" in -f) page=$2; shift;; -gray|-singlefile) ;; -r|-l) shift;; *) last=$1;; esac; shift; done\n\
+         v=$((40 * page))\nprintf 'P6\\n10 14\\n255\\n' > \"$last.ppm\"; head -c 420 /dev/zero | tr '\\0' \"\\\\$(printf '%03o' $v)\" >> \"$last.ppm\"\n",
+    );
+    let tools = Tools { pdfinfo: Some(pdfinfo), pdftoppm: Some(pdftoppm), ..Tools::default() };
+    let fake = FakePrinter::start();
+    let p = printer_for(&fake);
+    let dir = tempfile::tempdir().unwrap();
+    let pdf = dir.path().join("three.pdf");
+    std::fs::write(&pdf, b"%PDF-1.4 x").unwrap();
+
+    let centres = |job: &[u8]| -> Vec<u8> {
+        pwg::decode(job)
+            .unwrap()
+            .iter()
+            .map(|pg| {
+                let (w, h) = (pg.header.width as usize, pg.header.height as usize);
+                pg.pixels[(h / 2 * w + w / 2) * 3]
+            })
+            .collect()
+    };
+    let run = |opts: PrintOptions| {
+        let plan = plan_print(&p, std::slice::from_ref(&pdf), &opts, &tools).unwrap();
+        run_print(&p, &plan, &quick(), &tools, Confirm::explicit(), &mut |_| {}).unwrap();
+        (plan, centres(&fake.printed_jobs().last().unwrap().data))
+    };
+    let base = PrintOptions {
+        paper: *print::PaperSize::parse("card").unwrap(),
+        ..PrintOptions::default()
+    };
+
+    let (_, normal) = run(base.clone());
+    assert_eq!(normal, [40, 80, 120]);
+    let (plan, reversed) =
+        run(PrintOptions { page_order: print::PageOrder::Reverse, ..base.clone() });
+    assert_eq!(reversed, [120, 80, 40]);
+    assert!(
+        plan.jobs[0].notes.iter().any(|n| n.contains("last sheet first")),
+        "{:?}",
+        plan.jobs[0].notes
+    );
+
+    // Two-sided: sheet 2 (page 3, blank back) first; pages 1 and 2 stay front and back of one sheet.
+    let (plan, duplex) = run(PrintOptions {
+        page_order: print::PageOrder::Reverse,
+        duplex: Some(print::Duplex::Long),
+        ..base.clone()
+    });
+    assert_eq!(duplex, [120, 255, 40, 80]);
+    assert_eq!(plan.jobs[0].sheets, Some(2));
+
+    // The JSON the daemon takes, and what is refused.
+    let o =
+        print::PrintSpec::from_json(r#"{"page_order":"reverse"}"#).unwrap().to_options().unwrap();
+    assert!(o.page_order.is_reverse());
+    assert!(
+        print::PrintSpec::from_json(r#"{"page_order":"sideways"}"#).unwrap().to_options().is_err()
+    );
+    let photo = photo_file(dir.path(), "x.png", 100, 100);
+    let e = plan_print(
+        &p,
+        &[photo],
+        &PrintOptions { page_order: print::PageOrder::Reverse, ..PrintOptions::default() },
+        &tools,
+    )
+    .unwrap_err();
+    assert!(e.to_string().contains("page order is for documents"), "{e}");
+}
+
+#[test]
 fn a_combination_the_printer_does_not_list_is_refused_before_printing() {
     let fake = FakePrinter::start();
     let p = printer_for(&fake);
