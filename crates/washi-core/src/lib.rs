@@ -12,6 +12,7 @@ mod error;
 pub mod firmware;
 mod lang;
 pub mod links;
+pub mod localization;
 mod maintenance;
 pub mod pdf;
 mod plan;
@@ -39,6 +40,9 @@ pub use firmware::{
 };
 pub use lang::{Language, LanguageSetting, system_language};
 pub use links::{Link, LinkSource, WebLinks, WebSources};
+pub use localization::{
+    CachedIcon, CachedStrings, FetchedIcon, FetchedStrings, LocalizationCache, MAX_AGE_SECS,
+};
 pub use maintenance::{MaintOp, MaintOptions, MaintReport, Progress};
 pub use plan::{Plan, Step};
 pub use printer::{HostSource, Printer, resolve_host, resolve_ipv4, split_host_port, unix_now};
