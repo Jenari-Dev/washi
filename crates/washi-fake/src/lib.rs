@@ -662,9 +662,14 @@ fn answer(shared: &Shared, op: &str, service: &str, body: &str) -> String {
         }
         ("GetConfiguration", "device") => st.config_xml.clone(),
         ("PowerOn", _) => {
-            // Unverified on a real printer: the fake wakes up and says so.
-            st.asleep = false;
-            reply(op, service, true, "")
+            // Verified on the XK140 (firmware 1.060, 2026-10-14): without the power-on mode the
+            // printer answers `NG ParameterError` and stays as it is; with it, it wakes up.
+            if has_power_on_mode(body) {
+                st.asleep = false;
+                reply(op, service, true, "")
+            } else {
+                reply(op, service, false, "ParameterError")
+            }
         }
         ("VendorCmd", "device") if body.contains(">UpdateFRom<") => {
             if st.firmware.update_available.is_some() {
@@ -686,6 +691,14 @@ fn answer(shared: &Shared, op: &str, service: &str, body: &str) -> String {
         (op, _) if op.starts_with("Get") => reply(op, service, false, "NotSupportService"),
         _ => reply(op, service, true, ""),
     }
+}
+
+/// Does a `PowerOn` body carry a non-empty `<ivec:poweronmode>` element?
+fn has_power_on_mode(body: &str) -> bool {
+    body.split("<ivec:poweronmode>")
+        .nth(1)
+        .and_then(|rest| rest.split("</ivec:poweronmode>").next())
+        .is_some_and(|mode| !mode.trim().is_empty())
 }
 
 /// Finish a firmware restart that has run its course: the new version is in place.
@@ -1397,6 +1410,29 @@ mod tests {
             bk.contains("<ivec:icon>error</ivec:icon>")
                 && bk.contains("<ivec:level>0</ivec:level>")
         );
+    }
+
+    #[test]
+    fn power_on_needs_the_power_on_mode_like_the_real_printer() {
+        let f = FakePrinter::start();
+        f.set_asleep(true);
+        let bare = "<ivec:param_set servicetype=\"device\"></ivec:param_set>";
+        let empty = "<ivec:poweronmode></ivec:poweronmode>";
+        let blank = "<ivec:poweronmode> </ivec:poweronmode>";
+        for body in [bare, empty, blank] {
+            let r = answer(&f.shared, "PowerOn", "device", body);
+            assert!(r.contains("<ivec:response>NG</ivec:response>"), "{body}: {r}");
+            assert!(
+                r.contains("<ivec:response_detail>ParameterError</ivec:response_detail>"),
+                "{r}"
+            );
+            assert!(f.state().asleep, "{body}: a refused PowerOn leaves the printer asleep");
+        }
+        let ok = "<ivec:param_set servicetype=\"device\">\
+                  <ivec:poweronmode>ModeA</ivec:poweronmode></ivec:param_set>";
+        let r = answer(&f.shared, "PowerOn", "device", ok);
+        assert!(r.contains("<ivec:response>OK</ivec:response>"), "{r}");
+        assert!(!f.state().asleep, "PowerOn with the mode wakes the printer");
     }
 
     #[test]
