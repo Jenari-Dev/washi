@@ -4,6 +4,36 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Disc label fonts.** Every text has a font family picker (the installed families, Japanese ones
+  such as Noto Sans CJK JP included) and Bold / Italic switches. The printed image uses the same
+  face as the canvas: fontconfig picks the file for the family, weight and slant (a face of a
+  font collection, a named instance of a variable font), a family without a bold or italic cut is
+  thickened or slanted the way fontconfig says Qt draws it, and letters the font lacks come from
+  another installed font instead of printing as boxes. Saved designs keep `family`, `bold` and
+  `italic` (older designs load as regular, upright text). `washi disc` takes `--font-family`,
+  `--bold` and `--italic`; the `PrintDisc` text takes `family`, `bold` and `italic` (and still
+  `font` for a file).
+- **Scan, Stitch: left and right or top and bottom.** The setup page has a "Join the scans" choice
+  and the Join button of the preview has a menu with the same two entries.
+- **The edge the printer cannot print on** is drawn as a dashed frame on the Photo Print and
+  Document Print previews, from the margins of the printer's own `media-col-database` entry for the
+  chosen tray, paper type and size (turned with the sheet in landscape; borderless shows none). A
+  photo with margins is drawn inside the frame. `GetPrintCapabilities` has a new `margins` map.
+- **Page Order (Normal / Reverse) for Document Print.** Reverse prints the last sheet first. The
+  sheets are turned round, not the pages: pages keep their place on a sheet (n-up), and a two-sided
+  sheet keeps its front before its back (a lone last page comes out first with a blank back). The
+  preview shows the sheets in printing order. `washi print --page-order reverse`, and `page_order`
+  in the `PrintFile` options.
+
+### Changed
+- The disc label request no longer carries a font file chosen by the app: it names the family and
+  the styles, and the service resolves the file (`TextSpec.font` still works for a file).
+- A font collection is opened at the face fontconfig reports. The Japanese cut is preferred for
+  Japanese text in the default font (fontconfig alone ranked the Korean cut of Noto Sans CJK first).
+
 ## [0.1.2] - 2026-10-14
 
 ### Added

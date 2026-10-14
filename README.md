@@ -36,11 +36,12 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
   back afterwards.
 - **Printing.** Photos (JPEG, PNG, BMP) with borderless printing, paper type and tray taken from
   the printer's own list, one to sixteen pictures per sheet; PDF documents (and Office files when
-  LibreOffice is installed) with page ranges and two-sided printing. A preview shows the sheet as it
-  will come out. Files can be dropped onto the page.
+  LibreOffice is installed) with page ranges, two-sided printing and page order. A preview shows the
+  sheet as it will come out, with the edge the printer cannot print on marked. Files can be dropped
+  onto the page.
 - **Scanning.** Documents and photos from the flatbed, several pages in one go, rotate, crop,
   slant correction, colour correction, automatic crop, several photos on one glass, stitching two
-  halves of a large original, PDF or JPEG output, and text recognition when Tesseract is installed.
+  halves of a large original (left and right, or top and bottom), PDF or JPEG output, and text recognition when Tesseract is installed.
 - **Disc labels.** A designer for the printable ring of a disc: picture, texts in any installed
   font family (Japanese ones too) with bold and italic, background colour, text that follows the
   ring, a preview of what is sent to the printer, and printing from the disc tray.
