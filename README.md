@@ -44,6 +44,12 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
 - **Disc labels.** A designer for the printable ring of a disc: picture, texts, background colour,
   text that follows the ring, a preview of what is sent to the printer, and printing from the disc
   tray.
+- **The printer's own words and picture.** Paper types are named the way the printer itself names
+  them, in the language you use (the English / Japanese switch changes them at once), and the
+  banner and printer list show the printer's own product picture. Both are read from your printer
+  when it offers them (IPP Everywhere `printer-strings-uri` and `printer-icons`) and kept in your
+  cache; Washi's own names and drawing are the fallback. A picture pack image of your own, if you
+  put one in `~/.local/share/washi/printers/`, comes first.
 - **Notifications.** A small background service (`washid`) tells you when a tank runs low or empty,
   when the printer reports an error and when it is back online.
 - **English and Japanese.** The app, the notifications and the desktop entry, with a language switch
@@ -199,7 +205,7 @@ tell us what you find.
 | Area | Verified on the XK140 | Implemented, tested against the fake printer only |
 |---|---|---|
 | Discovery and printer list | finding the printer by mDNS, status polling | removing a printer from the list, switching between several printers |
-| Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links | support-code messages and notifications for a real error (the printer was never in an error state) |
+| Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links, the printer's own paper names (English and Japanese) and picture | support-code messages and notifications for a real error (the printer was never in an error state) |
 | Settings | reading every setting and its allowed values | **writing** any of them: quiet mode, auto power on / off, ink drying time, paper gap, automatic firmware update; manual head alignment values |
 | Maintenance | **nozzle check** (printed, with progress and completion) | cleaning, deep cleaning, automatic alignment, alignment check, manual alignment sheets; roller and bottom plate cleaning (the XK140 offers neither) |
 | Firmware | reading the version and the update flag | the **firmware update** itself |
@@ -228,7 +234,9 @@ Washi has no accounts and no telemetry and sends nothing anywhere. The only netw
 the printer you chose, plus local mDNS discovery. Web pages that the printer points to (ink shop,
 manual, help for an error code) open in your browser only after Washi has told you whose page it is
 and you have said yes. Caches live in `~/.cache/washi` under a file name that carries no host or
-device name, and the daemon never logs host names, serial numbers or hardware addresses.
+device name, and the daemon never logs host names, serial numbers or hardware addresses. The paper
+names and the picture of your printer are read from the printer itself at run time and kept in that
+cache: they are not part of Washi and are not copied anywhere else.
 
 ## Legal
 

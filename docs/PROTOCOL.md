@@ -166,6 +166,40 @@ to open it.
   `custom_canon_disc_120x120mm`, and the printable area is 2834×2834 px at 600 dpi.
 - `marker-levels` keeps working while the CHMP print service sleeps; it is what Washi shows then.
 
+## The printer's own words and picture (IPP Everywhere)
+
+Printers that follow PWG 5100.13 (IPP Everywhere) name two more things in `Get-Printer-Attributes`.
+On the XK140 (firmware 1.060) both are read-only and need no password:
+
+- `printer-strings-uri`: a localised **strings file** with the printer's own display names for the
+  keywords it uses. The reply follows the request's `attributes-natural-language`: `en` gives
+  `http://<host>./strings/en.txt`, `ja` gives `.../strings/ja.txt`, and a language the printer does
+  not list gives an empty value. `printer-strings-languages-supported` lists the languages (the
+  XK140: `ja en fr de it es pt nl da no sv fi pl cs ru tr ar zh-cn zh-tw ko th id`). The file is
+  fetched with a plain `GET` from the printer's web server (port 80) and is in Apple's `.strings`
+  format: `"key" = "value";` lines, `/* */` and `//` comments, the escapes `\"` and `\\`, UTF-8
+  or UTF-16 with a byte order mark. The keys are `<attribute>.<keyword>`; on the XK140 all of them
+  are `media-type.<keyword>` (the `com.canon-` papers, in the language of the request: the Japanese
+  file has the Japanese market's names). Keys for other attributes, such as `media-source.*`, are
+  used when a printer has them.
+- `printer-icons`: the addresses of **pictures of the printer** (PNG with an alpha channel, 128×128
+  and 512×512 on the XK140), `GET` from the same web server.
+
+Washi's rules for these:
+
+- The host and port in a returned address are ignored. Only its path (and query) is requested, from
+  the printer Washi already talks to, so a printer cannot send the app to another machine. Only
+  `http` addresses are accepted.
+- When the address does not change with the language, `<directory>/<language>.<extension>` is used
+  instead, but only for a language in `printer-strings-languages-supported`.
+- Strings: at most 512 KB, 4096 entries, keys of ASCII graphic characters (160 at most), values of
+  256 characters at most with control and bidirectional-control characters removed. A syntax error
+  costs the entry it is in, not the file.
+- Pictures: PNG only, at most 2 MB and 2048×2048 pixels; of several pictures the largest is used.
+  The transparent margin is cut off so that the product shot fills its space in the banner.
+- Both are kept per printer in `~/.cache/washi` and read again after 30 days or when the firmware
+  version changes (see [ARCHITECTURE.md](ARCHITECTURE.md)).
+
 ## eSCL notes (XK140)
 
 Platen only (no feeder); colour modes `Grayscale8` and `RGB24` (no `BlackAndWhite1`); 75, 100, 150,

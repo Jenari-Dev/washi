@@ -4,6 +4,34 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **The printer's own paper names, in the language you use.** Washi reads the display names the
+  printer itself publishes (IPP `printer-strings-uri`, a `.strings` file) and shows them for the
+  media types in Photo Print, Document Print, the disc label page and the print confirmation, and
+  for the paper sources when the printer names them. The names follow the English / Japanese switch
+  at once. Washi's own names remain the fallback for a printer that says nothing.
+- **The printer's own picture.** The banner and the printer list show the product picture the
+  printer publishes (IPP `printer-icons`), with its transparent margin cut off. The order is: your
+  picture pack image (`~/.local/share/washi/printers/<MODEL>.png`), the printer's picture, Washi's
+  line drawing.
+- D-Bus `GetPrinterStrings(host, language)` and `GetPrinterIcon(host)`, read-only, allowed with
+  `--read-only`. Both are kept in `~/.cache/washi` under the hashed printer key and read again
+  after 30 days or when the printer's firmware version changes; a kept copy is answered at once and
+  refreshed in the background, so the interface never waits for them.
+- The fake printer can serve strings and a picture (`--strings LANG=FILE`, `--icon FILE.png`).
+
+### Changed
+- Corrected paper names where the printer shows Washi's guesses were wrong: `com.canon-mtgr` is
+  Photo Paper Plus Glossy II (it was "Photo Paper Glossy") and `com.canon-mtglossy` is Glossy Photo
+  Paper (it was "Photo Paper Plus Glossy II"); Photo Paper Pro Crystal Grade; the two faces of the
+  postcards are told apart; names that were guessed (glossy postcards, "Fine Art Paper") are
+  described without claiming a product. The preferred photo paper on the Photo Print page is
+  Photo Paper Plus Glossy II (`com.canon-mtgr`), then glossy photo paper.
+- Drop-down entries are always shown as plain text, never as markup, because paper names now come
+  from the network.
+
 ## [0.1.1] - 2026-10-14
 
 ### Fixed

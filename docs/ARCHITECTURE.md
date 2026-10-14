@@ -32,7 +32,7 @@ survey and consent flags, and the maker's telemetry are not used; where the prin
 ```
 crates/washi-ivec   IVEC XML: typed request builders and tolerant response parsers. No I/O.
 crates/washi-net    CHMP client (minimal HTTP/1.1 on TcpStream), IPP client, eSCL client, the
-                    links of the printer's own web script, mDNS discovery.
+                    links, strings file and picture of the printer's own web server, mDNS discovery.
 crates/washi-core   printer handle, config file, PrinterSnapshot + cache, maintenance and
                     settings flows, support codes, web links, firmware; scan editing, print
                     preparation (photos, PDF rasterising, n-up, PWG raster) and disc labels.
@@ -71,6 +71,16 @@ requests from memory while a maintenance job holds the printer, and sends deskto
 once per condition (a tank turns low or empty, a new support code, the printer is back online). A
 sleeping printer is read through IPP and the cache without waking it.
 
+The paper names and the picture of the printer come from the printer too: `GetPrinterStrings`
+and `GetPrinterIcon` read its IPP `printer-strings-uri` and `printer-icons` (read-only, so also with
+`--read-only`) and keep the results in `~/.cache/washi` under the hashed printer key. A kept copy is
+answered at once; after 30 days or when the firmware version differs from the last snapshot's it is
+read again in the background, so only the very first call for a language waits for the printer. A
+printer that could not be read is not asked again for a minute. The text and the picture are
+fetched from the user's own device at run time and kept in the user's cache: they are not part of
+Washi and are not redistributed (see [NOTICE.md](../NOTICE.md)); Washi's own paper names are only
+the fallback for a printer that says nothing.
+
 The D-Bus API is the interface `io.github.Jenari_Dev.Washi1` on `/io/github/Jenari_Dev/Washi`.
 Structured values are JSON strings; long-running jobs return an id and report through signals
 (`MaintenanceProgress`, `ScanPageReady`, `PrintProgress`, ...). The full list is in
@@ -83,6 +93,10 @@ connection and answers come back as signals. Pages share a few QML singletons (`
 printer state, `Nav` for navigation and dialogs, `Theme`, `Fmt`). Heavy image work (scan editing,
 previews) runs in `washi-core` on worker threads. Texts are written with KDE's `i18n()` and
 translated through gettext catalogs; switching the language re-evaluates every binding at once.
+The printer's own names for papers (`Store.printerText`) follow the same switch: the app asks the
+daemon for the names in the language shown, and Washi's own table answers until they arrive. The
+picture of a printer is the local picture pack image if there is one
+(`~/.local/share/washi/printers/<MODEL>.png`), else the printer's own, else Washi's line art.
 
 ## Languages
 
