@@ -54,10 +54,11 @@ pub use spec::{MaintSpec, SettingsSpec, parse_auto_power_off, parse_quiet};
 pub use support::{Severity, SupportInfo};
 pub use tools::Tools;
 
-/// Plan for `PowerOn` (no job bracket). **Unverified** on a real printer.
+/// Plan for `PowerOn` (no job bracket, power-on mode `ModeA`). Verified on a real XK140
+/// (firmware 1.060, 2026-10-14): the printer wakes up.
 pub fn plan_power_on() -> Plan {
     Plan {
-        title: "wake the printer (PowerOn, unverified)".to_string(),
+        title: "wake the printer (PowerOn, mode ModeA)".to_string(),
         steps: vec![Step::Send(washi_ivec::Request::power_on())],
     }
 }

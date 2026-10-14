@@ -301,10 +301,10 @@ impl Printer {
 
     /// `PowerOn` (device service, no job): wake a printer that is in auto power-off.
     ///
-    /// **Unverified.** The request is the one the Windows driver's service-command library
-    /// builds; it has not been sent to a real XK140 yet. A printer in auto power-off usually
-    /// answers `NG Suspended` to writes, so this may be refused with that detail; waking the
-    /// printer with a print job (or its power button) always works.
+    /// Verified on a real XK140 (firmware 1.060, 2026-10-14). The request carries the power-on
+    /// mode `ModeA` (see [`Request::PowerOn`]); without it the printer answers
+    /// `NG ParameterError`. The reply only says the command was accepted: look at the print
+    /// status afterwards to see the printer come up (it takes a few seconds).
     pub fn power_on(&self, confirm: Confirm) -> Result<()> {
         let mut client = self.client();
         let r = client.execute(&Request::power_on(), confirm)?;

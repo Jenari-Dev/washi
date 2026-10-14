@@ -569,8 +569,8 @@ pub enum LinkLang {
 pub enum PowerCmd {
     /// Switch the printer off.
     Off,
-    /// Wake a printer in auto power-off. UNVERIFIED: the request is the one Canon's Windows
-    /// driver library builds; a sleeping printer may refuse it (a print job wakes it for sure).
+    /// Wake a printer in auto power-off (verified on the XK140, firmware 1.060). Sends PowerOn
+    /// with the power-on mode the printer expects, then waits a few seconds for it to come up.
     On,
 }
 

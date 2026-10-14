@@ -111,6 +111,7 @@ fn power_off_is_dry_by_default() {
 fn power_on_is_dry_by_default_and_a_single_request() {
     let s = assert_dry(&["power", "on"], &["PowerOn"]);
     assert!(!s.contains("StartJob"), "no job bracket: {s}");
+    assert!(s.contains("<ivec:poweronmode>ModeA</ivec:poweronmode>"), "the power-on mode: {s}");
     assert_dry(
         &["set", "registration", "1", "A=2", "B=-1"],
         &["StartJob", "SetConfiguration", "EndJob"],

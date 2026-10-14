@@ -17,6 +17,10 @@ use washi_core::{
 use crate::cli::{Cli, Cmd, ConfigCmd, MaintCmd, PowerCmd};
 use crate::{firmware, jobs, render};
 
+/// How long `washi power on` waits for the printer to come up, and how often it looks.
+const WAKE_WAIT: Duration = Duration::from_secs(10);
+const WAKE_POLL: Duration = Duration::from_secs(1);
+
 pub fn run(cli: Cli) -> Result<()> {
     match &cli.cmd {
         Cmd::Discover { timeout } => discover(&cli, *timeout),
@@ -425,8 +429,24 @@ fn power_on(cli: &Cli) -> Result<()> {
         return Ok(());
     }
     let p = connect(cli)?;
+    let was_asleep = !p.print_service_awake();
     p.power_on(Confirm::explicit())?;
-    println!("Printer {}: power on sent (unverified; check `washi status`).", p.host());
+    // The printer takes a few seconds to come up: look at the print status until it stops
+    // saying `Suspended`.
+    if p.wait_until_awake(WAKE_WAIT, WAKE_POLL) {
+        if was_asleep {
+            println!("Printer woke up ({}).", p.host());
+        } else {
+            println!("Printer {}: power on sent; it was already awake.", p.host());
+        }
+    } else {
+        println!(
+            "Printer {}: power on sent, but it still reports auto power-off after {} s; \
+             check `washi status` in a moment.",
+            p.host(),
+            WAKE_WAIT.as_secs()
+        );
+    }
     Ok(())
 }
 

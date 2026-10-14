@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use washi_ivec::{
     DeviceCapability, DeviceConfig, DeviceStatus, IvecError, MaintenanceCapability,
@@ -154,6 +154,27 @@ impl Printer {
 
     pub fn print_status(&self) -> Result<PrintStatus> {
         Ok(PrintStatus::from_response(&self.raw(ReadOp::GetStatus, Service::Print)?)?)
+    }
+
+    /// Is the print service answering, i.e. the printer is not in auto power-off? One read-only
+    /// `GetStatus print`: `NG Suspended` and an unreachable printer are "no".
+    pub fn print_service_awake(&self) -> bool {
+        matches!(probe_print(self.print_status()), PrintProbe::Awake(_) | PrintProbe::Busy)
+    }
+
+    /// After a wake request: look at `GetStatus print` right away and then every `interval`,
+    /// until it no longer says `Suspended` (true) or `timeout` has passed (false). Read-only.
+    pub fn wait_until_awake(&self, timeout: Duration, interval: Duration) -> bool {
+        let start = Instant::now();
+        loop {
+            if self.print_service_awake() {
+                return true;
+            }
+            if start.elapsed() >= timeout {
+                return false;
+            }
+            std::thread::sleep(interval);
+        }
     }
 
     pub fn device_status(&self) -> Result<DeviceStatus> {
