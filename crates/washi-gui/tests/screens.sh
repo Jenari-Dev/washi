@@ -20,6 +20,11 @@
 #                             picture written by this script (never a real printer's); also a live
 #                             language switch and a local picture pack image winning over the
 #                             printer's picture; output target/screens-r4/<name>.png.
+#   tests/screens.sh r5       the polish round in English and Japanese against the fake printer: the
+#                             disc label font family with Bold / Italic (Japanese text in a Japanese
+#                             family, bold and italic), the scan stitch direction, the unprintable
+#                             edge on the Photo Print and Document Print previews, and the page
+#                             order of Document Print; output target/screens-r5/<name>.png.
 #   tests/screens.sh i18n     the main pages and one dialog of each kind in English and in Japanese
 #                             (WASHI_LANG=en|ja) against the fake printer; output
 #                             target/screens-i18n/<name>-<lang>.png (override with WASHI_SCREENS).
@@ -47,6 +52,7 @@ out=${WASHI_SCREENS:-$root/target/screens}
 [ "$mode" = i18n ] && out=${WASHI_SCREENS:-$root/target/screens-i18n}
 [ "$mode" = r3 ] && out=${WASHI_SCREENS:-$root/target/screens-r3}
 [ "$mode" = r4 ] && out=${WASHI_SCREENS:-$root/target/screens-r4}
+[ "$mode" = r5 ] && out=${WASHI_SCREENS:-$root/target/screens-r5}
 mkdir -p "$out"
 work=$(mktemp -d)
 pids=""
@@ -363,8 +369,46 @@ r4)
         -draw 'roundrectangle 20,60 400,220 18,18' "$XDG_DATA_HOME/washi/printers/XK140.png"
     shot "home-pack-image-en" WASHI_LANG=en WASHI_PAGE=home WASHI_SHOT_DELAY_MS=1500
     ;;
+r5)
+    export XDG_CONFIG_HOME=$work/config XDG_CACHE_HOME=$work/cache XDG_STATE_HOME=$work/state XDG_DATA_HOME=$work/data
+    mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
+    samples
+    # A five-page document with the page number large on every page.
+    im=$(command -v magick || command -v convert)
+    for n in 1 2 3 4 5; do
+        "$im" -size 620x877 xc:white -gravity center -fill '#2a5db0' -pointsize 360 -annotate 0 "$n" \
+            -gravity north -fill '#444' -pointsize 28 -annotate +0+40 "Page $n of 5" "$work/samples/p$n.png"
+    done
+    "$im" "$work/samples/p1.png" "$work/samples/p2.png" "$work/samples/p3.png" "$work/samples/p4.png" \
+        "$work/samples/p5.png" -units PixelsPerInch -density 75 "$work/samples/five.pdf"
+    langs=${WASHI_LANGS:-"en ja"}
+    "$fake" --chmp-port 18080 --ipp-port 18631 --scan-pages 2 --scan-image "$work/samples/scan.jpg" </dev/null >"$work/fake.log" 2>&1 &
+    pids="$pids $!"
+    sleep 0.5
+    "$washid" --printer 127.0.0.1:18080 --ipp-port 18631 >"$work/washid.log" 2>&1 &
+    pids="$pids $!"
+    sleep 1
+    for lang in $langs; do
+        l="WASHI_LANG=$lang"
+        # Disc label: a Japanese family in bold, an italic one, and text that follows the ring.
+        shot "disc-fonts-$lang" $l WASHI_PAGE=disc-label WASHI_DISC_IMAGE="$work/samples/photo.jpg" "WASHI_DISC_TEXT=夏のミックス 2026|Summer mix" \
+            "WASHI_DISC_FONT=0:Noto Sans CJK JP:b:-;1:DejaVu Serif:-:i" WASHI_SIZE=1040x1250 WASHI_SHOT_DELAY_MS=2500
+        # Scan, Stitch: the direction in the setup, and the join button with its menu.
+        shot "scan-stitch-setup-$lang" $l WASHI_PAGE=scan WASHI_SCAN_MODE=stitch WASHI_STITCH=top-bottom WASHI_SHOT_DELAY_MS=2000
+        shot "scan-stitch-preview-$lang" $l WASHI_PAGE=scan WASHI_SCAN_MODE=stitch WASHI_STITCH=top-bottom WASHI_SCAN_STEP=preview WASHI_SHOT_DELAY_MS=6500
+        # Print previews: the dashed frame of the edge the printer cannot print on (photos in L are
+        # borderless by default, so the photo frame shows with borderless switched off).
+        shot "photo-print-edge-$lang" $l WASHI_PAGE=photo-print WASHI_FILE="$work/samples/portrait.jpg" WASHI_BORDERLESS=0 WASHI_SHOT_DELAY_MS=3500
+        shot "document-print-edge-$lang" $l WASHI_PAGE=document-print WASHI_DOC="$root/contrib/testpage.pdf" WASHI_SHOT_DELAY_MS=3500
+        # Document Print, Page Order: a 5-page document printed two-sided with the last sheet first
+        # (the preview walks the sheets in printing order; its first sheet is the lone page 5).
+        shot "document-print-order-$lang" $l WASHI_PAGE=document-print WASHI_DOC="$work/samples/five.pdf" WASHI_PAGE_ORDER=reverse WASHI_DUPLEX=long WASHI_SIZE=1040x1000 WASHI_SHOT_DELAY_MS=3500
+        shot "disc-fonts-printed-$lang" $l WASHI_PAGE=disc-label WASHI_DISC_IMAGE="$work/samples/photo.jpg" "WASHI_DISC_TEXT=夏のミックス 2026|Summer mix" \
+            "WASHI_DISC_FONT=0:Noto Sans CJK JP:b:-;1:DejaVu Serif:-:i" WASHI_DIALOG=nav-disc-preview WASHI_SHOT_DELAY_MS=3500
+    done
+    ;;
 *)
-    echo "usage: $0 real|fake|sleep|i18n|r3|r4 [real]" >&2
+    echo "usage: $0 real|fake|sleep|i18n|r3|r4|r5 [real]" >&2
     exit 2
     ;;
 esac
