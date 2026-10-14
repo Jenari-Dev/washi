@@ -55,7 +55,7 @@ Plain HTTP/1.1 on port 80, no authentication.
 
 Replies use `<operation>Response`, e.g. `GetStatusResponse`, with `<ivec:response>OK|NG</ivec:response>`
 and `<ivec:response_detail>` (`NotSupportService`, `DataError`, `DeviceBusy`, `Suspended`,
-`NotStart`, …). Services: `print`, `device`, `maintenance` (the XK140 also lists `pli`, `eis`; the
+`NotStart`, `ParameterError`, …). Services: `print`, `device`, `maintenance` (the XK140 also lists `pli`, `eis`; the
 `scan` service is not served on `command2/port1`).
 
 ### Queries (safe, read-only)
@@ -125,7 +125,7 @@ A job sent to a printer in auto power-off wakes it (when `autopoweron` is `ON`).
 | Operation | Service | Notes |
 |---|---|---|
 | `PowerOff` | `device` | no parameters, no job |
-| `PowerOn` | `device` | no parameters, no job; wakes a printer in auto power-off (**unverified**: any job wakes it as well) |
+| `PowerOn` | `device` | no job; one parameter, `<ivec:poweronmode>ModeA</ivec:poweronmode>`; wakes a printer in auto power-off. Without the parameter the printer answers `NG ParameterError` and stays asleep. Verified on the XK140 (firmware 1.060, 2026-10-14): with `ModeA` the reply is `OK` and `GetStatus print` stops saying `Suspended` after a few seconds. Any job wakes the printer as well |
 | `VendorCmd` | `device` | `<vcn:ijoperation>UpdateFRom</vcn:ijoperation>`: asks the printer to update its own firmware (**unverified**). Only send it when `networkupdate_available` says an update is offered; then the printer goes away and comes back with the new `firmver`. Never switch the printer off meanwhile |
 
 Counters that belong to servicing the printer are not documented here and not used by Washi.

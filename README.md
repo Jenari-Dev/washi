@@ -199,11 +199,11 @@ tell us what you find.
 | Area | Verified on the XK140 | Implemented, tested against the fake printer only |
 |---|---|---|
 | Discovery and printer list | finding the printer by mDNS, status polling | removing a printer from the list, switching between several printers |
-| Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links | support-code messages and notifications for a real error (the printer was never in an error state), the Wake button |
+| Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links | support-code messages and notifications for a real error (the printer was never in an error state) |
 | Settings | reading every setting and its allowed values | **writing** any of them: quiet mode, auto power on / off, ink drying time, paper gap, automatic firmware update; manual head alignment values |
 | Maintenance | **nozzle check** (printed, with progress and completion) | cleaning, deep cleaning, automatic alignment, alignment check, manual alignment sheets; roller and bottom plate cleaning (the XK140 offers neither) |
 | Firmware | reading the version and the update flag | the **firmware update** itself |
-| Power | | power off, wake |
+| Power | **wake** (`washi power on --confirm`, the request the Wake button sends: the printer came out of auto power-off; XK140, firmware 1.060, 2026-10-14) | power off |
 | Printing | reading the media list (1335 entries), paper sizes, trays and the disc tray entry; **one PDF page** on plain A4 paper from the cassette, draft quality, black and white | photos and borderless printing, colour, several pictures per sheet, two-sided printing, other paper types and the rear tray |
 | Scanning | reading the scanner's capabilities; **one A4 page** at 150 dpi in grey as PDF | colour scans, photo mode, other resolutions, several pages in one session |
 | Scan editing, OCR | | rotate, crop, slant, colour correction, auto crop, multi-photo, stitching, OCR (these run on the computer, not on the printer) |

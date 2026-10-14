@@ -41,7 +41,7 @@ washi set dry-level 1..5
 washi set paper-gap auto|wide
 washi set auto-firmware on|off
 washi power off
-washi power on                    # wake a printer in auto power-off (UNVERIFIED, see below)
+washi power on                    # wake a printer in auto power-off (verified on the XK140)
 washi set registration 1 A=1 B=-2 ...   # manual head alignment values of one set (UNVERIFIED write)
 ```
 
@@ -71,6 +71,10 @@ Ink (IPP marker levels)
   Neither command wakes the printer.
 * Unreachable (nothing answers on CHMP or IPP): the last known data is shown and the exit code is 1.
   A sleeping printer exits 0.
+* `washi power on --confirm` wakes a sleeping printer. It sends `PowerOn` with the power-on mode
+  `ModeA` (the printer answers `NG ParameterError` without it), then looks at `GetStatus print`
+  for up to ten seconds and prints `Printer woke up` as soon as it no longer says `Suspended`.
+  Verified on a PIXUS XK140 (firmware 1.060, 2026-10-14). Without `--confirm` it is a dry run.
 * `washi status --json` prints the snapshot (power `on`/`sleeping`/`offline`, state, support code
   with a translation key, inks with status `ok`/`low`/`empty`, trays, device, counters, ...).
 * Cache: `~/.cache/washi/<hash of the host name>.json` (`XDG_CACHE_HOME` is honoured; the file name
@@ -192,8 +196,8 @@ which refuses under `--read-only`.
   edge of the banner, each with a small coloured icon. A support code shows in the banner and on
   the Status tab with a message and a "Help for this Support Code" button. Every link that leaves
   the app (Order Ink, Manual, Remote UI, help for a code) asks first and says whose page it is. A sleeping printer shows an optional **Wake printer** button
-  (`PowerOn`, unverified: a maintenance job, a print or the power button wake it just as well, so
-  nothing is disabled while it sleeps). After a nozzle check the follow-up offers a cleaning for
+  (`PowerOn` with the power-on mode `ModeA`, verified on the XK140; a maintenance job, a print or
+  the power button wake it just as well, so nothing is disabled while it sleeps). After a nozzle check the follow-up offers a cleaning for
   missing or faint lines and a print head alignment for crooked grids.
 * **Photo Print**: pick JPEG / PNG / BMP files (several for the n-in-1 layouts), Page Size,
   Orientation, Media Type (named from the printer's own `media-type-supported`, with our own
