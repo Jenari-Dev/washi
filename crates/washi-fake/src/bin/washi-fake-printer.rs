@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 //! Run the fake printer by hand: `washi-fake-printer [--chmp-port N] [--ipp-port N] [--asleep]
 //! [--scan-pages N] [--scan-image FILE.jpg] [--roller] [--code CODE] [--firmware-update VERSION]
-//! [--cleaning-types roller,platen,...] [--no-model-js]`.
+//! [--cleaning-types roller,platen,...] [--no-model-js] [--strings LANG=FILE]... [--icon FILE.png]`.
 //! Control commands are read from stdin (`sleep`, `wake`, `ink C 10`, `code 1300`, `log`, ...).
 //! It only listens on 127.0.0.1.
 
@@ -20,6 +20,8 @@ fn main() {
     let mut cleaning: Vec<String> = Vec::new();
     let mut model_js = true;
     let mut scan_image: Option<Vec<u8>> = None;
+    let mut strings: Vec<(String, Vec<u8>)> = Vec::new();
+    let mut icon: Option<Vec<u8>> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -39,13 +41,28 @@ fn main() {
                     .collect();
             }
             "--no-model-js" => model_js = false,
+            // The printer's own words for a language, from a .strings file (repeatable).
+            "--strings" => {
+                let arg = args.next().unwrap_or_default();
+                let Some((lang, file)) = arg.split_once('=') else {
+                    eprintln!("--strings takes LANG=FILE, for example ja=/tmp/ja.txt");
+                    std::process::exit(2);
+                };
+                let Ok(bytes) = std::fs::read(file) else {
+                    eprintln!("cannot read {file}");
+                    std::process::exit(2);
+                };
+                strings.push((lang.to_string(), bytes));
+            }
+            // A picture of the printer (PNG).
+            "--icon" => icon = args.next().and_then(|p| std::fs::read(p).ok()),
             "--scan-image" => {
                 scan_image = args.next().and_then(|p| std::fs::read(p).ok());
             }
             "--scan-pages" => scan_pages = args.next().and_then(|v| v.parse().ok()),
             other => {
                 eprintln!(
-                    "usage: washi-fake-printer [--chmp-port N] [--ipp-port N] [--asleep] [--scan-pages N] [--scan-image FILE] [--roller] [--code CODE] [--firmware-update VERSION] [--cleaning-types a,b] [--no-model-js]"
+                    "usage: washi-fake-printer [--chmp-port N] [--ipp-port N] [--asleep] [--scan-pages N] [--scan-image FILE] [--roller] [--code CODE] [--firmware-update VERSION] [--cleaning-types a,b] [--no-model-js] [--strings LANG=FILE] [--icon FILE.png]"
                 );
                 eprintln!("unknown argument {other:?}");
                 std::process::exit(2);
@@ -65,6 +82,12 @@ fn main() {
     fake.set_cleaning_types(&types);
     if !model_js {
         fake.set_model_js(None);
+    }
+    for (lang, bytes) in &strings {
+        fake.set_strings(lang, Some(bytes));
+    }
+    if let Some(png) = icon {
+        fake.set_icons(vec![("printer_icon_large.png".to_string(), png)]);
     }
     if let Some(jpeg) = scan_image {
         fake.set_scan_image(jpeg);

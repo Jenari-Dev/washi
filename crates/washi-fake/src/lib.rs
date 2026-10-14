@@ -15,6 +15,7 @@
 //!
 //! Binds to `127.0.0.1` only. It never contacts a real printer.
 
+use std::collections::BTreeMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -50,6 +51,8 @@ struct State {
     cleaning_types: Vec<String>,
     /// What `GET /JS_MDL/model.js` serves (`None` = 404).
     model_js: Option<String>,
+    /// The printer's own words and pictures (`printer-strings-uri`, `printer-icons`).
+    words: Words,
     firmware: FirmwareState,
     levels: [u8; 5],
     support_code: String,
@@ -62,6 +65,19 @@ struct State {
     ipp_down: bool,
     scan: ScanState,
     prints: PrintState,
+}
+
+/// What the printer serves for `printer-strings-uri` and `printer-icons`. Nothing by default: a
+/// printer that has none of them is the usual case in the tests.
+#[derive(Debug, Clone, Default)]
+struct Words {
+    /// `.strings` files by language (`ja` -> `/strings/ja.txt`).
+    strings: BTreeMap<String, Vec<u8>>,
+    /// The address of the file does not follow the language of the request: the English one (or
+    /// the first language) is named whatever is asked for.
+    one_address: bool,
+    /// Pictures by file name (`/icon/<name>`), in the order they are listed.
+    icons: Vec<(String, Vec<u8>)>,
 }
 
 /// A print or validate request the fake received.
@@ -165,6 +181,7 @@ impl FakePrinter {
                 roller_cleaning: false,
                 cleaning_types: Vec::new(),
                 model_js: Some(MODEL_JS.to_string()),
+                words: Words::default(),
                 firmware: FirmwareState {
                     version: "1.060".to_string(),
                     update_available: None,
@@ -258,6 +275,27 @@ impl FakePrinter {
     /// What `GET /JS_MDL/model.js` serves (`None` = `404`).
     pub fn set_model_js(&self, script: Option<&str>) {
         self.state().model_js = script.map(str::to_string);
+    }
+
+    /// The `.strings` file for a language (`None` removes the language). The IPP attributes
+    /// `printer-strings-languages-supported` and `printer-strings-uri` follow.
+    pub fn set_strings(&self, language: &str, file: Option<&[u8]>) {
+        let mut st = self.state();
+        match file {
+            Some(f) => st.words.strings.insert(language.to_ascii_lowercase(), f.to_vec()),
+            None => st.words.strings.remove(&language.to_ascii_lowercase()),
+        };
+    }
+
+    /// Name the same strings address (the first language's) whatever language is asked for, like
+    /// a printer whose `printer-strings-uri` does not change with the request.
+    pub fn set_strings_one_address(&self, on: bool) {
+        self.state().words.one_address = on;
+    }
+
+    /// The pictures (`printer-icons`): file name and PNG bytes, served at `/icon/<name>`.
+    pub fn set_icons(&self, icons: Vec<(String, Vec<u8>)>) {
+        self.state().words.icons = icons;
     }
 
     /// Offer a firmware update: `GetStatus device` reports `networkupdate_available`, and an
@@ -442,7 +480,7 @@ impl FakePrinter {
 
     /// Run a line-oriented control command (used by the `washi-fake-printer` binary):
     /// `sleep`, `wake`, `roller on|off`, `cleaning-types roller platen ...`,
-    /// `firmware-update <version> [<restart ms>]`, `model-js on|off`, `ink <C> <pct>`, `code <n>`, `chmp-down`, `chmp-up`, `ipp-down`,
+    /// `firmware-update <version> [<restart ms>]`, `model-js on|off`, `strings-address one|each`, `ink <C> <pct>`, `code <n>`, `chmp-down`, `chmp-up`, `ipp-down`,
     /// `ipp-up`, `scan-pages <n>`, `scan-busy <n>`, `scan-reject [<http status>]`,
     /// `print-reject [<ipp status>]`, `job-polls <n>`, `abort-jobs on|off`, `accepting on|off`,
     /// `log`.
@@ -459,6 +497,7 @@ impl FakePrinter {
             }
             ["model-js", "off"] => self.set_model_js(None),
             ["model-js", "on"] => self.set_model_js(Some(MODEL_JS)),
+            ["strings-address", v @ ("one" | "each")] => self.set_strings_one_address(*v == "one"),
             ["ink", color, pct] if INK_ORDER.contains(color) && pct.parse::<u8>().is_ok() => {
                 self.set_ink(color, pct.parse().unwrap());
             }
@@ -782,7 +821,9 @@ fn serve_chmp(stream: TcpStream, shared: Arc<Shared>) {
         }
         let closing = req.header("connection").is_some_and(|v| v.eq_ignore_ascii_case("close"));
         if req.method == "GET"
-            && matches!(req.path.as_str(), "/" | "/index.html" | "/JS_MDL/model.js")
+            && (matches!(req.path.as_str(), "/" | "/index.html" | "/JS_MDL/model.js")
+                || req.path.starts_with("/strings/")
+                || req.path.starts_with("/icon/"))
         {
             let resp = serve_web(&shared, &req);
             if out.write_all(&resp).is_err() || closing {
@@ -849,6 +890,33 @@ fn serve_web(shared: &Shared, req: &Request) -> Vec<u8> {
                     )
                 }
                 _ => http_reply("404 Not Found", &[], b"A specification file is not found"),
+            }
+        }
+        path if path.starts_with("/strings/") => {
+            let file = path.trim_start_matches("/strings/");
+            let lang = file.split('.').next().unwrap_or("").to_ascii_lowercase();
+            shared.log.lock().unwrap().push(format!("Web/strings/{lang}"));
+            let body = shared.state.lock().unwrap().words.strings.get(&lang).cloned();
+            match body {
+                Some(b) => http_reply("200 OK", &[], &b),
+                None => http_reply("404 Not Found", &[], b"A specification file is not found"),
+            }
+        }
+        path if path.starts_with("/icon/") => {
+            let name = path.trim_start_matches("/icon/").to_string();
+            shared.log.lock().unwrap().push(format!("Web/icon/{name}"));
+            let body = shared
+                .state
+                .lock()
+                .unwrap()
+                .words
+                .icons
+                .iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, b)| b.clone());
+            match body {
+                Some(b) => http_reply("200 OK", &[("Content-Type", "image/png")], &b),
+                None => http_reply("404 Not Found", &[], b"not found"),
             }
         }
         _ => {
@@ -1186,6 +1254,44 @@ fn job_group(id: i32, state: i32, impressions: i32) -> IppGroup {
 }
 
 /// The reply to one IPP request, plus the operation's log name.
+/// `attributes-natural-language` of a request.
+fn asked_language(m: &IppMessage) -> String {
+    op_attr(m, "attributes-natural-language")
+        .and_then(|a| a.values.first())
+        .and_then(IppValue::as_str)
+        .unwrap_or("en")
+        .to_ascii_lowercase()
+}
+
+/// `printer-strings-*` and `printer-icons` for a request in `lang`: what a printer with an
+/// IPP Everywhere strings file says. The addresses name a host that is not the fake's own, so a
+/// client that follows the host instead of the path fails its test.
+fn words_attributes(w: &Words, lang: &str) -> Vec<IppAttribute> {
+    let mut v = Vec::new();
+    if !w.strings.is_empty() {
+        let langs: Vec<IppValue> = w.strings.keys().map(|l| IppValue::Keyword(l.clone())).collect();
+        v.push(IppAttribute::new("printer-strings-languages-supported", langs));
+        let file = if w.one_address {
+            w.strings.keys().next().cloned()
+        } else {
+            w.strings.contains_key(lang).then(|| lang.to_string())
+        };
+        // Like the real printer: a language it has no file for gets an empty address.
+        let uri =
+            file.map(|l| format!("http://printer.example./strings/{l}.txt")).unwrap_or_default();
+        v.push(IppAttribute::single("printer-strings-uri", IppValue::Uri(uri)));
+    }
+    if !w.icons.is_empty() {
+        let icons: Vec<IppValue> = w
+            .icons
+            .iter()
+            .map(|(n, _)| IppValue::Uri(format!("http://printer.example./icon/{n}")))
+            .collect();
+        v.push(IppAttribute::new("printer-icons", icons));
+    }
+    v
+}
+
 fn ipp_answer(shared: &Shared, m: &IppMessage, document: &[u8]) -> IppMessage {
     let opname = ipp_op::name(m.code);
     shared.log.lock().unwrap().push(format!("IPP/{opname}"));
@@ -1217,12 +1323,16 @@ fn ipp_answer(shared: &Shared, m: &IppMessage, document: &[u8]) -> IppMessage {
                         }
                     }
                 }
+                g.attributes.extend(words_attributes(&st.words, &asked_language(m)));
                 if !all {
                     g.attributes.retain(|a| wanted.contains(&a.name));
                 }
                 for a in &mut g.attributes {
                     if a.name == "printer-is-accepting-jobs" {
                         a.values = vec![IppValue::Boolean(st.prints.accepting)];
+                    }
+                    if a.name == "printer-firmware-string-version" {
+                        a.values = vec![IppValue::Text(st.firmware.version.clone())];
                     }
                 }
             }
@@ -1359,6 +1469,7 @@ mod tests {
             roller_cleaning: false,
             cleaning_types: Vec::new(),
             model_js: None,
+            words: Words::default(),
             firmware: FirmwareState {
                 version: "1.060".into(),
                 update_available: None,
