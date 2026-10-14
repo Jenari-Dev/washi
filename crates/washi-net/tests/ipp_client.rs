@@ -175,3 +175,60 @@ fn refused_connection_names_the_host() {
     );
     assert!(matches!(c.status().unwrap_err(), NetError::Connect { .. }));
 }
+
+#[test]
+fn the_localization_request_carries_the_language_and_asks_for_the_three_attributes() {
+    let reply = message(
+        0,
+        vec![
+            IppAttribute::single(
+                "printer-strings-uri",
+                IppValue::Uri("http://printer.example./strings/ja.txt".into()),
+            ),
+            IppAttribute::new(
+                "printer-strings-languages-supported",
+                vec![IppValue::Keyword("ja".into()), IppValue::Keyword("en".into())],
+            ),
+            IppAttribute::new(
+                "printer-icons",
+                vec![IppValue::Uri("http://printer.example./icon/big.png".into())],
+            ),
+            IppAttribute::single("printer-firmware-string-version", IppValue::Text("2.0".into())),
+        ],
+    );
+    let (addr, seen) = serve(http_length(&reply));
+    let l = client(addr).localization("JA").unwrap();
+    assert_eq!(l.language, "ja");
+    assert_eq!(l.strings_path("ja").as_deref(), Some("/strings/ja.txt"));
+    assert_eq!(l.icon_paths(), ["/icon/big.png"]);
+    assert_eq!(l.firmware_version.as_deref(), Some("2.0"));
+
+    let req = IppMessage::decode(&seen.lock().unwrap().body).unwrap();
+    assert_eq!(req.code, 0x000B, "a read: Get-Printer-Attributes");
+    let ops = req.group(tag::OPERATION_ATTRIBUTES).unwrap();
+    assert_eq!(ops.get("attributes-natural-language").unwrap().values[0].as_str(), Some("ja"));
+    let wanted: Vec<_> =
+        ops.get("requested-attributes").unwrap().values.iter().filter_map(|v| v.as_str()).collect();
+    assert_eq!(
+        wanted,
+        [
+            "printer-strings-uri",
+            "printer-strings-languages-supported",
+            "printer-icons",
+            "printer-firmware-string-version"
+        ]
+    );
+}
+
+#[test]
+fn a_bad_language_never_reaches_the_wire() {
+    let port = {
+        let l = TcpListener::bind("127.0.0.1:0").unwrap();
+        l.local_addr().unwrap().port()
+    };
+    let c = IppClient::with_options("127.0.0.1", IppOptions { port, ..IppOptions::default() });
+    for bad in ["", "ja\r\nX: y", "not a tag"] {
+        let e = c.localization(bad).unwrap_err();
+        assert!(matches!(e, NetError::Ipp(_)), "{bad:?}: {e}");
+    }
+}

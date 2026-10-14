@@ -9,7 +9,9 @@
 //!   asleep); `Print-Job`, `Validate-Job`, `Cancel-Job` and `Identify-Printer` need a [`Confirm`].
 //! * [`escl`]: the eSCL scanner client. Capabilities and status are reads; creating a job and
 //!   fetching pages need a [`Confirm`].
-//! * [`web`]: the links the printer's own web server publishes (`model.js`), read-only.
+//! * [`web`]: what the printer's own web server publishes, read-only: the links in `model.js`,
+//!   and the printer's strings file and picture that IPP names.
+//! * [`strings`]: the parser of those `.strings` files.
 //! * [`discover`]: mDNS discovery of `_canon-chmp._tcp`.
 
 mod client;
@@ -18,6 +20,7 @@ mod error;
 pub mod escl;
 pub mod http;
 pub mod ipp;
+pub mod strings;
 mod tcp;
 pub mod web;
 
@@ -25,5 +28,8 @@ pub use client::{ChmpClient, ClientOptions, Confirm, DEFAULT_PATH};
 pub use discovery::{DiscoveredPrinter, discover, discover_first};
 pub use error::NetError;
 pub use escl::{EsclClient, EsclOptions, ScanSettings, ScannerCapabilities, ScannerStatus};
-pub use ipp::{IppClient, IppOptions, PrinterAttributes};
-pub use web::{ModelLinks, WebOptions, fetch_model_links};
+pub use ipp::{IppClient, IppOptions, PrinterAttributes, PrinterLocalization};
+pub use strings::parse_strings;
+pub use web::{
+    ModelLinks, PrinterIcon, WebOptions, fetch_icon, fetch_model_links, fetch_strings, local_path,
+};

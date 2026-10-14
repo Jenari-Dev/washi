@@ -12,12 +12,14 @@
 //!   combinations exist, including borderless and the disc tray).
 
 pub mod job;
+pub mod localization;
 pub mod media;
 
 pub use job::{
     IdentifyAction, JobAttributes, JobState, Margins, MediaSpec, PrintCapabilities, PrintColorMode,
     PrintJob, Quality, Scaling, Sides, ValidateReply, WhichJobs,
 };
+pub use localization::{LOCALIZATION_ATTRIBUTES, PrinterLocalization, normalize_language};
 pub use media::{MediaDatabase, MediaEntry};
 
 use std::collections::BTreeMap;
@@ -146,6 +148,8 @@ pub enum IppError {
     NoPrinterAttributes,
     #[error("the IPP reply carries no job attributes")]
     NoJobAttributes,
+    #[error("{tag:?} is not a language tag")]
+    BadLanguage { tag: String },
     #[error("the printer refused the request: {name} ({code:#06x}){detail}")]
     Rejected { code: u16, name: &'static str, detail: String },
 }
@@ -947,11 +951,17 @@ impl IppClient {
     /// `charset`, `language` and `printer-uri`: the operation attributes every request starts
     /// with.
     pub(crate) fn base_operation_attributes(&self) -> Vec<IppAttribute> {
+        self.base_operation_attributes_in("en")
+    }
+
+    /// The same for a request made in another natural language (`ja`): a printer words some
+    /// of its answers, and the address of its strings file, for it.
+    pub(crate) fn base_operation_attributes_in(&self, language: &str) -> Vec<IppAttribute> {
         vec![
             IppAttribute::single("attributes-charset", IppValue::Charset("utf-8".into())),
             IppAttribute::single(
                 "attributes-natural-language",
-                IppValue::NaturalLanguage("en".into()),
+                IppValue::NaturalLanguage(language.into()),
             ),
             IppAttribute::single("printer-uri", IppValue::Uri(self.printer_uri())),
         ]

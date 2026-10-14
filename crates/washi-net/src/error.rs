@@ -31,4 +31,8 @@ pub enum NetError {
     Ipp(#[from] crate::ipp::IppError),
     #[error(transparent)]
     Escl(#[from] crate::escl::EsclError),
+    #[error("the printer's strings file is unusable: {0}")]
+    Strings(#[from] crate::strings::StringsError),
+    #[error("the printer's picture is unusable: {0}")]
+    Icon(String),
 }

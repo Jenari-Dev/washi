@@ -12,13 +12,21 @@
 //! The values come from the network, so they are checked before they are used: only `http` and
 //! `https` addresses with a plain host name, no whitespace or control characters, and at most
 //! 2048 bytes.
+//!
+//! The same web server serves the printer's own words and picture, which IPP only names
+//! (`printer-strings-uri`, `printer-icons`, see [`crate::ipp::localization`]):
+//! [`fetch_strings`] reads one `.strings` file and [`fetch_icon`] the best of the pictures. Both
+//! ask the printer Washi already talks to, for the *path* in the address the printer gave
+//! ([`local_path`]); the host in that address is never followed.
 
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
 use crate::error::NetError;
 use crate::http::{Endpoint, request_once, uri_host};
+use crate::strings::{MAX_STRINGS_BYTES, parse_strings};
 
 /// Path of the script on the printer's web server.
 pub const MODEL_JS_PATH: &str = "/JS_MDL/model.js";
@@ -153,6 +161,152 @@ pub fn fetch_model_links(host: &str, port: u16, opts: &WebOptions) -> Result<Mod
 
 fn host_header(host: &str, port: u16) -> String {
     if port == 80 { uri_host(host) } else { format!("{}:{port}", uri_host(host)) }
+}
+
+// ---- the printer's words and picture ---------------------------------------------------------------
+
+/// Longest path (with query) that is requested from the printer.
+const MAX_LOCAL_PATH: usize = 512;
+/// Largest picture accepted (the printer's own are 10 and 80 KB).
+pub const MAX_ICON_BYTES: usize = 2 * 1024 * 1024;
+/// Largest picture edge accepted, in pixels (the printer's own are 128 and 512).
+pub const MAX_ICON_EDGE: u32 = 2048;
+/// Pictures looked at when a printer lists several.
+const MAX_ICON_CANDIDATES: usize = 4;
+
+/// The path (and query) of an address from the printer's attributes, to be requested from the
+/// printer's own web server: `http://<anything>/strings/ja.txt` and `/strings/ja.txt` both give
+/// `/strings/ja.txt`. The host and port of the address are dropped on purpose: a printer cannot
+/// send the app to another machine. `None` for any other scheme (no TLS here), a fragment, `..`,
+/// or characters outside the plain URL set.
+pub fn local_path(uri: &str) -> Option<String> {
+    let uri = uri.trim();
+    let path = if uri.get(..7).is_some_and(|p| p.eq_ignore_ascii_case("http://")) {
+        let rest = &uri[7..];
+        let at = rest.find('/').filter(|at| *at > 0)?;
+        &rest[at..]
+    } else if uri.starts_with('/') && !uri.starts_with("//") {
+        uri
+    } else {
+        return None;
+    };
+    let plain = |b: u8| b.is_ascii_alphanumeric() || b"-._~/%+:,;=@?&".contains(&b);
+    let bare = path.split('?').next().unwrap_or(path);
+    if path.len() > MAX_LOCAL_PATH || !path.bytes().all(plain) || bare.contains("..") {
+        return None;
+    }
+    Some(path.to_string())
+}
+
+fn get_file(
+    host: &str,
+    port: u16,
+    path: &str,
+    accept: &str,
+    opts: &WebOptions,
+    max: usize,
+) -> Result<Vec<u8>, NetError> {
+    // Whatever the caller got the path from, it is a plain path of the printer's own server.
+    if local_path(path).as_deref() != Some(path) {
+        return Err(NetError::Http(format!("not a path on the printer: {path:?}")));
+    }
+    let ep =
+        Endpoint { host, port, connect_timeout: opts.connect_timeout, io_timeout: opts.io_timeout };
+    let headers = [
+        ("Host", host_header(host, port)),
+        ("Accept", accept.to_string()),
+        ("Accept-Language", opts.accept_language.clone()),
+    ];
+    let r = request_once(ep, "GET", path, &headers, &[], None, max)?;
+    if r.status != 200 {
+        return Err(NetError::Status { status: r.status });
+    }
+    Ok(r.body)
+}
+
+/// `GET <path>` (a path from [`crate::ipp::PrinterLocalization::strings_path`]) and parse the
+/// `.strings` file (read-only). `opts.accept_language` is the language the file is wanted in.
+pub fn fetch_strings(
+    host: &str,
+    port: u16,
+    path: &str,
+    opts: &WebOptions,
+) -> Result<BTreeMap<String, String>, NetError> {
+    let body = get_file(host, port, path, "text/plain, */*", opts, MAX_STRINGS_BYTES)?;
+    Ok(parse_strings(&body)?)
+}
+
+/// A picture of the printer (PNG).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrinterIcon {
+    pub png: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+}
+
+/// Width and height from the header of a PNG; `None` when the bytes do not start like one or
+/// the size is zero or above [`MAX_ICON_EDGE`].
+pub fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
+    const SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
+    if bytes.len() < 33 || bytes[..8] != SIGNATURE || bytes[8..16] != *b"\0\0\0\x0dIHDR" {
+        return None;
+    }
+    let w = u32::from_be_bytes(bytes[16..20].try_into().ok()?);
+    let h = u32::from_be_bytes(bytes[20..24].try_into().ok()?);
+    ((1..=MAX_ICON_EDGE).contains(&w) && (1..=MAX_ICON_EDGE).contains(&h)).then_some((w, h))
+}
+
+/// Candidates, the ones whose name says they are big first (`printer_icon_large.png`).
+fn icons_by_promise(paths: &[String]) -> Vec<&String> {
+    let rank = |p: &String| {
+        let name = p.rsplit('/').next().unwrap_or(p).to_ascii_lowercase();
+        if ["large", "big", "xl", "512"].iter().any(|w| name.contains(w)) {
+            0
+        } else if ["small", "thumb", "mini", "128", "64"].iter().any(|w| name.contains(w)) {
+            2
+        } else {
+            1
+        }
+    };
+    let mut v: Vec<&String> = paths.iter().take(MAX_ICON_CANDIDATES * 2).collect();
+    v.sort_by_key(|p| rank(p));
+    v.truncate(MAX_ICON_CANDIDATES);
+    v
+}
+
+/// The largest of the printer's pictures at `paths` (read-only). A picture that cannot be read
+/// or is not a PNG of a sensible size is skipped; the error is the last one when none is usable.
+pub fn fetch_icon(
+    host: &str,
+    port: u16,
+    paths: &[String],
+    opts: &WebOptions,
+) -> Result<PrinterIcon, NetError> {
+    let mut best: Option<PrinterIcon> = None;
+    let mut last = NetError::Http("the printer lists no picture".to_string());
+    for path in icons_by_promise(paths) {
+        let png = match get_file(host, port, path, "image/png, */*", opts, MAX_ICON_BYTES) {
+            Ok(b) => b,
+            Err(e) => {
+                last = e;
+                continue;
+            }
+        };
+        let Some((width, height)) = png_size(&png) else {
+            last = NetError::Icon("not a PNG of a usable size".to_string());
+            continue;
+        };
+        if best.as_ref().is_none_or(|b| {
+            u64::from(width) * u64::from(height) > u64::from(b.width) * u64::from(b.height)
+        }) {
+            best = Some(PrinterIcon { png, width, height });
+        }
+        // A picture of this size is the big one; the others are only smaller copies.
+        if best.as_ref().is_some_and(|b| b.width >= 512) {
+            break;
+        }
+    }
+    best.ok_or(last)
 }
 
 // ---- parsing -------------------------------------------------------------------------------------
@@ -419,5 +573,77 @@ mod tests {
         }
         assert_eq!(origin("p.local", 80), "http://p.local");
         assert_eq!(origin("p.local", 8080), "http://p.local:8080");
+    }
+
+    /// The first 33 bytes of a PNG of this size (all the size check looks at).
+    pub(crate) fn png_head(w: u32, h: u32) -> Vec<u8> {
+        let mut b = vec![0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13];
+        b.extend(b"IHDR");
+        b.extend(w.to_be_bytes());
+        b.extend(h.to_be_bytes());
+        b.extend([8, 6, 0, 0, 0, 0, 0, 0, 0]);
+        b
+    }
+
+    #[test]
+    fn only_the_path_of_an_address_is_kept() {
+        assert_eq!(
+            local_path("http://printer.example./strings/ja.txt").as_deref(),
+            Some("/strings/ja.txt")
+        );
+        assert_eq!(
+            local_path("HTTP://203.0.113.9:8080/icon/a.png?v=2").as_deref(),
+            Some("/icon/a.png?v=2")
+        );
+        assert_eq!(local_path("  /strings/en.txt ").as_deref(), Some("/strings/en.txt"));
+        assert_eq!(local_path("http://[2001:db8::1]/x/y.png").as_deref(), Some("/x/y.png"));
+        for bad in [
+            "",
+            "http://printer.example.",
+            "http://printer.example",
+            "http:///no-host",
+            "https://printer.example./strings/ja.txt",
+            "ftp://printer.example./strings/ja.txt",
+            "//printer.example./strings/ja.txt",
+            "strings/ja.txt",
+            "http://p/../etc/passwd",
+            "/a/../b",
+            "/a/b#frag",
+            "/a b",
+            "/a\r\nHost: evil",
+            "/\u{65e5}\u{672c}.txt",
+            "/a\"b",
+        ] {
+            assert_eq!(local_path(bad), None, "{bad:?}");
+        }
+        assert_eq!(local_path(&format!("/{}", "a".repeat(MAX_LOCAL_PATH))), None);
+        assert!(local_path(&format!("/{}", "a".repeat(MAX_LOCAL_PATH - 1))).is_some());
+    }
+
+    #[test]
+    fn png_sizes_are_read_from_the_header() {
+        assert_eq!(png_size(&png_head(512, 256)), Some((512, 256)));
+        assert_eq!(png_size(&png_head(0, 10)), None);
+        assert_eq!(png_size(&png_head(10, MAX_ICON_EDGE + 1)), None);
+        assert_eq!(
+            png_size(&png_head(MAX_ICON_EDGE, MAX_ICON_EDGE)),
+            Some((MAX_ICON_EDGE, MAX_ICON_EDGE))
+        );
+        assert_eq!(png_size(b"GIF89a"), None);
+        assert_eq!(png_size(&png_head(8, 8)[..20]), None);
+        let mut not_ihdr = png_head(8, 8);
+        not_ihdr[12..16].copy_from_slice(b"IDAT");
+        assert_eq!(png_size(&not_ihdr), None);
+    }
+
+    #[test]
+    fn the_big_looking_pictures_are_tried_first() {
+        let p = |s: &str| s.to_string();
+        let paths =
+            [p("/i/small.png"), p("/i/icon.png"), p("/i/icon_large.png"), p("/i/x_128.png")];
+        let order: Vec<&str> = icons_by_promise(&paths).into_iter().map(String::as_str).collect();
+        assert_eq!(order, ["/i/icon_large.png", "/i/icon.png", "/i/small.png", "/i/x_128.png"]);
+        let many: Vec<String> = (0..20).map(|i| format!("/i/{i}.png")).collect();
+        assert_eq!(icons_by_promise(&many).len(), MAX_ICON_CANDIDATES);
     }
 }
