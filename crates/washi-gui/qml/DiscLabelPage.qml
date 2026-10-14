@@ -432,7 +432,7 @@ RowLayout {
                     visible: discDrop.containsDrag
                     anchors.fill: parent
                     radius: 8
-                    color: "#261E50B4"
+                    color: "#261354BF"
                     border.width: 2
                     border.color: Theme.accent
                     WText {
