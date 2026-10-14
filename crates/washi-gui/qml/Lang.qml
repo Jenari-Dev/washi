@@ -20,6 +20,10 @@ QtObject {
         }
     }
 
-    // The daemon words its notifications and messages in the same language.
-    onCurrentChanged: Store.syncLanguage()
+    // The daemon words its notifications and messages in the same language, and the printer's
+    // own names for papers and so on are asked for in it.
+    onCurrentChanged: {
+        Store.syncLanguage();
+        Store.loadPrinterStrings();
+    }
 }

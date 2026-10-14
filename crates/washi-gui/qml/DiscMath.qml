@@ -353,7 +353,11 @@ QtObject {
 
     readonly property var swatches: ["#000000", "#FFFFFF", "#C93A3A", "#E0702B", "#F2CB1D", "#2E9E4F", "#1E50B4", "#7B5CC9", "#C9437E", "#8C8C8C"]
 
+    // The printer's own names for the two disc types when it has them.
     function mediaLabel(m) {
-        return m === "b" ? i18n("Other printable disc") : i18n("Printable disc (recommended)");
+        if (m === "b") {
+            return Store.printerText("media-type", "com.canon-mtdiscb", i18n("Other printable disc"));
+        }
+        return Store.printerText("media-type", "com.canon-mtdisca", i18n("Printable disc (recommended)"));
     }
 }

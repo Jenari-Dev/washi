@@ -33,7 +33,7 @@ g++ -std=c++20 -fPIC -O0 -I"$work" -I"$gui/src" -I/usr/include/KF6/KI18n \
     -lKF6I18n -lKF6I18nQml
 
 mkdir -p "$work/qml"
-cp "$gui"/qml/*.qml "$here"/tst_*.qml "$here"/FakeTransport.qml "$here"/FakeImaging.qml "$here"/Audit.qml "$work/qml/"
+cp "$gui"/qml/*.qml "$here"/tst_*.qml "$here"/FakeTransport.qml "$here"/FakeImaging.qml "$here"/Audit.qml "$here"/*-picture.png "$work/qml/"
 {
     for s in Theme Icons Fmt Prefs Lang Nav Store Img PrintModel ScanModel DiscMath; do
         printf 'singleton %s 1.0 %s.qml\n' "$s" "$s"

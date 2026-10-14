@@ -113,9 +113,26 @@ PageScroll {
                             kind: row.kind
                             size: 18
                         }
-                        Glyph {
-                            name: "printer"
-                            size: 30
+                        // The printer's own picture (a picture pack image for the active one),
+                        // else the glyph.
+                        Item {
+                            Layout.preferredWidth: 48
+                            Layout.preferredHeight: 38
+                            Glyph {
+                                visible: !listPicture.hasPicture
+                                anchors.centerIn: parent
+                                name: "printer"
+                                size: 30
+                            }
+                            PrinterImage {
+                                id: listPicture
+                                objectName: "listPicture-" + row.index
+                                anchors.fill: parent
+                                art: false
+                                model: row.modelData.active ? Store.modelName : ""
+                                iconSource: Store.iconFor(row.modelData.host)
+                                opacity: row.kind === "offline" ? 0.55 : 1
+                            }
                         }
                         ColumnLayout {
                             Layout.fillWidth: true

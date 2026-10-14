@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 10:27+0900\n"
+"POT-Creation-Date: 2026-10-14 11:58+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -1434,32 +1434,36 @@ msgid "Photo Paper Pro Platinum"
 msgstr "Photo Paper Pro Platinum"
 
 #, no-javascript-format
-msgid "Photo Paper Pro Crystal"
-msgstr "Photo Paper Pro Crystal"
+msgid "Photo Paper Pro Crystal Grade"
+msgstr "Photo Paper Pro Crystal Grade"
 
 #, no-javascript-format
 msgid "Photo Paper Pro Luster"
 msgstr "Photo Paper Pro Luster"
 
 #, no-javascript-format
-msgid "Photo Paper Glossy"
-msgstr "Photo Paper Glossy"
+msgid "Photo Paper Plus Glossy II"
+msgstr "Photo Paper Plus Glossy II"
 
 #, no-javascript-format
 msgid "Matte Photo Paper"
 msgstr "Matte Photo Paper"
 
 #, no-javascript-format
-msgid "Photo Paper Plus Glossy II"
-msgstr "Photo Paper Plus Glossy II"
+msgid "Glossy Photo Paper"
+msgstr "Glossy Photo Paper"
 
 #, no-javascript-format
 msgid "High Resolution Paper"
 msgstr "High Resolution Paper"
 
 #, no-javascript-format
-msgid "Glossy postcard (Hagaki)"
-msgstr "光沢はがき"
+msgid "Photo postcard (Hagaki)"
+msgstr "写真用はがき"
+
+#, no-javascript-format
+msgid "Photo postcard (Hagaki), address side"
+msgstr "写真用はがき（あて名面）"
 
 #, no-javascript-format
 msgid "T-shirt transfers"
@@ -1470,20 +1474,28 @@ msgid "Photo Paper Plus Semi-gloss"
 msgstr "Photo Paper Plus Semi-gloss"
 
 #, no-javascript-format
-msgid "Fine Art Paper"
-msgstr "Fine Art Paper"
+msgid "Fine art paper (other brands)"
+msgstr "ファインアート紙（他社製）"
 
 #, no-javascript-format
 msgid "Card stock"
-msgstr "厚紙"
+msgstr "カードストック"
 
 #, no-javascript-format
 msgid "Inkjet postcard (Hagaki)"
 msgstr "インクジェット対応はがき"
 
 #, no-javascript-format
+msgid "Inkjet postcard (Hagaki), address side"
+msgstr "インクジェット対応はがき（あて名面）"
+
+#, no-javascript-format
 msgid "Postcard (Hagaki)"
 msgstr "はがき"
+
+#, no-javascript-format
+msgid "Postcard (Hagaki), address side"
+msgstr "はがき（あて名面）"
 
 #, no-javascript-format
 msgid "Canon paper (%1)"

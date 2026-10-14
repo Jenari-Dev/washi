@@ -153,6 +153,18 @@ QtObject {
     // Desktop notification switches kept by the service: {enabled, ink, errors, online}.
     property var notifications: null
 
+    // ---- the printer's own words and picture (read-only; the service keeps them) --------------------
+    // Its display names for the keywords it uses ("media-type.<keyword>"), per language of the
+    // app: {en: {...}, ja: {...}}. `printerStrings` is the one of the language shown now and
+    // changes with the language switch.
+    property var printerStringsByLang: ({})
+    property var _stringsAsked: ({})
+    readonly property var printerStrings: printerStringsByLang[Lang.current] || ({})
+    // File URLs of the printers' pictures by host ("" = that printer has none).
+    property var printerIcons: ({})
+    property var _iconsAsked: ({})
+    readonly property string printerIcon: printerIcons[activeHost] || ""
+
     signal maintenanceProgress(string job, string stage, string message)
     signal maintenanceFinished(string job, bool ok, string message)
     signal scanPageReady(string session, int index, string path)
@@ -296,6 +308,7 @@ QtObject {
         if (hasPrinter && activeIp === "" && !snap.address) {
             resolveIp();
         }
+        loadPrinterWords();
     }
 
     function resetPrinterState() {
@@ -310,6 +323,8 @@ QtObject {
         printCaps = null;
         printCapsLoading = false;
         printCapsErrorSource = "";
+        printerStringsByLang = ({});
+        _stringsAsked = ({});
         scanCaps = null;
         scanCapsLoading = false;
         scanCapsErrorSource = "";
@@ -349,6 +364,9 @@ QtObject {
         snapLoaded = true;
         snapErrorSource = "";
         _setPower(activeHost, s.power);
+        // Whatever could not be read while the printer was away is asked for again (the service
+        // does not bother the printer more than once a minute).
+        loadPrinterWords();
         // A job was running (the service answers nothing but the snapshot meanwhile): read the
         // settings again now that the printer is free.
         if (capsFromCache && !s.activity && (s.power === "on" || s.power === "sleeping")) {
@@ -426,6 +444,7 @@ QtObject {
     // Read the other printers' state for the Printer List page (read-only queries).
     function refreshOthers() {
         for (const p of printers) {
+            loadPrinterIcon(p.host);
             if (!p.active) {
                 const host = p.host;
                 call("GetSnapshot", [host], (ok, body) => {
@@ -608,6 +627,69 @@ QtObject {
         });
     }
 
+    // ---- the printer's own words and picture ---------------------------------------------------------
+    // The service answers from what it kept and reads the printer only when it has nothing; none
+    // of this blocks anything, and what cannot be read leaves Washi's own texts and drawing.
+    function loadPrinterWords() {
+        loadPrinterStrings();
+        loadPrinterIcon(activeHost);
+    }
+
+    // The printer's names in the language shown now (asked again for another language).
+    function loadPrinterStrings() {
+        const host = activeHost;
+        const lang = Lang.current;
+        const key = host + "|" + lang;
+        if (host === "" || _stringsAsked[key]) {
+            return;
+        }
+        _stringsAsked[key] = true;
+        call("GetPrinterStrings", [host, lang], (ok, body) => {
+            const v = ok ? parse(body) : null;
+            if (host !== activeHost) {
+                return;
+            }
+            if (!v || typeof v !== "object") {
+                delete _stringsAsked[key];      // ask again with the next reading of the printer
+                return;
+            }
+            const all = Object.assign({}, printerStringsByLang);
+            all[lang] = v;
+            printerStringsByLang = all;
+        });
+    }
+
+    // The printer's own name for a keyword ("media-type", "com.example-glossy"), else `fallback`.
+    function printerText(attribute, keyword, fallback) {
+        const t = printerStrings[attribute + "." + keyword];
+        return t ? t : fallback;
+    }
+
+    function _fileUrl(path) {
+        return "file://" + path.split("/").map(encodeURIComponent).join("/");
+    }
+
+    // The picture of a printer: a file the service keeps (refreshed in the background).
+    function loadPrinterIcon(host) {
+        if (host === "" || _iconsAsked[host]) {
+            return;
+        }
+        _iconsAsked[host] = true;
+        call("GetPrinterIcon", [host], (ok, body) => {
+            if (!ok) {
+                delete _iconsAsked[host];
+                return;
+            }
+            const all = Object.assign({}, printerIcons);
+            all[host] = body === "" ? "" : _fileUrl(body);
+            printerIcons = all;
+        });
+    }
+
+    function iconFor(host) {
+        return printerIcons[host] || "";
+    }
+
     function loadNotifications() {
         call("GetNotificationSettings", [], (ok, body) => {
             const v = ok ? parse(body) : null;
@@ -708,6 +790,8 @@ QtObject {
         capsLoading = false;
         refreshing = false;
         notifications = null;
+        printerIcons = ({});
+        _iconsAsked = ({});
     }
 
     // ---- wiring ---------------------------------------------------------------------------------

@@ -118,6 +118,8 @@ const METHODS: &[&str] = &[
     "GetPrintCapabilities",
     "Wake",
     "GetWebLinks",
+    "GetPrinterStrings",
+    "GetPrinterIcon",
     "UpdateFirmware",
     "GetNotificationSettings",
     "SetNotificationSettings",

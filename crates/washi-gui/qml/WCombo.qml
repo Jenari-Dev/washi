@@ -40,6 +40,8 @@ QQC2.ComboBox {
         highlighted: control.highlightedIndex === index
         contentItem: Text {
             text: typeof item.modelData === "string" ? item.modelData : item.modelData.text
+            // Entries can be names the printer sent: never markup.
+            textFormat: Text.PlainText
             font.pixelSize: Theme.fontSize
             color: Theme.text
             verticalAlignment: Text.AlignVCenter
@@ -61,6 +63,7 @@ QQC2.ComboBox {
         leftPadding: 10
         rightPadding: 32
         text: control.displayText
+        textFormat: Text.PlainText
         font.pixelSize: Theme.fontSize
         color: control.enabled ? Theme.text : Theme.textMuted
         verticalAlignment: Text.AlignVCenter

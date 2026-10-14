@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 10:27+0900\n"
+"POT-Creation-Date: 2026-10-14 11:58+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1555,7 +1555,7 @@ msgid "Photo Paper Pro Platinum"
 msgstr ""
 
 #, no-javascript-format
-msgid "Photo Paper Pro Crystal"
+msgid "Photo Paper Pro Crystal Grade"
 msgstr ""
 
 #, no-javascript-format
@@ -1563,7 +1563,7 @@ msgid "Photo Paper Pro Luster"
 msgstr ""
 
 #, no-javascript-format
-msgid "Photo Paper Glossy"
+msgid "Photo Paper Plus Glossy II"
 msgstr ""
 
 #, no-javascript-format
@@ -1571,7 +1571,7 @@ msgid "Matte Photo Paper"
 msgstr ""
 
 #, no-javascript-format
-msgid "Photo Paper Plus Glossy II"
+msgid "Glossy Photo Paper"
 msgstr ""
 
 #, no-javascript-format
@@ -1579,7 +1579,11 @@ msgid "High Resolution Paper"
 msgstr ""
 
 #, no-javascript-format
-msgid "Glossy postcard (Hagaki)"
+msgid "Photo postcard (Hagaki)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Photo postcard (Hagaki), address side"
 msgstr ""
 
 #, no-javascript-format
@@ -1591,7 +1595,7 @@ msgid "Photo Paper Plus Semi-gloss"
 msgstr ""
 
 #, no-javascript-format
-msgid "Fine Art Paper"
+msgid "Fine art paper (other brands)"
 msgstr ""
 
 #, no-javascript-format
@@ -1603,7 +1607,15 @@ msgid "Inkjet postcard (Hagaki)"
 msgstr ""
 
 #, no-javascript-format
+msgid "Inkjet postcard (Hagaki), address side"
+msgstr ""
+
+#, no-javascript-format
 msgid "Postcard (Hagaki)"
+msgstr ""
+
+#, no-javascript-format
+msgid "Postcard (Hagaki), address side"
 msgstr ""
 
 #, no-javascript-format

@@ -147,7 +147,7 @@ Item {
             compare(printCalls().length, 0);
             const confirm = findChild(p, "printConfirm");
             verify(confirm.visible, "the confirmation is asked");
-            verify(confirm.text.indexOf("Photo Paper Plus Glossy II") >= 0, confirm.text);
+            verify(confirm.text.indexOf("Glossy Photo Paper") >= 0, confirm.text);
             verify(confirm.text.indexOf("borderless") >= 0, confirm.text);
             confirm.close();
             wait(100);

@@ -19,10 +19,16 @@ Item {
 
         function test_media_names() {
             compare(PrintModel.mediaLabel("stationery"), "Plain paper");
-            compare(PrintModel.mediaLabel("com.canon-mtglossy"), "Photo Paper Plus Glossy II");
+            compare(PrintModel.mediaLabel("com.canon-mtgr"), "Photo Paper Plus Glossy II");
+            compare(PrintModel.mediaLabel("com.canon-mtglossy"), "Glossy Photo Paper");
             compare(PrintModel.mediaLabel("com.canon-mtluster"), "Photo Paper Pro Luster");
             compare(PrintModel.mediaLabel("com.canon-mtmat"), "Matte Photo Paper");
             compare(PrintModel.mediaLabel("com.canon-mtunknown"), "Canon paper (unknown)");
+            // Postcards: the two faces are told apart; nothing is claimed about the finish.
+            compare(PrintModel.mediaLabel("com.canon-mthagaki"), "Postcard (Hagaki)");
+            compare(PrintModel.mediaLabel("com.canon-mthagakia"), "Postcard (Hagaki), address side");
+            compare(PrintModel.mediaLabel("com.canon-mthagakiglossy"), "Photo postcard (Hagaki)");
+            compare(PrintModel.mediaLabel("com.canon-mtfineart"), "Fine art paper (other brands)");
             compare(PrintModel.mediaLabel("some-new_type"), "some new type");
             verify(PrintModel.isPhotoMedia("com.canon-mtglossy"));
             verify(!PrintModel.isPhotoMedia("stationery"));
@@ -40,6 +46,9 @@ Item {
             compare(PrintModel.typesFor(caps, "cassette", "a4", false).join(","), "stationery");
             compare(PrintModel.defaultMedia(PrintModel.typesFor(caps, "auto", "l", true), true), "com.canon-mtglossy");
             compare(PrintModel.defaultMedia(PrintModel.typesFor(caps, "auto", "a4", false), false), "stationery");
+            // Photo Paper Plus Glossy II is preferred when the printer lists it.
+            compare(PrintModel.defaultMedia(["photographic", "com.canon-mtglossy", "com.canon-mtgr"], true), "com.canon-mtgr");
+            compare(PrintModel.defaultMedia(["photographic", "com.canon-mtluster"], true), "photographic");
         }
 
         function test_borderless_follows_the_media_database() {
@@ -126,7 +135,7 @@ Item {
 
         function test_description() {
             const t = PrintModel.describe({ copies: 2, mediaType: "com.canon-mtglossy", size: "l", sizeLabel: "L photo", borderless: true, color: true, layout: 1 }, "beach.jpg");
-            compare(t, "2 copies of beach.jpg on Photo Paper Plus Glossy II (L photo), borderless");
+            compare(t, "2 copies of beach.jpg on Glossy Photo Paper (L photo), borderless");
         }
     }
 }

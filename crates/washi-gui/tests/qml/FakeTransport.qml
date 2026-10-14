@@ -95,11 +95,18 @@ QtObject {
         from_printer: true
     })
 
+    // What the service says about the printer's own words and picture: names by language
+    // (`{"media-type.<keyword>": "Name"}`), and the path of the picture ("" = none).
+    property var words: ({ en: {}, ja: {} })
+    property string iconPath: ""
+    // The local picture pack image for the model (a file URL; "" = none installed).
+    property string pack: ""
+
     signal reply(int id, bool ok, string body)
     signal busSignal(string name, string a, string b, string c)
 
     function packImage(model) {
-        return "";
+        return pack;
     }
 
     function chooseLanguage(code) {
@@ -144,6 +151,8 @@ QtObject {
             }
             return [true, JSON.stringify(l)];
         }
+        case "GetPrinterStrings": return [true, JSON.stringify(words[args[1]] || {})];
+        case "GetPrinterIcon": return [true, iconPath];
         case "UpdateFirmware": return [true, "job-1"];
         case "GetNotificationSettings": return [true, JSON.stringify(notifications)];
         case "SetNotificationSettings": notifications = Object.assign({}, notifications, JSON.parse(args[0])); return [true, JSON.stringify(notifications)];

@@ -3,36 +3,45 @@ pragma Singleton
 import QtQuick
 
 // What the Photo Print and Document Print panels offer and how their choices become the
-// `PrintFile` options of the service. Pure functions: no printer access, no UI.
+// `PrintFile` options of the service. Functions only, no UI; the only thing read from outside is
+// the printer's own names for papers and trays (Store.printerText).
 QtObject {
     id: model
 
-    // Our own names for the media types the printer lists (IPP keywords, `com.canon-*` for
-    // Canon's papers). The mapping of the Canon keywords is a best reading of the printer's own
-    // list; anything unknown shows the keyword in readable form.
+    // The name of a media type (an IPP keyword; `com.canon-*` for Canon's papers) for a list or a
+    // sentence. The printer's own name for it, in the language of the app, comes first
+    // (Store.loadPrinterStrings reads them from the printer). Washi's own names below are the
+    // fallback for a printer that does not say (never read, an older firmware, a language it has
+    // no names in): plain descriptions, or product names the printer itself uses. A Canon keyword
+    // nobody has described here shows as "Canon paper (code)" rather than a guessed name.
     function mediaLabel(key) {
+        const own = Store.printerText("media-type", key, "");
+        return own !== "" ? own : fallbackLabel(key);
+    }
+
+    function fallbackLabel(key) {
         switch (key) {
         case "stationery": return i18n("Plain paper");
         case "photographic": return i18n("Photo paper");
         case "envelope": return i18n("Envelope");
         case "auto": return i18n("Detect automatically");
         case "com.canon-mtplatinum": return i18n("Photo Paper Pro Platinum");
-        case "com.canon-mtcrystal": return i18n("Photo Paper Pro Crystal");
+        case "com.canon-mtcrystal": return i18n("Photo Paper Pro Crystal Grade");
         case "com.canon-mtluster": return i18n("Photo Paper Pro Luster");
-        case "com.canon-mtgr": return i18n("Photo Paper Glossy");
+        case "com.canon-mtgr": return i18n("Photo Paper Plus Glossy II");
         case "com.canon-mtmat": return i18n("Matte Photo Paper");
-        case "com.canon-mtglossy": return i18n("Photo Paper Plus Glossy II");
+        case "com.canon-mtglossy": return i18n("Glossy Photo Paper");
         case "com.canon-mthires": return i18n("High Resolution Paper");
-        case "com.canon-mthagakiglossy":
-        case "com.canon-mthagakiglossya": return i18n("Glossy postcard (Hagaki)");
+        case "com.canon-mthagakiglossy": return i18n("Photo postcard (Hagaki)");
+        case "com.canon-mthagakiglossya": return i18n("Photo postcard (Hagaki), address side");
         case "com.canon-mttshirt": return i18n("T-shirt transfers");
         case "com.canon-mtsemisuper": return i18n("Photo Paper Plus Semi-gloss");
-        case "com.canon-mtfineart": return i18n("Fine Art Paper");
+        case "com.canon-mtfineart": return i18n("Fine art paper (other brands)");
         case "com.canon-mtcardstock": return i18n("Card stock");
-        case "com.canon-mtinkjet":
-        case "com.canon-mtinkjeta": return i18n("Inkjet postcard (Hagaki)");
-        case "com.canon-mthagaki":
-        case "com.canon-mthagakia": return i18n("Postcard (Hagaki)");
+        case "com.canon-mtinkjet": return i18n("Inkjet postcard (Hagaki)");
+        case "com.canon-mtinkjeta": return i18n("Inkjet postcard (Hagaki), address side");
+        case "com.canon-mthagaki": return i18n("Postcard (Hagaki)");
+        case "com.canon-mthagakia": return i18n("Postcard (Hagaki), address side");
         default:
             if (key.indexOf("com.canon-") === 0) {
                 const rest = key.substring("com.canon-".length).replace(/^mt/, "");
@@ -47,10 +56,11 @@ QtObject {
         return key !== "stationery" && key !== "envelope" && key !== "auto" && key.indexOf("com.canon-mtcardstock") !== 0;
     }
 
-    // The best default media type: Photo Paper Plus Glossy II, else any photo paper, else plain.
+    // The best default media type: Photo Paper Plus Glossy II (`mtgr`), else glossy photo paper,
+    // else any photo paper, else plain.
     function defaultMedia(types, photo) {
         if (photo) {
-            const pref = ["com.canon-mtglossy", "photographic", "com.canon-mtluster", "com.canon-mtplatinum"];
+            const pref = ["com.canon-mtgr", "com.canon-mtglossy", "photographic", "com.canon-mtluster", "com.canon-mtplatinum"];
             for (const p of pref) {
                 if (types.indexOf(p) >= 0) {
                     return p;
@@ -169,12 +179,13 @@ QtObject {
 
     function sourceOptions(caps) {
         const have = caps && caps.sources ? caps.sources : ["auto", "rear", "main"];
-        const out = [{ value: "auto", text: i18n("Automatic") }];
+        // The printer's own names for its sources, when it has them ("media-source.<keyword>").
+        const out = [{ value: "auto", text: Store.printerText("media-source", "auto", i18n("Automatic")) }];
         if (have.indexOf("rear") >= 0) {
-            out.push({ value: "rear", text: i18n("Rear tray") });
+            out.push({ value: "rear", text: Store.printerText("media-source", "rear", i18n("Rear tray")) });
         }
         if (have.indexOf("main") >= 0) {
-            out.push({ value: "cassette", text: i18n("Cassette") });
+            out.push({ value: "cassette", text: Store.printerText("media-source", "main", i18n("Cassette")) });
         }
         return out;
     }
