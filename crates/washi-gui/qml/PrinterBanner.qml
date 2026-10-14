@@ -89,12 +89,17 @@ Rectangle {
         ColumnLayout {
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: 176
+            // Without a minimum the row gives the spare width to the name column and the
+            // picture shrinks to a thumbnail.
+            Layout.minimumWidth: 150
             spacing: 6
 
             PrinterImage {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 170
+                Layout.minimumWidth: 140
                 Layout.preferredHeight: 86
+                Layout.minimumHeight: 80
                 model: Store.modelName
                 opacity: Store.statusKind === "offline" ? 0.55 : 1
                 MouseArea {

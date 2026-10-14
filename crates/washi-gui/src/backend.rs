@@ -243,11 +243,49 @@ fn pack_image_path(model: &str) -> Option<String> {
         short.to_ascii_uppercase(),
         short.to_ascii_lowercase(),
     ];
-    names
-        .iter()
-        .map(|n| base.join(format!("{n}.png")))
-        .find(|p| p.is_file())
-        .map(|p| format!("file://{}", p.display()))
+    let found = names.iter().map(|n| base.join(format!("{n}.png"))).find(|p| p.is_file())?;
+    let shown = trimmed_pack_copy(&found).unwrap_or(found);
+    Some(format!("file://{}", shown.display()))
+}
+
+/// Pack renders often sit in a large transparent canvas, which makes the printer tiny in the
+/// banner. Keep a copy with the margin cut in `~/.cache/washi/pack/` (rewritten when the source
+/// file changes); `None` when nothing needs cutting or the copy cannot be written.
+fn trimmed_pack_copy(src: &std::path::Path) -> Option<std::path::PathBuf> {
+    let meta = std::fs::metadata(src).ok()?;
+    let stamp = meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let cache = std::env::var_os("XDG_CACHE_HOME")
+        .filter(|v| !v.is_empty())
+        .map(std::path::PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".cache")))?
+        .join("washi/pack");
+    let name = src.file_stem()?.to_string_lossy().into_owned();
+    let out = cache.join(format!("{name}-{stamp}-{}.png", meta.len()));
+    if out.is_file() {
+        return Some(out);
+    }
+    let png = std::fs::read(src).ok()?;
+    let icon = washi_core::net::web::PrinterIcon { png, width: 0, height: 0 };
+    let (trimmed, _, _) = washi_core::localization::trim_margin(&icon)?;
+    std::fs::create_dir_all(&cache).ok()?;
+    // Older copies of the same picture are no longer needed.
+    if let Ok(dir) = std::fs::read_dir(&cache) {
+        for e in dir.flatten() {
+            let f = e.file_name().to_string_lossy().into_owned();
+            if f.starts_with(&format!("{name}-")) && e.path() != out {
+                let _ = std::fs::remove_file(e.path());
+            }
+        }
+    }
+    let tmp = out.with_extension("tmp");
+    std::fs::write(&tmp, trimmed).ok()?;
+    std::fs::rename(&tmp, &out).ok()?;
+    Some(out)
 }
 
 fn error_body(name: &str, message: &str) -> String {
