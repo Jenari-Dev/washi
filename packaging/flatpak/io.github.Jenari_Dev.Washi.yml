@@ -35,10 +35,6 @@ modules:
       - type: archive
         url: https://poppler.freedesktop.org/poppler-data-0.4.12.tar.gz
         sha256: c835b640a40ce357e1b83666aabd95edffa24ddddd49b8daff63adb851cdab74
-        x-checker-data:
-          type: anitya
-          project-id: 3687
-          url-template: https://poppler.freedesktop.org/poppler-data-$version.tar.gz
 
   # Only `pdftoppm` and `pdfinfo` are needed: Document Print rasterises PDF pages with them.
   - name: poppler
@@ -74,10 +70,6 @@ modules:
       - type: archive
         url: https://poppler.freedesktop.org/poppler-26.08.0.tar.xz
         sha256: dc906e68cea698109706ac6aa3d2c9d4512fcfcac42d90b8afcda486d1b9abd0
-        x-checker-data:
-          type: anitya
-          project-id: 3686
-          url-template: https://poppler.freedesktop.org/poppler-$version.tar.xz
 
   - name: washi
     buildsystem: simple
