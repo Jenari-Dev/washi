@@ -35,6 +35,8 @@ use crate::state::{StateFile, StoredPrinter};
 
 /// How long a request waits for the per-printer lock before giving up.
 const LOCK_WAIT: Duration = Duration::from_secs(20);
+/// Pauses before each look at a printer that was just asked to wake up (about 8 s in all).
+const WAKE_LOOKS_MS: [u64; 5] = [500, 1000, 1500, 2000, 3000];
 
 /// How long the media summary of a printer is reused.
 const PRINT_CAPS_MAX_AGE: Duration = Duration::from_secs(30 * 60);
@@ -891,10 +893,12 @@ impl Service {
 impl Service {
     // ---- wake, notifications, forgetting printers ----------------------------------------------
 
-    /// Wake a printer in auto power-off with IVEC `PowerOn`. **Unverified** on a real printer
-    /// (the request comes from the Windows driver's library; a sleeping XK140 may answer
-    /// `NG Suspended`). WRITES: `json` needs `"confirm": true`. Returns at once; the printer is
-    /// read again a few times so that UIs see it come up.
+    /// Wake a printer in auto power-off with IVEC `PowerOn` (with the power-on mode `ModeA`;
+    /// verified on a real XK140, firmware 1.060, 2026-10-14). WRITES: `json` needs
+    /// `"confirm": true`. After the request the printer is read again for a few seconds, so
+    /// that UIs see it come up (`SnapshotChanged`); the answer says whether the follow-up
+    /// status showed the printer awake (`"verified": true`). A printer that is slower keeps
+    /// being watched in the background.
     pub async fn wake(self: &Arc<Self>, host: &str, json: &str) -> Result<String> {
         self.ensure_writable("Wake")?;
         #[derive(serde::Deserialize)]
@@ -921,24 +925,42 @@ impl Service {
         })
         .await
         .map_err(ServiceError::internal)??;
-        info!("printer {}: wake request sent (PowerOn, unverified)", slot.log_id);
-        let svc = self.clone();
-        tokio::spawn(async move {
-            for secs in [2u64, 3, 5, 8] {
-                tokio::time::sleep(Duration::from_secs(secs)).await;
-                if let Ok(s) = svc.refresh_slot(slot.clone()).await {
-                    if s.power == Power::On {
-                        break;
-                    }
+        info!("printer {}: wake request sent (PowerOn)", slot.log_id);
+        // The request only says "accepted". The printer needs a few seconds to come up, so look
+        // at its status until it does: that is what `verified` reports.
+        let mut awake = false;
+        for ms in WAKE_LOOKS_MS {
+            tokio::time::sleep(Duration::from_millis(ms)).await;
+            if let Ok(s) = self.refresh_slot(slot.clone()).await {
+                if s.power == Power::On {
+                    awake = true;
+                    break;
                 }
             }
-        });
-        Ok(serde_json::json!({
-            "sent": true,
-            "verified": false,
-            "note": "PowerOn is unverified on real printers; watch the status or press the power button"
-        })
-        .to_string())
+        }
+        if awake {
+            info!("printer {}: woke up (status confirms it)", slot.log_id);
+        } else {
+            info!("printer {}: no sign of life yet, still watching", slot.log_id);
+            // A slow printer: keep looking so that the UIs see it when it arrives.
+            let svc = self.clone();
+            tokio::spawn(async move {
+                for secs in [5u64, 10] {
+                    tokio::time::sleep(Duration::from_secs(secs)).await;
+                    if let Ok(s) = svc.refresh_slot(slot.clone()).await {
+                        if s.power == Power::On {
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        let note = if awake {
+            "the printer woke up (confirmed by its status)"
+        } else {
+            "the printer accepted the wake command but is not up yet; watch the status or press the power button"
+        };
+        Ok(serde_json::json!({ "sent": true, "verified": awake, "note": note }).to_string())
     }
 
     /// The `[notifications]` switches as JSON `{"enabled", "ink", "errors", "online"}`.

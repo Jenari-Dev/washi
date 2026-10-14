@@ -184,10 +184,12 @@ impl Washi {
         self.svc.get_print_capabilities(&host).await.map_err(|e| self.err(e))
     }
 
-    /// Wake a printer that is in auto power-off (IVEC `PowerOn`, **unverified** on real
-    /// printers). WRITES, so `options_json` must contain `"confirm": true` and the daemon must
-    /// not be read-only. Returns at once with `{"sent", "verified": false, "note"}`; the
-    /// printer is read again a few times, so watch `SnapshotChanged`.
+    /// Wake a printer that is in auto power-off (IVEC `PowerOn` with the power-on mode
+    /// `ModeA`; verified on a real XK140, firmware 1.060). WRITES, so `options_json` must
+    /// contain `"confirm": true` and the daemon must not be read-only. After the request the
+    /// printer is read again for up to about 8 seconds; the call then returns
+    /// `{"sent": true, "verified", "note"}` with `verified` true when that status showed the
+    /// printer awake. A slower printer keeps being watched, so watch `SnapshotChanged`.
     async fn wake(&self, host: String, options_json: String) -> Result<String, DbusError> {
         self.svc.wake(&host, &options_json).await.map_err(|e| self.err(e))
     }

@@ -823,9 +823,14 @@ async fn waking_a_sleeping_printer_needs_write_access_and_a_confirm() {
     assert_eq!(r.svc.get_snapshot(&r.host).await.unwrap().power, Power::Sleeping);
     let mut rx = r.svc.subscribe();
     let out = parse(&r.svc.wake(&r.host, r#"{"confirm": true}"#).await.unwrap());
-    assert_eq!((out["sent"].as_bool(), out["verified"].as_bool()), (Some(true), Some(false)));
+    assert_eq!(
+        (out["sent"].as_bool(), out["verified"].as_bool()),
+        (Some(true), Some(true)),
+        "the follow-up status shows the printer awake"
+    );
+    assert!(out["note"].as_str().unwrap().contains("woke up"), "{out}");
     assert_eq!(fake.writes(), ["PowerOn/device"], "one request, no job bracket");
-    // The daemon looks again and announces the awake printer.
+    // The daemon looked again and announced the awake printer.
     let ev = next(
         &mut rx,
         |e| matches!(e, Event::Snapshot { json, .. } if json.contains("\"power\":\"on\"")),
