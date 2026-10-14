@@ -14,6 +14,12 @@
 #                             extra cleaning types): banner tabs, support code, links, firmware,
 #                             extra maintenance cards, text that follows the ring; output
 #                             target/screens-r3/<name>-<lang>.png.
+#   tests/screens.sh r4       the printer's own words and picture in English and Japanese: the paper
+#                             list of Photo Print, the confirmation sentence, the home banner and the
+#                             printer list, against a fake printer that serves a strings file and a
+#                             picture written by this script (never a real printer's); also a live
+#                             language switch and a local picture pack image winning over the
+#                             printer's picture; output target/screens-r4/<name>.png.
 #   tests/screens.sh i18n     the main pages and one dialog of each kind in English and in Japanese
 #                             (WASHI_LANG=en|ja) against the fake printer; output
 #                             target/screens-i18n/<name>-<lang>.png (override with WASHI_SCREENS).
@@ -40,6 +46,7 @@ fake=${FAKE_BIN:-$root/target/release/washi-fake-printer}
 out=${WASHI_SCREENS:-$root/target/screens}
 [ "$mode" = i18n ] && out=${WASHI_SCREENS:-$root/target/screens-i18n}
 [ "$mode" = r3 ] && out=${WASHI_SCREENS:-$root/target/screens-r3}
+[ "$mode" = r4 ] && out=${WASHI_SCREENS:-$root/target/screens-r4}
 mkdir -p "$out"
 work=$(mktemp -d)
 pids=""
@@ -66,6 +73,36 @@ samples() {
         -draw 'rectangle 100,600 700,610' -fill '#2a5db0' -draw 'rectangle 100,900 500,1300' \
         -fill '#c93a3a' -draw 'circle 800,1100 800,1250' -rotate 2.2 -gravity center -crop 1240x1754+0+0 +repage \
         -quality 90 "$work/samples/scan.jpg" 2>/dev/null
+}
+
+# Words and a picture for a fake printer to serve, written here: made-up names (not a printer's)
+# in English and Japanese, and a product-shot-like drawing on a transparent ground.
+words() {
+    mkdir -p "$work/words"
+    cat >"$work/words/en.txt" <<'EOF_EN'
+/* Sample strings for the screenshot check: original text, not from any printer. */
+"media-type.photographic" = "Sample Photo Stock";
+"media-type.com.canon-mtglossy" = "Sample Glossy Photo Stock";
+"media-type.com.canon-mtluster" = "Sample Lustre Photo Stock";
+"media-type.stationery" = "Sample Plain Stock";
+"media-type.com.canon-mtdisca" = "Sample Disc (recommended)";
+"media-type.com.canon-mtdiscb" = "Sample Disc (other)";
+EOF_EN
+    cat >"$work/words/ja.txt" <<'EOF_JA'
+/* スクリーンショット確認用の見本：どのプリンターのものでもない、この確認用に書いた文言 */
+"media-type.photographic" = "見本フォト用紙";
+"media-type.com.canon-mtglossy" = "見本光沢フォト用紙";
+"media-type.com.canon-mtluster" = "見本ラスターフォト用紙";
+"media-type.stationery" = "見本普通紙";
+"media-type.com.canon-mtdisca" = "見本ディスク（推奨）";
+"media-type.com.canon-mtdiscb" = "見本ディスク（その他）";
+EOF_JA
+    # A printer-like drawing, 512 x 512, with the empty margin a product shot has.
+    "$im" -size 512x512 xc:none -stroke '#8d96a8' -strokewidth 3 \
+        -fill '#dfe5f0' -draw 'polygon 60,190 130,130 400,130 452,190' \
+        -fill '#f4f6fa' -draw 'roundrectangle 60,190 452,360 14,14' \
+        -fill '#243b6b' -stroke none -draw 'roundrectangle 330,225 420,262 6,6' \
+        -fill '#9aa5ba' -draw 'rectangle 92,332 300,346' "$work/words/icon.png"
 }
 
 shot() { # name [VAR=value ...]
@@ -296,8 +333,38 @@ r3)
     done
     stop_fake
     ;;
+r4)
+    export XDG_CONFIG_HOME=$work/config XDG_CACHE_HOME=$work/cache XDG_STATE_HOME=$work/state XDG_DATA_HOME=$work/data
+    mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
+    samples
+    words
+    langs=${WASHI_LANGS:-"en ja"}
+    "$fake" --chmp-port 18080 --ipp-port 18631 --strings en="$work/words/en.txt" \
+        --strings ja="$work/words/ja.txt" --icon "$work/words/icon.png" </dev/null >"$work/fake.log" 2>&1 &
+    pids="$pids $!"
+    sleep 0.5
+    "$washid" --printer 127.0.0.1:18080 --ipp-port 18631 >"$work/washid.log" 2>&1 &
+    pids="$pids $!"
+    sleep 1
+    for lang in $langs; do
+        l="WASHI_LANG=$lang"
+        shot "photo-print-$lang" $l WASHI_PAGE=photo-print WASHI_FILE="$work/samples/photo.jpg" WASHI_SHOT_DELAY_MS=3500
+        shot "photo-print-list-$lang" $l WASHI_PAGE=photo-print WASHI_FILE="$work/samples/photo.jpg" WASHI_OPEN=media WASHI_SHOT_DELAY_MS=3500
+        shot "dialog-print-confirm-$lang" $l WASHI_PAGE=photo-print WASHI_FILE="$work/samples/photo.jpg" WASHI_DIALOG=nav-print-confirm WASHI_SHOT_DELAY_MS=2500
+        shot "home-$lang" $l WASHI_PAGE=home WASHI_SHOT_DELAY_MS=1500
+        shot "printer-list-$lang" $l WASHI_PAGE=printer-list WASHI_SHOT_DELAY_MS=1500
+        shot "disc-label-$lang" $l WASHI_PAGE=disc-label WASHI_DISC_IMAGE="$work/samples/photo.jpg" "WASHI_DISC_TEXT=Summer mix|2026" WASHI_SHOT_DELAY_MS=2500
+    done
+    # The window starts in English and is switched to Japanese while it is open: the names follow.
+    shot "photo-print-list-switched-to-ja" WASHI_LANG=en WASHI_SWITCH_LANG=ja WASHI_PAGE=photo-print WASHI_FILE="$work/samples/photo.jpg" WASHI_OPEN=media WASHI_SHOT_DELAY_MS=3500
+    # A picture pack image of your own comes before the printer's picture (here a plain drawing).
+    mkdir -p "$XDG_DATA_HOME/washi/printers"
+    "$im" -size 420x270 xc:none -fill '#f2c14e' -stroke '#7a5a10' -strokewidth 4 \
+        -draw 'roundrectangle 20,60 400,220 18,18' "$XDG_DATA_HOME/washi/printers/XK140.png"
+    shot "home-pack-image-en" WASHI_LANG=en WASHI_PAGE=home WASHI_SHOT_DELAY_MS=1500
+    ;;
 *)
-    echo "usage: $0 real|fake|sleep|i18n|r3 [real]" >&2
+    echo "usage: $0 real|fake|sleep|i18n|r3|r4 [real]" >&2
     exit 2
     ;;
 esac

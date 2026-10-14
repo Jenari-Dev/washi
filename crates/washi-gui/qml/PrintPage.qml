@@ -150,6 +150,15 @@ RowLayout {
         if (orient !== "") {
             orientation = orient;
         }
+        if (Store.env("WASHI_OPEN") === "media") {
+            showListTimer.start();
+        }
+    }
+    // Screenshot checks: WASHI_OPEN=media drops down the list of media types once the page is up.
+    Timer {
+        id: showListTimer
+        interval: 1800
+        onTriggered: mediaBox.popup.open()
     }
     Connections {
         target: Store
@@ -703,6 +712,7 @@ RowLayout {
             FormRow {
                 label: i18n("Media Type")
                 WCombo {
+                    id: mediaBox
                     objectName: "mediaCombo"
                     Layout.fillWidth: true
                     enabled: page.typeList.length > 0
