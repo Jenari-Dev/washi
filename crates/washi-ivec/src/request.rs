@@ -293,9 +293,10 @@ pub enum Request {
         job: JobId,
     },
     PowerOff,
-    /// Wake a printer that is in auto power-off (device service, no job). **Unverified** on a
-    /// real printer: the string comes from the Windows driver's service-command library
-    /// (`PowerOn`), which sends it without a job bracket like `PowerOff`.
+    /// Wake a printer that is in auto power-off (device service, no job), with
+    /// `<ivec:poweronmode>ModeA</ivec:poweronmode>` — the only parameter the Windows driver's
+    /// printer-properties UI passes. Without it the XK140 answers `NG ParameterError`
+    /// (observed 2026-10-14).
     PowerOn,
     VendorCmd(VendorCommand),
 }
@@ -352,7 +353,7 @@ impl Request {
         Request::PowerOff
     }
 
-    /// See [`Request::PowerOn`]: unverified.
+    /// See [`Request::PowerOn`].
     pub fn power_on() -> Self {
         Request::PowerOn
     }
@@ -403,7 +404,8 @@ impl Request {
     fn params(&self) -> String {
         let job = |j: &JobId| format!("<ivec:jobID>{}</ivec:jobID>", escape(j.as_str()));
         match self {
-            Request::Get { .. } | Request::PowerOff | Request::PowerOn => String::new(),
+            Request::Get { .. } | Request::PowerOff => String::new(),
+            Request::PowerOn => "<ivec:poweronmode>ModeA</ivec:poweronmode>".to_string(),
             Request::StartJob { job: j, bidi, username, computername, job_description, .. } => {
                 let mut x = job(j);
                 x.push_str(&format!("<ivec:bidi>{}</ivec:bidi>", if *bidi { "1" } else { "0" }));
@@ -529,6 +531,15 @@ mod tests {
         assert!(!Request::power_on().is_read_only());
         assert!(!Request::start_job(Service::Device, JobId::standard()).is_read_only());
         assert!(!Request::update_firmware().is_read_only());
+    }
+
+    #[test]
+    fn power_on_carries_the_power_on_mode() {
+        let n = parsed(&Request::power_on());
+        let ps = n.find(&["contents", "param_set"]).unwrap();
+        assert_eq!(ps.attr("servicetype"), Some("device"));
+        assert_eq!(ps.child_text("poweronmode"), Some("ModeA"));
+        assert_eq!(ps.child_text("jobID"), None, "no job bracket");
     }
 
     #[test]
