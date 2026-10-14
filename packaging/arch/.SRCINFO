@@ -1,6 +1,6 @@
 pkgbase = washi
 	pkgdesc = Status, maintenance, printing and scanning for Canon inkjet printers (a Canon PRINT replacement)
-	pkgver = 0.1.2
+	pkgver = 0.1.3
 	pkgrel = 1
 	url = https://github.com/Jenari-Dev/washi
 	arch = x86_64
@@ -27,7 +27,7 @@ pkgbase = washi
 	optdepends = qt6-wayland: native Wayland support
 	optdepends = xdg-utils: opening web links in your browser
 	options = !lto
-	source = washi-0.1.2.tar.gz::https://github.com/Jenari-Dev/washi/archive/refs/tags/v0.1.2.tar.gz
+	source = washi-0.1.3.tar.gz::https://github.com/Jenari-Dev/washi/archive/refs/tags/v0.1.3.tar.gz
 	sha256sums = SKIP
 
 pkgname = washi

@@ -97,6 +97,23 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.3" date="2026-10-14">
+      <description>
+        <p>Fonts for disc labels, more scan and print options.</p>
+        <p xml:lang="ja">ディスクレーベルのフォント指定と、スキャン・印刷の設定を追加しました。</p>
+        <ul>
+          <li>Disc label text: choose the font family, bold and italic; Japanese fonts included</li>
+          <li xml:lang="ja">ディスクレーベルの文字に、フォントの種類・太字・斜体を指定できます（日本語フォントにも対応）</li>
+          <li>Scan stitching joins left and right or top and bottom</li>
+          <li xml:lang="ja">スキャンのつなぎ合わせで、左右または上下を選べます</li>
+          <li>Print previews show the edge the printer cannot print on</li>
+          <li xml:lang="ja">印刷プレビューに、印刷できない余白の位置を表示します</li>
+          <li>Document Print can print the last page first</li>
+          <li xml:lang="ja">文書印刷で、最後のページから印刷できます</li>
+        </ul>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.2" date="2026-10-14">
       <description>
         <p>Paper names and the printer picture now come from your printer.</p>

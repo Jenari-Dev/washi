@@ -4,7 +4,7 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.3] - 2026-10-14
 
 ### Added
 - **Disc label fonts.** Every text has a font family picker (the installed families, Japanese ones
@@ -33,6 +33,8 @@ All notable changes to Washi are listed here. The format follows
   the styles, and the service resolves the file (`TextSpec.font` still works for a file).
 - A font collection is opened at the face fontconfig reports. The Japanese cut is preferred for
   Japanese text in the default font (fontconfig alone ranked the Korean cut of Noto Sans CJK first).
+- The Flatpak builds poppler and poppler-data from their release tarballs (pinned by checksum)
+  instead of cloning them from git.
 
 ## [0.1.2] - 2026-10-14
 
