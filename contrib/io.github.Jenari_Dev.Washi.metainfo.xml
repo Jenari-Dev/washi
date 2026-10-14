@@ -97,6 +97,19 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.2" date="2026-10-14">
+      <description>
+        <p>Paper names and the printer picture now come from your printer.</p>
+        <p xml:lang="ja">用紙の名前とプリンターの画像を、お使いのプリンターから読み込むようになりました。</p>
+        <ul>
+          <li>Paper types are shown with the names your printer publishes, in English or Japanese</li>
+          <li xml:lang="ja">用紙の種類を、プリンター自身が持つ名前（英語または日本語）で表示します</li>
+          <li>The banner shows your printer's own picture, larger than before</li>
+          <li xml:lang="ja">バナーにプリンター自身の画像を、これまでより大きく表示します</li>
+        </ul>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.1" date="2026-10-14">
       <description>
         <p>The Wake button works.</p>

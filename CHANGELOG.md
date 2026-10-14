@@ -4,7 +4,7 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.2] - 2026-10-14
 
 ### Added
 - **The printer's own paper names, in the language you use.** Washi reads the display names the
@@ -31,6 +31,10 @@ All notable changes to Washi are listed here. The format follows
   Photo Paper Plus Glossy II (`com.canon-mtgr`), then glossy photo paper.
 - Drop-down entries are always shown as plain text, never as markup, because paper names now come
   from the network.
+- Canon PRINT's exact accent blue (`#1354BF`, hover `#124FB3`, pressed `#0E3F8F`) instead of a
+  colour estimated from screenshots.
+- A bigger printer picture in the banner: the picture keeps a minimum size, and picture-pack images
+  are shown without their transparent margin (a trimmed copy is kept in `~/.cache/washi/pack`).
 
 ## [0.1.1] - 2026-10-14
 
