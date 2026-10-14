@@ -77,6 +77,27 @@ QtObject {
             main: { stationery: { a4: 3, a5: 1, b5: 1 } },
             rear: { "com.canon-mtglossy": { a4: 3, card: 1, l: 3 }, "com.canon-mtluster": { a4: 3, l: 3 }, envelope: { a4: 1, l: 1 }, photographic: { a4: 3, card: 1, l: 3 }, stationery: { a4: 1, card: 1, l: 1 } }
         },
+        // The bordered entries' margins [top, bottom, left, right] in 1/100 mm: even ones, and
+        // plain A4 from the front tray made uneven so that a turned sheet shows it.
+        margins: (function () {
+            const media = {
+                auto: { "com.canon-mtglossy": ["a4", "card", "l"], "com.canon-mtluster": ["a4", "l"], envelope: ["a4", "l"], photographic: ["a4", "card", "l"], stationery: ["a4", "card", "l"] },
+                main: { stationery: ["a4", "a5", "b5"] },
+                rear: { "com.canon-mtglossy": ["a4", "card", "l"], "com.canon-mtluster": ["a4", "l"], envelope: ["a4", "l"], photographic: ["a4", "card", "l"], stationery: ["a4", "card", "l"] }
+            };
+            const out = {};
+            for (const src of Object.keys(media)) {
+                out[src] = {};
+                for (const ty of Object.keys(media[src])) {
+                    out[src][ty] = {};
+                    for (const size of media[src][ty]) {
+                        out[src][ty][size] = [500, 500, 340, 340];
+                    }
+                }
+            }
+            out.auto.stationery.a4 = [300, 1200, 340, 560];
+            return out;
+        })(),
         qualities: ["draft", "normal", "high"], duplex: true, copies_max: 99,
         document_formats: ["image/jpeg", "image/pwg-raster"]
     })

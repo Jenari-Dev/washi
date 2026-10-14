@@ -96,6 +96,36 @@ QtObject {
         return choice === "cassette" ? "main" : choice;
     }
 
+    // The edge of a sheet the printer cannot print on, for the paper that is chosen: the margins
+    // of the printer's bordered entry for this source, type and size, in mm and *as the sheet is
+    // drawn* ({top, right, bottom, left}). The database lists them for the portrait sheet; a
+    // landscape sheet is that sheet turned a quarter, so its top is the portrait sheet's right
+    // edge and so on. null when nothing is lost there: no entry, margins the printer does not
+    // state, or all zero (borderless printing is the caller's business: it asks for none).
+    function unprintable(caps, source, type, size, landscape) {
+        const s = caps && caps.margins ? caps.margins[sourceKey(source)] : null;
+        const t = s ? s[type] : null;
+        const m = t ? t[size] : null;
+        if (!m || m.length !== 4 || m.some(v => !(v >= 0))) {
+            return null;
+        }
+        const top = m[0] / 100;
+        const bottom = m[1] / 100;
+        const left = m[2] / 100;
+        const right = m[3] / 100;
+        if (top + bottom + left + right <= 0) {
+            return null;
+        }
+        return landscape ? { top: right, right: bottom, bottom: left, left: top } : { top: top, right: right, bottom: bottom, left: left };
+    }
+
+    // Width and height in mm of the sheet as drawn.
+    function sheetMm(sizeObj, orientation) {
+        const w = (sizeObj ? sizeObj.width : 21000) / 100;
+        const h = (sizeObj ? sizeObj.height : 29700) / 100;
+        return orientation === "landscape" ? { w: h, h: w } : { w: w, h: h };
+    }
+
     // Media types offered for a size from a source (printer's order), photo papers first if wanted.
     function typesFor(caps, source, size, photoFirst) {
         if (!caps || !caps.media) {

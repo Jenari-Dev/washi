@@ -40,6 +40,9 @@ RowLayout {
     readonly property var sizeObj: caps && caps.sizes ? (caps.sizes.find(z => z.key === sizeKey) || null) : null
     readonly property var sizeList: PrintModel.sizesFor(caps, source, "")
     readonly property var typeList: PrintModel.typesFor(caps, source, sizeKey, !documentMode)
+    // The edge the printer cannot print on for this paper (null: none to show, or borderless).
+    readonly property var edge: !caps || borderless ? null : PrintModel.unprintable(caps, source, mediaType, sizeKey, orientation === "landscape")
+    readonly property var sheetMm: PrintModel.sheetMm(sizeObj, orientation)
     readonly property bool borderlessOk: !documentMode && PrintModel.borderlessAvailable(caps, PrintModel.sourceKey(source), mediaType, sizeKey) && layout === 1
 
     // Document facts (from QtPdf once the page is loaded).
@@ -97,6 +100,11 @@ RowLayout {
             sizeKey = hit || (sizes.length > 0 ? sizes[0].key : caps.sizes[0].key);
         }
         reconcile();
+        // The screenshot checks can start with margins (WASHI_BORDERLESS=0).
+        if (Store.env("WASHI_BORDERLESS") === "0") {
+            borderlessTouched = true;
+            borderless = false;
+        }
     }
 
     // Keep media type, borderless and layout consistent with what the printer offers.
@@ -464,6 +472,9 @@ RowLayout {
                     anchors.fill: parent
                     visible: !page.documentMode
                     aspect: PrintModel.sheetAspect(page.sizeObj, page.orientation)
+                    edge: page.edge
+                    sheetMm: page.sheetMm
+                    fitToEdge: true
                     imagePath: page.sheetPath
                     busy: page.sheetBusy
                 }
@@ -478,6 +489,8 @@ RowLayout {
                     visible: page.documentMode && page.fileKind === "office"
                     anchors.fill: parent
                     aspect: PrintModel.sheetAspect(page.sizeObj, page.orientation)
+                    edge: page.edge
+                    sheetMm: page.sheetMm
                     ColumnLayout {
                         anchors.centerIn: parent
                         width: parent.width - 32
@@ -507,12 +520,24 @@ RowLayout {
                     objectName: "docSheet"
                     source: "file://" + page.files[0]
                     aspect: PrintModel.sheetAspect(page.sizeObj, page.orientation)
+                    edge: page.edge
+                    sheetMm: page.sheetMm
                     pages: page.selectedPages
                     sheetIndex: Math.min(page.current, page.sheetCount - 1)
                     layout: page.layout
                     onFirstLandscapeChanged: if (pageCount > 0) page.orientation = firstLandscape ? "landscape" : "portrait"
                     onPageCountChanged: if (pageCount > 0) page.orientation = firstLandscape ? "landscape" : "portrait"
                 }
+            }
+
+            WText {
+                objectName: "edgeHint"
+                visible: page.edge !== null
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                kind: "muted"
+                wrapMode: Text.WordWrap
+                text: i18n("The dashed line marks the edge the printer cannot print on.")
             }
 
             // Thumbnails of the selected photos

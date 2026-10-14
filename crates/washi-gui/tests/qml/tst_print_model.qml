@@ -51,6 +51,37 @@ Item {
             compare(PrintModel.defaultMedia(["photographic", "com.canon-mtluster"], true), "photographic");
         }
 
+        function test_the_unprintable_edge_follows_the_media_database_and_the_turn_of_the_sheet() {
+            // Plain A4 from the front tray: [top, bottom, left, right] = 3, 12, 3.4, 5.6 mm.
+            const portrait = PrintModel.unprintable(caps, "auto", "stationery", "a4", false);
+            compare(portrait.top, 3);
+            compare(portrait.bottom, 12);
+            compare(portrait.left, 3.4);
+            compare(portrait.right, 5.6);
+            // A landscape sheet is the portrait one turned a quarter anticlockwise: the portrait
+            // sheet's top edge is the left one, its left edge the bottom one, and so on.
+            const land = PrintModel.unprintable(caps, "auto", "stationery", "a4", true);
+            compare(land.left, 3);
+            compare(land.bottom, 3.4);
+            compare(land.right, 12);
+            compare(land.top, 5.6);
+            // The cassette is the "main" source of the database.
+            compare(PrintModel.unprintable(caps, "cassette", "stationery", "a4", false).top, 5);
+            // Nothing to show without an entry, without the figures, or when all are zero.
+            verify(PrintModel.unprintable(caps, "auto", "stationery", "a5", false) === null);
+            verify(PrintModel.unprintable(caps, "auto", "no-such-type", "a4", false) === null);
+            verify(PrintModel.unprintable(null, "auto", "stationery", "a4", false) === null);
+            verify(PrintModel.unprintable({ media: {} }, "auto", "stationery", "a4", false) === null, "an older service sends no margins");
+            verify(PrintModel.unprintable({ margins: { auto: { x: { a4: [0, 0, 0, 0] } } } }, "auto", "x", "a4", false) === null);
+            verify(PrintModel.unprintable({ margins: { auto: { x: { a4: [1, "?", 1, 1] } } } }, "auto", "x", "a4", false) === null);
+            // The sheet as drawn, in mm.
+            const a4 = caps.sizes.find(z => z.key === "a4");
+            compare(PrintModel.sheetMm(a4, "portrait").w, 210);
+            compare(PrintModel.sheetMm(a4, "landscape").w, 297);
+            compare(PrintModel.sheetMm(a4, "landscape").h, 210);
+            compare(PrintModel.sheetMm(null, "portrait").h, 297);
+        }
+
         function test_borderless_follows_the_media_database() {
             verify(PrintModel.borderlessAvailable(caps, "auto", "com.canon-mtglossy", "l"));
             verify(!PrintModel.borderlessAvailable(caps, "auto", "com.canon-mtglossy", "card"), "card has margins only");

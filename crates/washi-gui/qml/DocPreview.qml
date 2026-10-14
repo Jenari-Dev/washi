@@ -11,6 +11,8 @@ Item {
     property int sheetIndex: 0
     property int layout: 1
     property real aspect: 0.707
+    property var edge: null
+    property var sheetMm: ({ w: 210, h: 297 })
 
     readonly property int pageCount: sheet.item ? sheet.item.pageCount : 0
     readonly property bool firstLandscape: sheet.item ? sheet.item.firstLandscape : false
@@ -33,4 +35,6 @@ Item {
     Binding { target: sheet.item; property: "sheetIndex"; value: preview.sheetIndex; when: sheet.item !== null }
     Binding { target: sheet.item; property: "layout"; value: preview.layout; when: sheet.item !== null }
     Binding { target: sheet.item; property: "aspect"; value: preview.aspect; when: sheet.item !== null }
+    Binding { target: sheet.item; property: "edge"; value: preview.edge; when: sheet.item !== null }
+    Binding { target: sheet.item; property: "sheetMm"; value: preview.sheetMm; when: sheet.item !== null }
 }

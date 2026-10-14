@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:42+0900\n"
+"POT-Creation-Date: 2026-10-14 12:47+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1854,6 +1854,10 @@ msgstr ""
 msgid ""
 "Office files are converted by LibreOffice when you print, so there is no "
 "preview here."
+msgstr ""
+
+#, no-javascript-format
+msgid "The dashed line marks the edge the printer cannot print on."
 msgstr ""
 
 #, no-javascript-format

@@ -941,6 +941,15 @@ async fn print_capabilities_are_a_cached_read_even_when_read_only() {
     assert!(v["sizes"].as_array().unwrap().iter().any(|z| z["key"] == "a4"));
     assert!(v["media"]["main"]["stationery"]["a4"].as_u64().unwrap() & 1 == 1, "{v}");
     assert_eq!(v["qualities"], serde_json::json!(["draft", "normal", "high"]));
+    // The edge the printer cannot print on: [top, bottom, left, right] in 1/100 mm of the
+    // bordered entries; borderless-only combinations have none.
+    assert_eq!(
+        v["margins"]["auto"]["stationery"]["a4"],
+        serde_json::json!([500, 500, 340, 340]),
+        "{v}"
+    );
+    assert!(v["margins"]["auto"]["com.canon-mtglossy"]["l"].is_array());
+    assert!(v["margins"].get("disc").is_none(), "the disc tray is not a print page");
     assert!(fake.writes().is_empty());
     fake.clear_log();
     let again = r.svc.get_print_capabilities(&r.host).await.unwrap();

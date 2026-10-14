@@ -178,8 +178,9 @@ impl Washi {
 
     /// What the printer prints on: JSON `{sources, media_types, sizes, media, qualities, duplex,
     /// copies_max, ...}` where `media[source][media type][size key]` is a bit set (1 = with
-    /// margins, 2 = borderless). Read-only IPP queries, allowed with `--read-only`; cached for
-    /// half an hour.
+    /// margins, 2 = borderless) and `margins[source][media type][size key]` is `[top, bottom,
+    /// left, right]` in 1/100 mm for combinations with a bordered entry. Read-only IPP queries,
+    /// allowed with `--read-only`; cached for half an hour.
     async fn get_print_capabilities(&self, host: String) -> Result<String, DbusError> {
         self.svc.get_print_capabilities(&host).await.map_err(|e| self.err(e))
     }

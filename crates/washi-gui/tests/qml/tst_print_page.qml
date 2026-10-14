@@ -104,6 +104,63 @@ Item {
             compare(p.files.join("|"), "/users/me/letter.docx");
         }
 
+        function test_the_unprintable_edge_is_framed_on_the_preview_unless_borderless() {
+            const p = photoPage(["/p/beach.jpg"]);
+            const sheet = findChild(p, "photoSheet");
+            const frame = findChild(sheet, "unprintableFrame");
+            compare(p.borderless, true);
+            verify(sheet.edge === null, "borderless prints to the edge: nothing to mark");
+            verify(!frame.visible);
+            verify(!findChild(p, "edgeHint").visible);
+            // With margins the printer's own figures are drawn, where the sheet is.
+            p.sizeKey = "a4";
+            p.mediaType = "stationery";
+            p.orientation = "portrait";
+            verify(!p.borderless);
+            verify(sheet.edge !== null);
+            compare(sheet.edge.top, 3);
+            compare(sheet.edge.bottom, 12);
+            verify(frame.visible);
+            verify(findChild(p, "edgeHint").visible);
+            tryVerify(() => frame.width > 50);
+            fuzzyCompare(frame.x0 / frame.width, 3.4 / 210, 0.001);
+            fuzzyCompare(1 - frame.x1 / frame.width, 5.6 / 210, 0.001);
+            fuzzyCompare(frame.y0 / frame.height, 3 / 297, 0.001);
+            fuzzyCompare(1 - frame.y1 / frame.height, 12 / 297, 0.001);
+            // Turned on its side, the same figures turn with the paper.
+            p.orientation = "landscape";
+            compare(sheet.edge.left, 3);
+            compare(sheet.edge.right, 12);
+            tryVerify(() => frame.width > frame.height);
+            fuzzyCompare(frame.x0 / frame.width, 3 / 297, 0.001);
+            fuzzyCompare(1 - frame.y1 / frame.height, 3.4 / 210, 0.001);
+            // Another tray has its own figures. (Plain A4 from the cassette can go borderless, and
+            // that turns itself on until the user chooses; asked for margins, the edge is back.)
+            p.source = "cassette";
+            verify(p.borderless && sheet.edge === null);
+            p.borderlessTouched = true;
+            p.borderless = false;
+            // (the sheet is still on its side: the portrait top margin, 5 mm, is its left edge)
+            compare(sheet.edge.left, 5);
+            compare(sheet.edge.top, 3.4);
+        }
+
+        function test_the_document_preview_marks_the_unprintable_edge_too() {
+            boot(false);
+            loader.sourceComponent = docComp;
+            tryVerify(() => loader.item !== null);
+            tryVerify(() => Store.printCaps !== null);
+            const p = loader.item;
+            p.setFiles(["/users/me/a.pdf"]);
+            tryVerify(() => p.edge !== null);
+            compare(p.edge.top, 3, "plain A4 from the front tray");
+            verify(findChild(p, "edgeHint").visible);
+            // Documents have no borderless setting, so the edge is always there.
+            p.sizeKey = "a4";
+            p.mediaType = "stationery";
+            verify(p.edge !== null);
+        }
+
         function test_defaults_from_the_printer() {
             const p = photoPage(["/p/beach.jpg"]);
             compare(p.sizeKey, "l", "photos default to an L print");

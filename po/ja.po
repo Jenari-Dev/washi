@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:42+0900\n"
+"POT-Creation-Date: 2026-10-14 12:47+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -1728,6 +1728,10 @@ msgstr "ドロップして選択"
 #, no-javascript-format
 msgid "Office files are converted by LibreOffice when you print, so there is no preview here."
 msgstr "Office ファイルは印刷時に LibreOffice で変換されるため、ここではプレビューできません。"
+
+#, no-javascript-format
+msgid "The dashed line marks the edge the printer cannot print on."
+msgstr "点線の外側は、プリンターが印刷できない縁の部分です。"
 
 #, no-javascript-format
 msgid "%1 / %2"

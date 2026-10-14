@@ -214,7 +214,11 @@ which refuses under `--read-only`.
   Orientation, Media Type (named from the printer's own `media-type-supported`, with our own
   names for the `com.canon-*` papers), Paper Source, Borderless (only where the printer's media
   database has a borderless entry for that paper and size), Photo Layout, Quality, Color, Copies.
-  The preview is the sheet as it will be printed, composed by the same code that prints it.
+  The preview is the sheet as it will be printed, composed by the same code that prints it. When
+  the paper has margins (not borderless), a dashed frame marks the edge the printer cannot print on,
+  from the margins of the printer's own `media-col-database` entry for that tray, paper type and
+  size (turned with the sheet in landscape); a photo is drawn inside the frame, because the job asks
+  the printer to fit it there.
 * **Document Print**: PDFs (Office files too when LibreOffice is installed), a page preview from QtPdf
   with page / sheet navigation, Pages (`1-6, 3, 12-14`), Page Layout n-up, Two-sided Printing,
   and the same paper settings. Printing PDFs needs poppler. Files can be dragged from a file

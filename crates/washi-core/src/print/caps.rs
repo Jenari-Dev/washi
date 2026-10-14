@@ -57,6 +57,10 @@ pub struct PrintSummary {
     pub sizes: Vec<SizeInfo>,
     /// source -> media type -> size key -> [`BORDERED`] | [`BORDERLESS`] flags.
     pub media: BTreeMap<String, BTreeMap<String, BTreeMap<String, u8>>>,
+    /// source -> media type -> size key -> the margins of the bordered entry in 1/100 mm as
+    /// `[top, bottom, left, right]` for the portrait sheet: the edge the printer cannot print on.
+    /// Absent for a combination with no bordered entry (borderless only), where nothing is lost.
+    pub margins: BTreeMap<String, BTreeMap<String, BTreeMap<String, [i32; 4]>>>,
     /// `draft`, `normal`, `high`.
     pub qualities: Vec<String>,
     /// Two-sided printing is offered.
@@ -69,6 +73,8 @@ impl PrintSummary {
     /// Build the summary from what the printer said. Pure.
     pub fn build(caps: &PrintCapabilities, db: &MediaDatabase) -> PrintSummary {
         let mut media: BTreeMap<String, BTreeMap<String, BTreeMap<String, u8>>> = BTreeMap::new();
+        let mut margins: BTreeMap<String, BTreeMap<String, BTreeMap<String, [i32; 4]>>> =
+            BTreeMap::new();
         let mut size_keys: Vec<&'static str> = Vec::new();
         for e in &db.entries {
             let (Some(source), Some(ty)) = (e.source.as_deref(), e.media_type.as_deref()) else {
@@ -90,6 +96,19 @@ impl PrintSummary {
                 .or_default()
                 .entry(size.key.to_string())
                 .or_insert(0) |= flag;
+            if let (BORDERED, Some(g)) = (flag, e.margins()) {
+                // Entries of one combination agree; should they not, the wider edge is kept.
+                let m = margins
+                    .entry(source.to_string())
+                    .or_default()
+                    .entry(ty.to_string())
+                    .or_default()
+                    .entry(size.key.to_string())
+                    .or_insert([0; 4]);
+                for (cur, new) in m.iter_mut().zip([g.top, g.bottom, g.left, g.right]) {
+                    *cur = (*cur).max(new);
+                }
+            }
             if !size_keys.contains(&size.key) {
                 size_keys.push(size.key);
             }
@@ -109,11 +128,17 @@ impl PrintSummary {
             media_types,
             sizes,
             media,
+            margins,
             qualities: vec!["draft".into(), "normal".into(), "high".into()],
             duplex: caps.sides.iter().any(|s| s.starts_with("two-sided")),
             copies_max: caps.copies_max,
             document_formats: caps.document_formats.clone(),
         }
+    }
+
+    /// The margins of a bordered combination, `[top, bottom, left, right]` in 1/100 mm.
+    pub fn margins_of(&self, source: &str, media_type: &str, size_key: &str) -> Option<[i32; 4]> {
+        self.margins.get(source)?.get(media_type)?.get(size_key).copied()
     }
 
     /// Flags for one combination (0 = not offered).
@@ -193,6 +218,42 @@ mod tests {
         assert_eq!(s.copies_max, Some(99));
         let json = serde_json::to_value(&s).unwrap();
         assert_eq!(json["media"]["auto"]["stationery"]["a4"], 3);
+    }
+
+    #[test]
+    fn the_summary_keeps_the_margins_of_the_bordered_entries() {
+        let mut uneven = entry(8890, 12700, 0, "rear", "stationery");
+        (uneven.top, uneven.bottom, uneven.left, uneven.right) =
+            (Some(300), Some(1200), Some(340), Some(340));
+        let db = MediaDatabase {
+            entries: vec![
+                entry(21000, 29700, 340, "auto", "stationery"),
+                entry(21000, 29700, 0, "auto", "stationery"), // the borderless twin
+                entry(21000, 29700, 0, "auto", "photographic"), // borderless only
+                uneven,
+                // A second bordered entry of one combination: the wider edge wins.
+                MediaEntry { top: Some(500), ..entry(21000, 29700, 340, "rear", "stationery") },
+                entry(21000, 29700, 340, "rear", "stationery"),
+                MediaEntry { top: None, ..entry(8890, 12700, 340, "main", "stationery") },
+            ],
+        };
+        let caps = PrintCapabilities::default();
+        let s = PrintSummary::build(&caps, &db);
+        assert_eq!(s.margins_of("auto", "stationery", "a4"), Some([340; 4]), "the bordered one");
+        assert_eq!(s.margins_of("auto", "photographic", "a4"), None, "borderless only: no edge");
+        assert_eq!(s.margins_of("rear", "stationery", "l"), Some([300, 1200, 340, 340]));
+        assert_eq!(s.margins_of("rear", "stationery", "a4"), Some([500, 340, 340, 340]));
+        assert_eq!(
+            s.margins_of("main", "stationery", "l"),
+            None,
+            "a margin the printer leaves out"
+        );
+        assert_eq!(s.margins_of("nope", "x", "a4"), None);
+        let json = serde_json::to_value(&s).unwrap();
+        assert_eq!(
+            json["margins"]["rear"]["stationery"]["l"],
+            serde_json::json!([300, 1200, 340, 340])
+        );
     }
 
     #[test]
