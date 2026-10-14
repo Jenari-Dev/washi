@@ -343,7 +343,11 @@ Item {
             p.pageOrder = "normal";
             compare(p.sheetOrder.join(","), "0,1,2,3,4");
             p.pageOrder = "reverse";
-            // It goes to the service when printing; the confirmation sentence says so.
+            // It goes to the service when printing; the confirmation sentence says so. Print all
+            // pages: the page count of the test document depends on the preview in use (QtPdf
+            // reads 0 pages from the missing file, the poppler fallback's fake reports 3), so a
+            // range such as "1-5" is valid on one machine and not on another.
+            p.allPages = true;
             p.files = ["/d/doc.pdf"];
             tryVerify(() => p.canPrint);
             verify(PrintModel.describe(p.settingsObject(), "doc.pdf").indexOf("last page first") > 0);
