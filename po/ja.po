@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 11:58+0900\n"
+"POT-Creation-Date: 2026-10-14 12:38+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -431,6 +431,14 @@ msgstr "フォント"
 #, no-javascript-format
 msgid "Default"
 msgstr "標準"
+
+#, no-javascript-format
+msgid "Bold"
+msgstr "太字"
+
+#, no-javascript-format
+msgid "Italic"
+msgstr "斜体"
 
 #, no-javascript-format
 msgid "Follow the ring"

@@ -11,13 +11,13 @@
 //!   recommended) or `com.canon-mtdiscb`, `media-size` 120 x 120 mm (`om_square_120x120mm`),
 //!   margins 0.1 mm: exactly the two entries of the printer's `media-col-database`.
 
+mod font;
 mod ring;
 
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 
-use ab_glyph::{Font, FontRef, GlyphId, PxScale, ScaleFont, point};
 use image::{GrayImage, Rgb, RgbImage};
 use serde::{Deserialize, Serialize};
 use washi_net::ipp::{Margins, MediaSpec, PrintColorMode, PrintJob, Quality};
@@ -30,8 +30,10 @@ use crate::print::{
 };
 use crate::printer::Printer;
 use crate::pwg::{ColorSpace, PageHeader, PwgWriter};
-use crate::tools::run_capture;
 
+pub use font::{
+    FontFace, fc_weight_to_opentype, find_font, match_pattern, resolve_face, run_fc_match,
+};
 pub use ring::{RingGlyph, RingText};
 
 pub const DISC_DIAMETER_MM: f64 = 120.0;
@@ -164,6 +166,10 @@ impl Align {
     }
 }
 
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
 /// A text item. `x_mm` / `y_mm` are measured from the disc centre (right, down); the text
 /// block (lines separated by `\n`) is centred vertically on that point and aligned
 /// horizontally to it.
@@ -177,8 +183,19 @@ pub struct TextItem {
     /// Clockwise rotation about (x, y).
     pub rotation_deg: f32,
     pub align: Align,
-    /// A font file; `None` picks one that has the glyphs (fontconfig, then common locations).
+    /// A font file, used as it is (`family`, `bold` and `italic` are then not used); `None` asks
+    /// fontconfig for the family below, or for a default font that has the glyphs.
     pub font: Option<PathBuf>,
+    /// The font family to ask fontconfig for (what the app's picker lists); `None` is the
+    /// default sans-serif font (a Japanese one for Japanese text).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub family: Option<String>,
+    /// The bold cut of the family; a family without one is thickened.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub bold: bool,
+    /// The italic cut of the family; a family without one is slanted.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub italic: bool,
     /// "Follow the ring": the letters are placed on a circle about the disc centre instead of in
     /// a straight line. Then `x_mm`, `y_mm` and `rotation_deg` are not used, and the text is one
     /// line (line breaks become spaces).
@@ -197,6 +214,9 @@ impl TextItem {
             rotation_deg: 0.0,
             align: Align::Center,
             font: None,
+            family: None,
+            bold: false,
+            italic: false,
             ring: None,
         }
     }
@@ -238,157 +258,30 @@ pub fn parse_color(s: &str) -> Result<[u8; 3]> {
 // Fonts and text
 // ---------------------------------------------------------------------------------------------
 
-fn has_cjk(s: &str) -> bool {
-    s.chars().any(|c| matches!(c as u32, 0x2E80..=0x9FFF | 0xAC00..=0xD7AF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF))
-}
-
-/// Ask fontconfig for a font file (and face index) that covers `sample`.
-fn fc_match(pattern: &str) -> Option<(PathBuf, u32)> {
-    let mut c = std::process::Command::new("fc-match");
-    c.args(["-f", "%{file}|%{index}\n", pattern]);
-    let o = run_capture(c, std::time::Duration::from_secs(10), "fc-match").ok()?;
-    let line = String::from_utf8_lossy(&o.stdout).lines().next()?.to_string();
-    let (file, index) = line.split_once('|')?;
-    let path = PathBuf::from(file);
-    path.exists().then(|| (path, index.trim().parse().unwrap_or(0)))
-}
-
-/// The font file fontconfig picks for a family name such as `Noto Sans` or `DejaVu Serif:bold`
-/// (what a GUI's font picker returns). `None` when fontconfig is missing or the name is not a
-/// plain pattern. The best match is returned even when the family itself is not installed.
-pub fn find_font_family(family: &str) -> Option<PathBuf> {
-    let f = family.trim();
-    let plain = !f.is_empty()
-        && f.len() <= 80
-        && !f.starts_with('-')
-        && f.chars()
-            .all(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | ',' | ':' | '=' | '.'));
-    if !plain {
-        return None;
-    }
-    fc_match(f).map(|(p, _)| p)
-}
-
-/// A font file for `sample`: fontconfig first, then a few well-known paths.
-pub fn find_font(sample: &str) -> Option<(PathBuf, u32)> {
-    if let Some(p) = std::env::var_os("WASHI_FONT").map(PathBuf::from).filter(|p| p.exists()) {
-        return Some((p, 0));
-    }
-    let pattern = if has_cjk(sample) { "sans:lang=ja" } else { "sans" };
-    if let Some(f) = fc_match(pattern) {
-        return Some(f);
-    }
-    [
-        "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-        "/usr/share/fonts/noto/NotoSans-Regular.ttf",
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
-    ]
-    .iter()
-    .map(PathBuf::from)
-    .find(|p| p.exists())
-    .map(|p| (p, 0))
-}
-
-struct LoadedFont {
-    data: Vec<u8>,
-    index: u32,
-}
-
-impl LoadedFont {
-    fn load(item: &TextItem) -> Result<LoadedFont> {
-        let (path, index) = match &item.font {
-            Some(p) => (p.clone(), 0),
-            None => find_font(&item.text).ok_or_else(|| {
-                Error::Invalid("no font found for the label text; pass a font file".into())
-            })?,
-        };
-        let data = std::fs::read(&path)
-            .map_err(|e| Error::io(format!("cannot read the font {}", path.display()), e))?;
-        FontRef::try_from_slice_and_index(&data, index)
-            .map_err(|_| Error::Invalid(format!("{} is not a usable font file", path.display())))?;
-        Ok(LoadedFont { data, index })
-    }
-
-    fn font(&self) -> FontRef<'_> {
-        // Checked in `load`.
-        FontRef::try_from_slice_and_index(&self.data, self.index).expect("font was validated")
-    }
-}
-
-/// The scale for a font whose em is `px_size` pixels.
-fn px_scale(font: &FontRef<'_>, px_size: f32) -> PxScale {
-    font.pt_to_px_scale(px_size).unwrap_or(PxScale::from(px_size))
-}
-
-/// Coverage mask of one line of text, and the baseline-to-top ascent in pixels.
-fn render_line(font: &FontRef<'_>, px_size: f32, line: &str) -> GrayImage {
-    let scale = px_scale(font, px_size);
-    let scaled = font.as_scaled(scale);
-    let ascent = scaled.ascent();
-    let height = (scaled.ascent() - scaled.descent()).ceil().max(1.0);
-    let mut x = 0.0f32;
-    let mut prev: Option<GlyphId> = None;
-    let mut glyphs = Vec::new();
-    for ch in line.chars() {
-        let id = scaled.glyph_id(ch);
-        if let Some(p) = prev {
-            x += scaled.kern(p, id);
-        }
-        glyphs.push(id.with_scale_and_position(scale, point(x + 1.0, ascent + 1.0)));
-        x += scaled.h_advance(id);
-        prev = Some(id);
-    }
-    let (w, h) = ((x.ceil() as u32 + 3).max(1), height as u32 + 3);
-    let mut cov = GrayImage::new(w, h);
-    for g in glyphs {
-        if let Some(o) = font.outline_glyph(g) {
-            let b = o.px_bounds();
-            o.draw(|gx, gy, c| {
-                let (px, py) = (b.min.x as i64 + i64::from(gx), b.min.y as i64 + i64::from(gy));
-                if px >= 0 && py >= 0 && (px as u32) < w && (py as u32) < h {
-                    let cur = f32::from(cov.get_pixel(px as u32, py as u32).0[0]);
-                    cov.put_pixel(
-                        px as u32,
-                        py as u32,
-                        image::Luma([(cur + c * 255.0).min(255.0) as u8]),
-                    );
-                }
-            });
-        }
-    }
-    cov
-}
-
 /// A text that follows the ring: every letter is rendered by itself and set on the circle where
 /// [`RingText::layout`] puts it.
 fn draw_ring_text(
     img: &mut RgbImage,
-    font: &FontRef<'_>,
+    fonts: &[font::StyledFont<'_>],
     t: &TextItem,
     ring: &RingText,
     size: f32,
     centre: f64,
     px_per_mm: f64,
 ) {
-    let scaled = font.as_scaled(px_scale(font, size));
     let chars: Vec<char> = t.text.chars().map(|c| if c.is_control() { ' ' } else { c }).collect();
     let advances_px: Vec<f64> =
-        chars.iter().map(|c| f64::from(scaled.h_advance(scaled.glyph_id(*c)))).collect();
+        chars.iter().map(|c| f64::from(font::advance_px(fonts, size, *c))).collect();
     let advances_mm: Vec<f64> = advances_px.iter().map(|a| a / px_per_mm).collect();
-    let ascent = f64::from(scaled.ascent());
     for ((ch, adv), g) in chars.iter().zip(&advances_px).zip(ring.layout(&advances_mm, t.align)) {
         if ch.is_whitespace() {
             continue;
         }
-        let cov = render_line(font, size, &ch.to_string());
-        // `render_line` starts the letter 1 px in and puts its baseline `ascent + 1` px down; the
-        // point to pin on the ring is the middle of the letter's advance, on the baseline.
-        let layer_anchor = (1.0 + adv / 2.0, ascent + 1.0);
+        let line = font::render_line(fonts, size, &ch.to_string());
+        // The point to pin on the ring is the middle of the letter's advance, on the baseline.
+        let layer_anchor = (f64::from(line.left) + adv / 2.0, f64::from(line.baseline));
         let anchor = (centre + g.x_mm * px_per_mm, centre + g.y_mm * px_per_mm);
-        composite_layer(img, &cov, anchor, layer_anchor, g.rotation_deg as f32, t.color);
+        composite_layer(img, &line.cov, anchor, layer_anchor, g.rotation_deg as f32, t.color);
     }
 }
 
@@ -531,17 +424,18 @@ impl DiscLabel {
         }
 
         // Text.
+        let mut fonts_cache = font::FontCache::default();
         for t in &self.texts {
             if t.text.trim().is_empty() {
                 continue;
             }
-            let lf = LoadedFont::load(t)?;
-            let font = lf.font();
-            // `pt_to_px_scale` assumes 72 ppi; scale to the canvas resolution.
+            let set = font::FontSet::load(t, &font::run_fc_match, &mut fonts_cache)?;
+            let fonts = set.styled();
+            // The size is the em in pixels: points at the canvas resolution.
             let size = (t.size_pt * f64::from(DPI) / 72.0 * k) as f32;
             if let Some(ring) = &t.ring {
                 ring.validate()?;
-                draw_ring_text(&mut img, &font, t, ring, size, centre, px_per_mm);
+                draw_ring_text(&mut img, &fonts, t, ring, size, centre, px_per_mm);
                 continue;
             }
             let lines: Vec<&str> = t.text.lines().collect();
@@ -551,7 +445,7 @@ impl DiscLabel {
                 if line.trim().is_empty() {
                     continue;
                 }
-                let cov = render_line(&font, size, line);
+                let cov = font::render_line(&fonts, size, line).cov;
                 let off = (i as f64 - (lines.len() as f64 - 1.0) / 2.0) * line_h;
                 // The block is rotated about (x, y); this line sits `off` px below it.
                 let (ax, ay) = (centre + t.x_mm * px_per_mm, centre + t.y_mm * px_per_mm);
@@ -630,6 +524,12 @@ pub struct TextSpec {
     pub rotation: Option<f32>,
     pub align: Option<String>,
     pub font: Option<PathBuf>,
+    /// A font family, as fontconfig names it (`Noto Sans CJK JP`); used when `font` is not given.
+    pub family: Option<String>,
+    /// The bold cut of `family`.
+    pub bold: Option<bool>,
+    /// The italic cut of `family`.
+    pub italic: Option<bool>,
     /// Follow the ring (see [`RingText`]); the position and rotation above are then unused.
     pub ring: Option<RingSpec>,
 }
@@ -702,6 +602,9 @@ impl DiscSpec {
                 item.align = Align::parse(a)?;
             }
             item.font = t.font.clone();
+            item.family = t.family.clone().filter(|f| !f.trim().is_empty());
+            item.bold = t.bold.unwrap_or(false);
+            item.italic = t.italic.unwrap_or(false);
             item.ring = t.ring.as_ref().map(RingSpec::to_ring).transpose()?;
             l.texts.push(item);
         }
@@ -1117,6 +1020,69 @@ mod tests {
         // A straight text is saved without the key.
         let straight = serde_json::to_string(&TextItem::new("x")).unwrap();
         assert!(!straight.contains("ring"), "{straight}");
+    }
+
+    #[test]
+    fn the_font_family_and_style_are_saved_and_old_designs_still_load() {
+        // A label saved before families and styles existed: no such keys.
+        let old = r#"{"text":"Mix","x_mm":0.0,"y_mm":32.0,"size_pt":18.0,"color":[0,0,0],
+                      "rotation_deg":0.0,"align":"Center","font":null}"#;
+        let t: TextItem = serde_json::from_str(old).unwrap();
+        assert_eq!((t.family.as_deref(), t.bold, t.italic), (None, false, false));
+        // A plain text is written without the new keys, so older Washi reads it too.
+        let plain = serde_json::to_string(&TextItem::new("x")).unwrap();
+        assert!(!plain.contains("family") && !plain.contains("bold") && !plain.contains("italic"));
+        // With them, the label survives a round trip.
+        let mut styled = TextItem::new("日本語");
+        styled.family = Some("Noto Sans CJK JP".into());
+        styled.bold = true;
+        styled.italic = true;
+        let label = DiscLabel { texts: vec![styled.clone(), t], ..DiscLabel::default() };
+        let back: DiscLabel =
+            serde_json::from_str(&serde_json::to_string(&label).unwrap()).unwrap();
+        assert_eq!(back, label);
+        assert_eq!(back.texts[0].family.as_deref(), Some("Noto Sans CJK JP"));
+        // The print request (`PrintDisc`) carries them too; a blank family means "default".
+        let (l, _) = DiscSpec::from_json(
+            r#"{"texts":[{"text":"a","family":"Hack","bold":true},
+                         {"text":"b","family":"  ","italic":true},{"text":"c"}]}"#,
+        )
+        .unwrap()
+        .to_label()
+        .unwrap();
+        assert_eq!(
+            (l.texts[0].family.as_deref(), l.texts[0].bold, l.texts[0].italic),
+            (Some("Hack"), true, false)
+        );
+        assert_eq!(
+            (l.texts[1].family.as_deref(), l.texts[1].bold, l.texts[1].italic),
+            (None, false, true)
+        );
+        assert_eq!(
+            (l.texts[2].family.as_deref(), l.texts[2].bold, l.texts[2].italic),
+            (None, false, false)
+        );
+        assert!(
+            DiscSpec::from_json(r#"{"texts":[{"text":"a","bolt":true}]}"#).is_err(),
+            "typos are errors"
+        );
+    }
+
+    #[test]
+    fn an_unknown_family_still_prints_with_the_default_font() {
+        if find_font("Washi").is_none() {
+            eprintln!("no font on this system; skipping");
+            return;
+        }
+        let mut t = TextItem::new("WASHI");
+        t.family = Some("No Such Family 12345".into());
+        t.bold = true;
+        t.italic = true;
+        t.size_pt = 30.0;
+        t.color = [255, 0, 0];
+        let img = DiscLabel { texts: vec![t], ..DiscLabel::default() }.render_sized(PX).unwrap();
+        let n = img.pixels().filter(|p| p.0[0] > 200 && p.0[1] < 80).count();
+        assert!(n > 200, "fontconfig's best match was used: {n} px");
     }
 
     #[test]

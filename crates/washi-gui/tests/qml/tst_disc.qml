@@ -102,10 +102,23 @@ Item {
             d.media = "b";
             d.inner_mm = 30;
             d.background = { path: "/p/a.jpg", fit: "contain", scale: 1.5, offset_mm: [3, -4], rotation: 20 };
-            d.texts.push({ text: "Hello", x_mm: 1, y_mm: 2, size_pt: 24, color: "#aa00cc", rotation: 5, align: "left", family: "Noto Sans", ring: null });
-            d.texts.push({ text: "Round", x_mm: 0, y_mm: 0, size_pt: 14, color: "#000000", rotation: 0, align: "center", family: "", ring: { radius_mm: 40, start_deg: 180, clockwise: false, letter_spacing_pt: 3 } });
+            d.texts.push({ text: "Hello", x_mm: 1, y_mm: 2, size_pt: 24, color: "#aa00cc", rotation: 5, align: "left", family: "Noto Sans CJK JP", bold: true, italic: false, ring: null });
+            d.texts.push({ text: "Round", x_mm: 0, y_mm: 0, size_pt: 14, color: "#000000", rotation: 0, align: "center", family: "", bold: false, italic: true, ring: { radius_mm: 40, start_deg: 180, clockwise: false, letter_spacing_pt: 3 } });
             const back = DiscMath.parseDesign(DiscMath.designJson(d));
             compare(JSON.stringify(back), JSON.stringify(d));
+            compare(back.texts[0].bold, true);
+            compare(back.texts[0].italic, false);
+            compare(back.texts[1].italic, true);
+            // A design saved before families had styles has neither key: regular, upright. A
+            // style that is not a real boolean is not taken.
+            const older = DiscMath.parseDesign(JSON.stringify({ texts: [{ text: "old", family: "Hack" }, { text: "odd", bold: "yes", italic: 1 }] }));
+            compare(older.texts[0].family, "Hack");
+            compare(older.texts[0].bold, false);
+            compare(older.texts[0].italic, false);
+            compare(older.texts[1].bold, false);
+            compare(older.texts[1].italic, false);
+            compare(DiscMath.newText("x").bold, false);
+            compare(DiscMath.newText("x").italic, false);
             // A design saved before the ring existed has none.
             compare(DiscMath.parseDesign(JSON.stringify({ texts: [{ text: "old" }] })).texts[0].ring, null);
             // Wild ring values are clamped; a ring that is not an object is no ring.
@@ -147,9 +160,9 @@ Item {
             d.outer_mm = 117;
             d.background_color = "#112233";
             d.background = { path: "/p/a.jpg", fit: "cover", scale: 1.2, offset_mm: [1, 2], rotation: 15 };
-            d.texts.push({ text: "Side A", x_mm: 0, y_mm: 32, size_pt: 20, color: "#ffffff", rotation: 0, align: "center", family: "Noto Sans" });
+            d.texts.push({ text: "Side A", x_mm: 0, y_mm: 32, size_pt: 20, color: "#ffffff", rotation: 0, align: "center", family: "Noto Sans CJK JP", bold: true, italic: false });
             d.texts.push({ text: "   ", x_mm: 0, y_mm: 0, size_pt: 20, color: "#000000", rotation: 0, align: "center", family: "" });
-            const s = DiscMath.printSpec(d, fam => "/fonts/" + fam + ".ttf", "high");
+            const s = DiscMath.printSpec(d, "high");
             compare(s.media, "b");
             compare(s.inner_mm, 25);
             compare(s.outer_mm, 117);
@@ -161,12 +174,16 @@ Item {
             compare(s.background_color, "#112233");
             compare(s.quality, "high");
             compare(s.texts.length, 1, "empty text is not printed");
-            compare(s.texts[0].font, "/fonts/Noto Sans.ttf");
+            // The font goes by name, with the styles that are on; the service resolves the file.
+            compare(s.texts[0].family, "Noto Sans CJK JP");
+            compare(s.texts[0].bold, true);
+            verify(!("italic" in s.texts[0]), "a style that is off is not sent");
+            verify(!("font" in s.texts[0]));
             compare(s.texts[0].size_pt, 20);
             verify(!("confirm" in s), "the Store adds confirm");
             // without a picture the request has none
             d.background = null;
-            verify(!("image" in DiscMath.printSpec(d, null, "")));
+            verify(!("image" in DiscMath.printSpec(d, "")));
         }
 
         // ---- text that follows the ring: the same numbers as the tests of washi_core::disc::ring
@@ -421,6 +438,35 @@ Item {
             verify(p.design.texts[0].family !== "");
             combo.activated(0);
             compare(p.design.texts[0].family, "");
+        }
+
+        function test_bold_and_italic_switches_edit_the_selected_text() {
+            const p = boot();
+            p.addText("Side A");
+            const bold = findChild(p, "boldToggle");
+            const italic = findChild(p, "italicToggle");
+            verify(bold !== null && italic !== null);
+            verify(!bold.checked && !italic.checked);
+            bold.toggle();
+            bold.toggled();
+            compare(p.design.texts[0].bold, true);
+            compare(p.design.texts[0].italic, false);
+            italic.toggle();
+            italic.toggled();
+            compare(p.design.texts[0].italic, true);
+            verify(bold.checked && italic.checked, "both show on");
+            // The preview request names the family and the styles, and they are saved with the design.
+            const spec = p.spec("");
+            compare(spec.texts[0].bold, true);
+            compare(spec.texts[0].italic, true);
+            const back = DiscMath.parseDesign(DiscMath.designJson(p.design));
+            compare(back.texts[0].bold, true);
+            compare(back.texts[0].italic, true);
+            // Selecting another text shows its own switches.
+            p.addText("Side B");
+            verify(!bold.checked && !italic.checked);
+            p.selected = 0;
+            verify(bold.checked && italic.checked);
         }
 
         function test_the_preview_as_printed_uses_the_print_request() {

@@ -574,6 +574,9 @@ fn disc_label(a: &DiscArgs) -> Result<DiscLabel> {
         item.color = color;
         item.align = Align::Center;
         item.font = a.font.clone();
+        item.family = a.font_family.clone().filter(|f| !f.trim().is_empty());
+        item.bold = a.bold;
+        item.italic = a.italic;
         l.texts.push(item);
     }
     if let Some(t) = &a.ring {
@@ -582,6 +585,9 @@ fn disc_label(a: &DiscArgs) -> Result<DiscLabel> {
         item.color = color;
         item.align = Align::Center;
         item.font = a.font.clone();
+        item.family = a.font_family.clone().filter(|f| !f.trim().is_empty());
+        item.bold = a.bold;
+        item.italic = a.italic;
         let ring = disc::RingText {
             radius_mm: a.ring_radius,
             start_deg: a.ring_start,

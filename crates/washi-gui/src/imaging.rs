@@ -54,11 +54,6 @@ pub mod qobject {
         #[cxx_name = "removeDataFile"]
         fn remove_data_file(self: &Imaging, path: &QString) -> bool;
 
-        /// The font file fontconfig picks for a family name, "" when unknown.
-        #[qinvokable]
-        #[cxx_name = "fontFile"]
-        fn font_file(self: &Imaging, family: &QString) -> QString;
-
         /// `{"width", "height"}` of an image file read from its header, "" when it is none.
         #[qinvokable]
         #[cxx_name = "imageSize"]
@@ -220,7 +215,7 @@ use cxx_qt_lib::QString;
 use image::{DynamicImage, RgbImage};
 use serde_json::{Value, json};
 use washi_core::Tools;
-use washi_core::disc::{self, DiscSpec};
+use washi_core::disc::DiscSpec;
 use washi_core::print::{self, Orientation, PaperSize, photo};
 use washi_core::scan::detect::{self, ScanKind};
 use washi_core::scan::ocr;
@@ -492,12 +487,6 @@ impl qobject::Imaging {
         let data = data_dir();
         let inside = p.starts_with(&data) && !p.components().any(|c| c.as_os_str() == "..");
         inside && p.is_file() && std::fs::remove_file(p).is_ok()
-    }
-
-    pub fn font_file(&self, family: &QString) -> QString {
-        q(&disc::find_font_family(&family.to_string())
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_default())
     }
 
     pub fn image_size(&self, path: &QString) -> QString {

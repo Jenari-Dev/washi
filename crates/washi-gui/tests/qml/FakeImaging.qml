@@ -59,7 +59,6 @@ QtObject {
         return JSON.stringify(Object.keys(files).filter(p => p.indexOf(dir + "/") === 0 && p.endsWith(ext)).map(p => p.substring(dir.length + 1)));
     }
     function removeDataFile(path) { removed = removed.concat([path]); delete files[path]; return true; }
-    function fontFile(family) { return family === "" ? "" : "/fonts/" + family.replace(/ /g, "") + ".ttf"; }
     function imageSize(path) { return path.indexOf("portrait") >= 0 ? JSON.stringify({ width: 1200, height: 1800 }) : JSON.stringify({ width: 1800, height: 1200 }); }
     function token() { return "tok" + (++nextId); }
 

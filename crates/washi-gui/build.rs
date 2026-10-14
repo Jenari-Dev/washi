@@ -188,6 +188,7 @@ fn main() {
                 "qml/CropOverlay.qml",
                 "qml/ColorPicker.qml",
                 "qml/DiscCanvas.qml",
+                "qml/StyleToggle.qml",
             ]),
     )
     .qt_module("Quick")

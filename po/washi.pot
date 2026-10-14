@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 11:58+0900\n"
+"POT-Creation-Date: 2026-10-14 12:38+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -456,6 +456,14 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Default"
+msgstr ""
+
+#, no-javascript-format
+msgid "Bold"
+msgstr ""
+
+#, no-javascript-format
+msgid "Italic"
 msgstr ""
 
 #, no-javascript-format

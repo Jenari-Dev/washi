@@ -379,9 +379,20 @@ pub struct DiscArgs {
     /// Where the text block is centred: X,Y in mm from the disc centre (right, down).
     #[arg(long, default_value = "0,32", value_name = "X,Y")]
     pub text_pos: String,
-    /// Font file for the text (default: found through fontconfig).
+    /// Font file for the text, used as it is (default: found through fontconfig).
     #[arg(long)]
     pub font: Option<PathBuf>,
+    /// Font family for the text, as fontconfig names it (`fc-list : family` lists them), e.g.
+    /// "Noto Sans CJK JP". Not used with --font.
+    #[arg(long, value_name = "NAME", conflicts_with = "font")]
+    pub font_family: Option<String>,
+    /// The bold cut of --font-family (the default font when no family is given); a family that
+    /// has none is thickened.
+    #[arg(long, conflicts_with = "font")]
+    pub bold: bool,
+    /// The italic cut of --font-family; a family that has none is slanted.
+    #[arg(long, conflicts_with = "font")]
+    pub italic: bool,
     /// A text that follows the ring (one line), e.g. a title along the edge. Uses --text-size,
     /// --text-color and --font; the start angle is the middle of the text.
     #[arg(long, value_name = "TEXT")]

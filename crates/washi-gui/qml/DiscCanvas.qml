@@ -30,7 +30,7 @@ Item {
             const t = list[i];
             const rg = t.ring;
             const row = {
-                t_text: t.text, t_x: t.x_mm, t_y: t.y_mm, t_pt: t.size_pt, t_color: t.color, t_rot: t.rotation, t_align: t.align, t_family: t.family,
+                t_text: t.text, t_x: t.x_mm, t_y: t.y_mm, t_pt: t.size_pt, t_color: t.color, t_rot: t.rotation, t_align: t.align, t_family: t.family, t_bold: !!t.bold, t_italic: !!t.italic,
                 t_ring_on: !!rg, t_ring_r: rg ? rg.radius_mm : DiscMath.defaultRingRadius, t_ring_start: rg ? rg.start_deg : 0,
                 t_ring_cw: rg ? rg.clockwise : true, t_ring_sp: rg ? rg.letter_spacing_pt : 0
             };
@@ -111,6 +111,8 @@ Item {
                 required property real t_rot
                 required property string t_align
                 required property string t_family
+                required property bool t_bold
+                required property bool t_italic
                 required property bool t_ring_on
                 required property real t_ring_r
                 required property real t_ring_start
@@ -130,13 +132,15 @@ Item {
                 readonly property var ring: ({ radius_mm: t_ring_r, start_deg: t_ring_start, clockwise: t_ring_cw, letter_spacing_pt: t_ring_sp })
                 readonly property var glyphChars: Array.from(t_text.replace(/[\r\n]+/g, " ")).map(c => c.charCodeAt(0) < 32 ? " " : c)
                 readonly property var advancesMm: {
-                    fontPx; t_family;       // widths change with the font
+                    fontPx; t_family; t_bold; t_italic;       // widths change with the font
                     return glyphChars.map(c => metrics.advanceWidth(c) / canvas.mm);
                 }
                 readonly property var glyphs: t_ring_on ? DiscMath.ringLayout(ring, advancesMm, t_align) : []
                 FontMetrics {
                     id: metrics
                     font.family: anchor.t_family !== "" ? anchor.t_family : Qt.application.font.family
+                    font.bold: anchor.t_bold
+                    font.italic: anchor.t_italic
                     font.pixelSize: Math.max(1, anchor.fontPx)
                 }
                 Repeater {
@@ -155,6 +159,8 @@ Item {
                             text: anchor.glyphChars[index] || ""
                             color: anchor.t_color
                             font.family: anchor.t_family !== "" ? anchor.t_family : Qt.application.font.family
+                            font.bold: anchor.t_bold
+                            font.italic: anchor.t_italic
                             font.pixelSize: Math.max(1, anchor.fontPx)
                             textFormat: Text.PlainText
                             wrapMode: Text.NoWrap
@@ -169,6 +175,8 @@ Item {
                     text: anchor.t_text
                     color: anchor.t_color
                     font.family: anchor.t_family !== "" ? anchor.t_family : Qt.application.font.family
+                    font.bold: anchor.t_bold
+                    font.italic: anchor.t_italic
                     font.pixelSize: Math.max(1, anchor.fontPx)
                     lineHeightMode: Text.FixedHeight
                     lineHeight: anchor.fontPx * 1.25

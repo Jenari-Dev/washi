@@ -132,6 +132,7 @@ washi print FILE... [--size a4] [--media-type plain|photo|glossy|...|com.canon-*
             [--name NAME] [--no-check] [--no-wait]
 
 washi disc [--image IMG] [--text TEXT]... [--inner 22] [--outer 116] [--media-type a|b]
+           [--font-family NAME [--bold] [--italic] | --font FILE.ttf]
            [--ring TEXT [--ring-radius 48] [--ring-start 0] [--ring-ccw] [--ring-spacing 0]]
            [--preview LABEL.png]       # --preview renders only, no printer access
 
@@ -173,6 +174,16 @@ washi cancel JOB                       # cancel a job (see `washi jobs`)
   edge reads upright with `--ring-start 180`) and `--ring-spacing` adds room after each letter, in
   points. The geometry is one pure function (`washi_core::disc::RingText::layout`) that the app's
   canvas mirrors, so the preview and the printed image agree.
+* **Fonts** (`--font-family`, `--bold`, `--italic`; the font picker and the B / I switches in the
+  app): the family goes to fontconfig (`fc-match`) with the weight and slant, and the file it names
+  is drawn, the way the app's canvas gets the same face from Qt. A family kept in a collection is
+  opened at its own face (`Noto Sans CJK JP`, not the first one); a variable font is set to the
+  weight fontconfig picked; a family without a bold or italic cut is thickened or slanted the way
+  fontconfig says it would be (`embolden`, the 0.2 slant matrix). Letters the chosen font lacks
+  (Japanese in a Latin family) come from another font, so a label does not print boxes when some
+  font on the computer has the letter. With no family, text uses the default sans-serif font, a
+  Japanese one for Japanese text. `--font FILE` uses that file as it is. Designs saved by older
+  versions have no style keys and stay regular and upright.
 
 ## The desktop app: `washi-app`
 
@@ -219,7 +230,8 @@ which refuses under `--read-only`.
   the disc type, a preview of the image that is sent, the tray guidance, and designs saved as JSON
   in `~/.local/share/washi/discs/`. A text can "Follow the ring": radius, start angle,
   clockwise or counter-clockwise and letter spacing; the canvas draws it with the same formulas as
-  the printed image and it is dragged round the disc with the mouse.
+  the printed image and it is dragged round the disc with the mouse. Every text has a font family
+  picker (the families installed on the computer, Japanese ones included) and Bold / Italic.
 
 ## Languages
 

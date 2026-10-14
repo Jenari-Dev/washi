@@ -258,7 +258,8 @@ impl Washi {
     /// Print a disc label through the disc tray; returns the job id (signals as `PrintFile`).
     /// WRITES, so `label_json` must contain `"confirm": true`. Keys: `image` (path), `fit`,
     /// `scale`, `offset_mm`, `rotation`, `background_color`, `texts` (a list of
-    /// `{text, x_mm, y_mm, size_pt, color, rotation, align, font}`), `inner_mm`, `outer_mm`,
+    /// `{text, x_mm, y_mm, size_pt, color, rotation, align, font | family, bold, italic, ring}`),
+    /// `inner_mm`, `outer_mm`,
     /// `media` (a or b), `quality`.
     async fn print_disc(&self, host: String, label_json: String) -> Result<String, DbusError> {
         self.svc.print_disc(&host, &label_json).await.map_err(|e| self.err(e))

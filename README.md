@@ -41,9 +41,9 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
 - **Scanning.** Documents and photos from the flatbed, several pages in one go, rotate, crop,
   slant correction, colour correction, automatic crop, several photos on one glass, stitching two
   halves of a large original, PDF or JPEG output, and text recognition when Tesseract is installed.
-- **Disc labels.** A designer for the printable ring of a disc: picture, texts, background colour,
-  text that follows the ring, a preview of what is sent to the printer, and printing from the disc
-  tray.
+- **Disc labels.** A designer for the printable ring of a disc: picture, texts in any installed
+  font family (Japanese ones too) with bold and italic, background colour, text that follows the
+  ring, a preview of what is sent to the printer, and printing from the disc tray.
 - **The printer's own words and picture.** Paper types are named the way the printer itself names
   them, in the language you use (the English / Japanese switch changes them at once), and the
   banner and printer list show the printer's own product picture. Both are read from your printer

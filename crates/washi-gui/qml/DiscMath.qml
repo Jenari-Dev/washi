@@ -217,7 +217,7 @@ QtObject {
 
     // ---- designs ---------------------------------------------------------------------------------------
     function newText(text) {
-        return { text: text || "", x_mm: 0, y_mm: 32, size_pt: 18, color: "#000000", rotation: 0, align: "center", family: "", ring: null };
+        return { text: text || "", x_mm: 0, y_mm: 32, size_pt: 18, color: "#000000", rotation: 0, align: "center", family: "", bold: false, italic: false, ring: null };
     }
 
     // A ring read from JSON: every field checked and clamped; null when there is none.
@@ -293,6 +293,9 @@ QtObject {
                     rotation: Number(t.rotation) || 0,
                     align: ["left", "center", "right"].indexOf(t.align) >= 0 ? t.align : "center",
                     family: typeof t.family === "string" ? t.family : "",
+                    // Designs saved before the styles existed have neither key.
+                    bold: t.bold === true,
+                    italic: t.italic === true,
                     ring: parseRing(t.ring)
                 });
             }
@@ -318,9 +321,10 @@ QtObject {
         return clean === "" ? "" : clean + ".json";
     }
 
-    // The JSON PrintDisc takes (confirm is added by the Store). `fontFile(family)` maps a font
-    // family to a file ("" = let the host pick one).
-    function printSpec(d, fontFile, quality) {
+    // The JSON PrintDisc takes (confirm is added by the Store). A text's font goes by name: the
+    // service asks fontconfig for the family's regular, bold or italic cut itself, the way the
+    // canvas does through Qt, so the printed letters are the ones on the screen.
+    function printSpec(d, quality) {
         const spec = {
             inner_mm: d.inner_mm,
             outer_mm: d.outer_mm,
@@ -328,9 +332,14 @@ QtObject {
             background_color: d.background_color,
             texts: d.texts.filter(t => t.text.trim() !== "").map(t => {
                 const o = { text: t.text, x_mm: t.x_mm, y_mm: t.y_mm, size_pt: t.size_pt, color: t.color, rotation: t.rotation, align: t.align };
-                const f = t.family !== "" && fontFile ? fontFile(t.family) : "";
-                if (f !== "") {
-                    o.font = f;
+                if (t.family !== "") {
+                    o.family = t.family;
+                }
+                if (t.bold) {
+                    o.bold = true;
+                }
+                if (t.italic) {
+                    o.italic = true;
                 }
                 if (t.ring) {
                     o.ring = { radius_mm: t.ring.radius_mm, start_deg: t.ring.start_deg, clockwise: t.ring.clockwise, letter_spacing_pt: t.ring.letter_spacing_pt };

@@ -258,6 +258,45 @@ fn disc_dry_run_and_preview_need_no_printer() {
 }
 
 #[test]
+fn disc_text_takes_a_font_family_with_bold_and_italic() {
+    if washi_core::disc::find_font("Washi").is_none() {
+        eprintln!("no font on this system; skipping");
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let render = |extra: &[&str], name: &str| {
+        let png = dir.path().join(name);
+        let out = Command::new(env!("CARGO_BIN_EXE_washi"))
+            .args(["--host", "127.0.0.1:9", "disc", "--text", "Road trip", "--text-size", "30"])
+            .args(["--text-color", "#ff0000"])
+            .args(extra)
+            .args(["--preview", &png.to_string_lossy()])
+            .env("XDG_CONFIG_HOME", "/nonexistent")
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "{extra:?}: {}", text(&out).1);
+        image::open(&png)
+            .unwrap()
+            .to_rgb8()
+            .pixels()
+            .filter(|p| p.0[0] > 200 && p.0[1] < 90)
+            .count()
+    };
+    let plain = render(&[], "plain.png");
+    // A family fontconfig does not know still prints (its best match), and bold adds ink.
+    let bold = render(&["--font-family", "No Such Family 4242", "--bold"], "bold.png");
+    assert!(plain > 200 && bold > plain, "{plain} / {bold}");
+    render(&["--italic"], "italic.png");
+    // A font file and a family are two answers to one question.
+    let out = Command::new(env!("CARGO_BIN_EXE_washi"))
+        .args(["--host", "127.0.0.1:9", "disc", "--text", "x", "--font", "/x.ttf", "--bold"])
+        .env("XDG_CONFIG_HOME", "/nonexistent")
+        .output()
+        .unwrap();
+    assert!(!out.status.success());
+}
+
+#[test]
 fn identify_and_cancel_are_dry_without_confirm() {
     let s = dry(&["identify", "--action", "sound"]);
     assert!(

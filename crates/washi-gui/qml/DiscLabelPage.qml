@@ -105,6 +105,19 @@ RowLayout {
                     });
                 }
             }
+            // WASHI_DISC_FONT=index:family:b|-:i|-;... sets a text's family, bold and italic.
+            const fonts = Store.env("WASHI_DISC_FONT");
+            for (const r of fonts === "" ? [] : fonts.split(";")) {
+                const f = r.split(":");
+                const i = parseInt(f[0]);
+                if (i >= 0 && i < design.texts.length) {
+                    change(d => {
+                        d.texts[i].family = f[1] || "";
+                        d.texts[i].bold = f[2] === "b";
+                        d.texts[i].italic = f[3] === "i";
+                    });
+                }
+            }
             const pick = Store.env("WASHI_DISC_SELECT");
             selected = pick === "picture" ? -1 : (pick === "none" ? -2 : 0);
         }
@@ -112,7 +125,7 @@ RowLayout {
 
     // ---- printing --------------------------------------------------------------------------------------
     function spec(quality) {
-        return DiscMath.printSpec(design, fam => Img.engine ? Img.engine.fontFile(fam) : "", quality);
+        return DiscMath.printSpec(design, quality);
     }
 
     function askToPrint() {
@@ -627,6 +640,25 @@ RowLayout {
                     model: [{ text: i18n("Default"), value: "" }].concat(Qt.fontFamilies().map(f => ({ text: f, value: f })))
                     selectedValue: page.sel ? page.sel.family : ""
                     onActivated: i => page.change(d => { d.texts[page.selected].family = valueAt(i); })
+                }
+                RowLayout {
+                    spacing: 6
+                    StyleToggle {
+                        objectName: "boldToggle"
+                        letter: "B"
+                        styleBold: true
+                        label: i18n("Bold")
+                        checked: !!page.sel && !!page.sel.bold
+                        onToggled: page.change(d => { d.texts[page.selected].bold = checked; })
+                    }
+                    StyleToggle {
+                        objectName: "italicToggle"
+                        letter: "I"
+                        styleItalic: true
+                        label: i18n("Italic")
+                        checked: !!page.sel && !!page.sel.italic
+                        onToggled: page.change(d => { d.texts[page.selected].italic = checked; })
+                    }
                 }
             }
             WCheck {
