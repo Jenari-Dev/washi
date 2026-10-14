@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 01:13+0900\n"
+"POT-Creation-Date: 2026-10-14 10:27+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2789,8 +2789,8 @@ msgstr ""
 
 #, no-javascript-format
 msgid ""
-"Ask %1 to wake up? This sends the PowerOn command, which has not been tried "
-"on a real printer yet. Starting a print or a cleaning wakes the printer too."
+"Ask %1 to wake up? It takes a few seconds. Starting a print or a cleaning "
+"wakes the printer too."
 msgstr ""
 
 #, no-javascript-format

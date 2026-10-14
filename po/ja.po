@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 01:13+0900\n"
+"POT-Creation-Date: 2026-10-14 10:27+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -2615,8 +2615,8 @@ msgid "Wake"
 msgstr "起動"
 
 #, no-javascript-format
-msgid "Ask %1 to wake up? This sends the PowerOn command, which has not been tried on a real printer yet. Starting a print or a cleaning wakes the printer too."
-msgstr "%1 を起動しますか？PowerOn コマンドを送信しますが、実際のプリンターではまだ動作を確認できていません。印刷やクリーニングを始めても、プリンターは起動します。"
+msgid "Ask %1 to wake up? It takes a few seconds. Starting a print or a cleaning wakes the printer too."
+msgstr "%1 を起動しますか？起動には数秒かかります。印刷やクリーニングを始めても、プリンターは起動します。"
 
 #, no-javascript-format
 msgid "The printer did not wake up"

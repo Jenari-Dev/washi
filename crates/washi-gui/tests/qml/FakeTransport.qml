@@ -136,7 +136,7 @@ QtObject {
         case "PrintFiles":
         case "PrintDisc": return [true, "print-1"];
         case "CancelJob": return [true, "true"];
-        case "Wake": return [true, JSON.stringify({ sent: true, verified: false, note: "unverified" })];
+        case "Wake": return [true, JSON.stringify({ sent: true, verified: false, note: "the printer accepted the wake command but is not up yet" })];
         case "GetWebLinks": {
             const l = Object.assign({}, webLinks);
             if (args[1] !== "") {

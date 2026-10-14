@@ -2,10 +2,13 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 
-// "Wake printer": asks a printer in auto power-off to wake up (IVEC PowerOn). That command is
-// unverified on real printers, so the button asks first and says so when it fails; a print job,
-// a maintenance job or the printer's own power button wake it just as well. Shown only while the
-// printer sleeps. Read-only mode refuses (the button is off, with a tooltip saying why).
+// "Wake printer": asks a printer in auto power-off to wake up (IVEC PowerOn with the power-on
+// mode ModeA; verified on a real XK140, firmware 1.060). The button asks first. The service
+// waits a few seconds for the printer's status to show it awake, and the button then goes away
+// (it is shown only while the printer sleeps); if the printer is slower, "Wake request sent"
+// stays until it arrives. When the request fails, the dialog says why and points to the power
+// button, a print job or a maintenance job, which wake the printer just as well. Read-only mode
+// refuses (the button is off, with a tooltip saying why).
 Item {
     id: w
 
@@ -50,8 +53,17 @@ Item {
         phase = "sending";
         Store.wake((ok, body) => {
             if (ok) {
-                phase = "sent";
-                resetTimer.restart();
+                // The service saw the printer come up: nothing left to wait for.
+                let up = false;
+                try {
+                    up = JSON.parse(body).verified === true;
+                } catch (e) {
+                    up = false;
+                }
+                phase = up ? "idle" : "sent";
+                if (!up) {
+                    resetTimer.restart();
+                }
             } else {
                 phase = "idle";
                 failureSource = Fmt.errorSource(body);
@@ -82,7 +94,7 @@ Item {
         title: i18n("Wake printer")
         acceptText: i18n("Wake")
         glyph: "power"
-        text: i18n("Ask %1 to wake up? This sends the PowerOn command, which has not been tried on a real printer yet. Starting a print or a cleaning wakes the printer too.", Store.displayName)
+        text: i18n("Ask %1 to wake up? It takes a few seconds. Starting a print or a cleaning wakes the printer too.", Store.displayName)
         onAccepted: w.send()
     }
 

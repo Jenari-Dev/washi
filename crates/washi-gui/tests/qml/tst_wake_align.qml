@@ -53,6 +53,7 @@ Item {
             findChild(wake, "wakeConfirm").close();
             findChild(wake, "wakeFailure").close();
             wake.phase = "idle";
+            wake.failureSource = "";
             Store.reset();
             Store.transport = null;
             fake.connected = false;
@@ -93,6 +94,17 @@ Item {
             compare(fake.called("Wake")[0].args[0], "printer.test");
             compare(JSON.parse(fake.called("Wake")[0].args[1]).confirm, true);
             tryVerify(() => wake.phase === "sent");
+        }
+
+        function test_a_wake_that_the_status_confirms_leaves_nothing_to_wait_for() {
+            boot({ power: "sleeping" });
+            fake.overrides = Object.assign({}, fake.overrides, { Wake: [true, JSON.stringify({ sent: true, verified: true, note: "the printer woke up" })] });
+            findChild(wake, "wakeInnerButton").clicked();
+            findChild(findChild(wake, "wakeConfirm"), "acceptButton").clicked();
+            tryVerify(() => fake.called("Wake").length === 1);
+            wait(100);
+            compare(wake.phase, "idle", "a confirmed wake does not leave the button waiting");
+            compare(wake.failure, "");
         }
 
         function test_wake_refused_in_read_only_mode() {

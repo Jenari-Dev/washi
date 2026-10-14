@@ -677,7 +677,8 @@ QtObject {
         call("CancelJob", [job], cb);
     }
 
-    // Wake a printer that is in auto power-off (IVEC PowerOn: unverified on real printers).
+    // Wake a printer that is in auto power-off (IVEC PowerOn, verified on the XK140). The reply
+    // comes after the service has looked at the status for a few seconds: {sent, verified, note}.
     function wake(cb) {
         if (_writeGuard(cb)) {
             call("Wake", [activeHost, JSON.stringify({ confirm: true })], cb);
