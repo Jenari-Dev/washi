@@ -30,13 +30,15 @@ modules:
   - name: poppler-data
     buildsystem: cmake-ninja
     sources:
-      - type: git
-        url: https://gitlab.freedesktop.org/poppler/poppler-data.git
-        tag: POPPLER_DATA_0_4_12
-        commit: af9f452b427d5ce8abe81ff98cc40c5f39fad90b
+      # Release tarballs (pinned by checksum) instead of git: the freedesktop GitLab answered
+      # 500 during a release build, and Flathub prefers archives anyway.
+      - type: archive
+        url: https://poppler.freedesktop.org/poppler-data-0.4.12.tar.gz
+        sha256: c835b640a40ce357e1b83666aabd95edffa24ddddd49b8daff63adb851cdab74
         x-checker-data:
-          type: git
-          tag-pattern: ^POPPLER_DATA_(\d+_\d+_\d+)$
+          type: anitya
+          project-id: 3687
+          url-template: https://poppler.freedesktop.org/poppler-data-$version.tar.gz
 
   # Only `pdftoppm` and `pdfinfo` are needed: Document Print rasterises PDF pages with them.
   - name: poppler
@@ -69,13 +71,13 @@ modules:
       - /lib/pkgconfig
       - /share/man
     sources:
-      - type: git
-        url: https://gitlab.freedesktop.org/poppler/poppler.git
-        tag: poppler-26.08.0
-        commit: d663f8fe0237073fadf43e4e19acc46b3ba3e80a
+      - type: archive
+        url: https://poppler.freedesktop.org/poppler-26.08.0.tar.xz
+        sha256: dc906e68cea698109706ac6aa3d2c9d4512fcfcac42d90b8afcda486d1b9abd0
         x-checker-data:
-          type: git
-          tag-pattern: ^poppler-(\d+\.\d+\.\d+)$
+          type: anitya
+          project-id: 3686
+          url-template: https://poppler.freedesktop.org/poppler-$version.tar.xz
 
   - name: washi
     buildsystem: simple
