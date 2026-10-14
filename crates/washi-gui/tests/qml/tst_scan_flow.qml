@@ -4,6 +4,8 @@ import QtTest 1.2
 // The Scan screens: setup -> preview/edit -> rotate/crop or image correction -> preview, what is
 // sent to the service (StartScan with confirm), how pages arrive and what saving asks of the host.
 Item {
+    id: root
+    readonly property var theFlow: flow
     width: 1040
     height: 760
 
@@ -16,6 +18,22 @@ Item {
 
     ScanFlow {
         id: flow
+    }
+    Component {
+        id: setupComp
+        ScanSetupView {
+            flow: root.theFlow
+            width: 1040
+            height: 760
+        }
+    }
+    Component {
+        id: previewComp
+        ScanPreviewView {
+            flow: root.theFlow
+            width: 1040
+            height: 760
+        }
     }
 
     TestCase {
@@ -40,6 +58,7 @@ Item {
             tryVerify(() => Store.snapLoaded);
             flow.newScan();
             flow.mode = "normal";
+            flow.stitchDirection = "left-right";
             flow.kind = "document";
             flow.sizeKey = "a4";
             flow.resolution = 300;
@@ -259,6 +278,67 @@ Item {
             tryVerify(() => flow.step === "preview");
             compare(imaging.called("scanExtra")[0].arg.op, "crop-photos");
             compare(flow.count, 2, "one page per photo");
+        }
+
+        function stitchRequests() {
+            return imaging.called("scanExtra").filter(r => r.arg.op === "stitch").map(r => r.arg);
+        }
+
+        function test_the_stitch_direction_is_chosen_in_setup_and_used_to_join() {
+            flow.mode = "stitch";
+            const setup = createTemporaryObject(setupComp, root);
+            verify(findChild(setup, "stitchDirectionRow").visible);
+            verify(findChild(setup, "stitch-left-right").checked, "left and right first");
+            verify(!findChild(setup, "stitch-top-bottom").checked);
+            mouseClick(findChild(setup, "stitch-top-bottom"));
+            compare(flow.stitchDirection, "top-bottom");
+            verify(findChild(setup, "stitch-top-bottom").checked);
+            verify(!findChild(setup, "stitch-left-right").checked);
+            // The row is only for Stitch.
+            flow.mode = "normal";
+            verify(!findChild(setup, "stitchDirectionRow").visible);
+            flow.mode = "stitch";
+            scanPages(2);
+            flow.stitchLastTwo();
+            tryVerify(() => stitchRequests().length === 1);
+            compare(stitchRequests()[0].direction, "top-bottom");
+            compare(stitchRequests()[0].a, 0);
+            compare(stitchRequests()[0].b, 1);
+        }
+
+        function test_the_join_button_of_the_preview_offers_both_directions() {
+            flow.mode = "stitch";
+            scanPages(2);
+            const view = createTemporaryObject(previewComp, root);
+            verify(findChild(view, "joinButton").visible);
+            // Left and right is the default; the menu next to Join changes it.
+            const menu = findChild(view, "joinMenu");
+            verify(menu !== null);
+            compare(menu.count, 2);
+            verify(menu.itemAt(0).checked && !menu.itemAt(1).checked);
+            menu.itemAt(1).triggered();
+            verify(menu.itemAt(1).checked, "the menu shows the choice");
+            compare(flow.stitchDirection, "top-bottom");
+            mouseClick(findChild(view, "joinButton"));
+            tryVerify(() => stitchRequests().length === 1);
+            compare(stitchRequests()[0].direction, "top-bottom");
+            // An explicit direction wins over the chosen one; anything else is the chosen one.
+            flow.newScan();
+            fake.clearCalls();
+            flow.mode = "stitch";
+            scanPages(2);
+            compare(flow.count, 2);
+            flow.stitchLastTwo("left-right");
+            tryVerify(() => stitchRequests().length === 2);
+            compare(stitchRequests()[1].direction, "left-right");
+        }
+
+        function test_stitching_needs_two_pages() {
+            flow.mode = "stitch";
+            scanPages(1);
+            flow.stitchLastTwo();
+            wait(50);
+            compare(stitchRequests().length, 0);
         }
 
         function test_read_only_never_scans() {

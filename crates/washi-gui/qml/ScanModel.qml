@@ -100,6 +100,14 @@ QtObject {
         return m;
     }
 
+    // Where the second scan of a Stitch continues the first.
+    function stitchDirections() {
+        return [
+            { value: "left-right", text: i18n("Left and right") },
+            { value: "top-bottom", text: i18n("Top and bottom") }
+        ];
+    }
+
     function pad(n) {
         return (n < 10 ? "0" : "") + n;
     }

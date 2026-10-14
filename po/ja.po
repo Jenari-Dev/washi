@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:38+0900\n"
+"POT-Creation-Date: 2026-10-14 12:42+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -2106,6 +2106,14 @@ msgid "Scan a document and turn it into a searchable PDF or a text file."
 msgstr "文書をスキャンして、検索できる PDF かテキストファイルにします。"
 
 #, no-javascript-format
+msgid "Left and right"
+msgstr "左右"
+
+#, no-javascript-format
+msgid "Top and bottom"
+msgstr "上下"
+
+#, no-javascript-format
 msgid "None"
 msgstr "なし"
 
@@ -2128,6 +2136,10 @@ msgstr "このページを削除"
 #, no-javascript-format
 msgid "Join"
 msgstr "結合"
+
+#, no-javascript-format
+msgid "Join the scans: %1"
+msgstr "つなぎ方：%1"
 
 #, no-javascript-format
 msgctxt "short button label under the page thumbnails"
@@ -2246,6 +2258,10 @@ msgstr "写真"
 #, no-javascript-format
 msgid "Document asks the scanner to favour text; Photo favours colour and tone. The image is not changed otherwise."
 msgstr "「文書」は文字を読みやすく、「写真」は色合いと階調を重視してスキャンします。それ以外に画像は加工されません。"
+
+#, no-javascript-format
+msgid "Join the scans"
+msgstr "つなぎ方"
 
 #, no-javascript-format
 msgid "Original Size"

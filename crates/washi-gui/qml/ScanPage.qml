@@ -15,6 +15,16 @@ Item {
 
     Component.onCompleted: {
         Store.loadScanCaps(false);
+        // The screenshot checks can open Scan in a mode (WASHI_SCAN_MODE=stitch) with a join
+        // direction (WASHI_STITCH=top-bottom).
+        const mode = Store.env("WASHI_SCAN_MODE");
+        if (mode !== "") {
+            scanFlow.mode = mode;
+        }
+        const join = Store.env("WASHI_STITCH");
+        if (join !== "") {
+            scanFlow.stitchDirection = join;
+        }
         // The screenshot checks start from a given step with the pages of a fake printer.
         const env = Store.env("WASHI_SCAN_STEP");
         if (env !== "") {

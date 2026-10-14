@@ -222,6 +222,21 @@ RowLayout {
             }
         }
         FormRow {
+            objectName: "stitchDirectionRow"
+            visible: view.flow.mode === "stitch"
+            label: i18n("Join the scans")
+            Repeater {
+                model: ScanModel.stitchDirections()
+                delegate: WRadio {
+                    required property var modelData
+                    objectName: "stitch-" + modelData.value
+                    text: modelData.text
+                    checked: view.flow.stitchDirection === modelData.value
+                    onClicked: view.flow.stitchDirection = modelData.value
+                }
+            }
+        }
+        FormRow {
             visible: view.flow.mode !== "auto" && view.flow.mode !== "multi-photo"
             label: i18n("Original Size")
             WCombo {

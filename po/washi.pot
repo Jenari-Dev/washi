@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:38+0900\n"
+"POT-Creation-Date: 2026-10-14 12:42+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2244,6 +2244,14 @@ msgid "Scan a document and turn it into a searchable PDF or a text file."
 msgstr ""
 
 #, no-javascript-format
+msgid "Left and right"
+msgstr ""
+
+#, no-javascript-format
+msgid "Top and bottom"
+msgstr ""
+
+#, no-javascript-format
 msgid "None"
 msgstr ""
 
@@ -2265,6 +2273,10 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Join"
+msgstr ""
+
+#, no-javascript-format
+msgid "Join the scans: %1"
 msgstr ""
 
 #, no-javascript-format
@@ -2392,6 +2404,10 @@ msgstr ""
 msgid ""
 "Document asks the scanner to favour text; Photo favours colour and tone. The "
 "image is not changed otherwise."
+msgstr ""
+
+#, no-javascript-format
+msgid "Join the scans"
 msgstr ""
 
 #, no-javascript-format

@@ -21,6 +21,9 @@ Item {
     property string colorMode: "color"           // color | gray | bw
     // normal | auto | multi-photo | stitch | ocr (the "More scan modes" menu)
     property string mode: "normal"
+    // Stitch: where the second scan continues the first, "left-right" (to the right of it) or
+    // "top-bottom" (below it).
+    property string stitchDirection: "left-right"
     readonly property var resolutions: ScanModel.resolutions(Store.scanCaps)
 
     // ---- the scan in progress and the pages ------------------------------------------------------
@@ -273,12 +276,13 @@ Item {
         startScan();
     }
 
-    // Stitch mode: join the last two pages.
+    // Stitch mode: join the last two pages, in `direction` (default: the chosen one).
     function stitchLastTwo(direction) {
         if (count < 2) {
             return;
         }
-        Img.extra({ op: "stitch", a: count - 2, b: count - 1, direction: direction }, (ok, r) => {
+        const dir = direction === "top-bottom" || direction === "left-right" ? direction : stitchDirection;
+        Img.extra({ op: "stitch", a: count - 2, b: count - 1, direction: dir }, (ok, r) => {
             if (ok) {
                 syncPages();
                 current = Math.min(r.index, count - 1);

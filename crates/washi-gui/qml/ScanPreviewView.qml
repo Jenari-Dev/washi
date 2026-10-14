@@ -130,13 +130,42 @@ RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: 8
                 spacing: 6
-                WButton {
-                    objectName: "joinButton"
+                RowLayout {
                     Layout.fillWidth: true
                     visible: view.flow.mode === "stitch" && view.flow.count >= 2
-                    text: i18n("Join")
-                    glyph: "check"
-                    onClicked: view.flow.stitchLastTwo("left-right")
+                    spacing: 2
+                    WButton {
+                        objectName: "joinButton"
+                        Layout.fillWidth: true
+                        text: i18n("Join")
+                        glyph: "check"
+                        onClicked: view.flow.stitchLastTwo()
+                    }
+                    WButton {
+                        objectName: "joinDirectionButton"
+                        kind: "quiet"
+                        glyph: "chevdown"
+                        implicitWidth: 30
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.text: i18n("Join the scans: %1", ScanModel.stitchDirections().find(d => d.value === view.flow.stitchDirection).text)
+                        onClicked: joinMenu.open()
+                        QQC2.Menu {
+                            id: joinMenu
+                            objectName: "joinMenu"
+                            y: -height
+                            Repeater {
+                                model: ScanModel.stitchDirections()
+                                delegate: QQC2.MenuItem {
+                                    required property var modelData
+                                    objectName: "join-" + modelData.value
+                                    text: modelData.text
+                                    checkable: true
+                                    checked: view.flow.stitchDirection === modelData.value
+                                    onTriggered: view.flow.stitchDirection = modelData.value
+                                }
+                            }
+                        }
+                    }
                 }
                 WButton {
                     objectName: "nextScanButton"
