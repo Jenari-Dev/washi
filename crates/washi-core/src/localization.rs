@@ -148,8 +148,13 @@ pub fn trim_margin(icon: &PrinterIcon) -> Option<(Vec<u8>, u32, u32)> {
         return None;
     }
     let cropped = image::imageops::crop_imm(&rgba, x0, y0, cw, ch).to_image();
+    // Encoded small: the picture is read from disk every time the app starts.
+    use image::ImageEncoder;
+    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
     let mut out = Vec::new();
-    cropped.write_to(&mut io::Cursor::new(&mut out), ImageFormat::Png).ok()?;
+    PngEncoder::new_with_quality(&mut out, CompressionType::Best, FilterType::Adaptive)
+        .write_image(cropped.as_raw(), cw, ch, image::ExtendedColorType::Rgba8)
+        .ok()?;
     Some((out, cw, ch))
 }
 
