@@ -9,10 +9,16 @@ use std::process::{Command, Output, Stdio};
 use washi_fake::FakePrinter;
 
 fn washi(fake: &FakePrinter, args: &[&str]) -> Output {
+    // Nothing that is kept (snapshots, the printer's web links) goes to the user's cache.
+    washi_cached(fake, Path::new("/nonexistent/washi-test-cache"), args)
+}
+
+fn washi_cached(fake: &FakePrinter, cache: &Path, args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_washi"))
         .args(["--host", &fake.chmp_target(), "--ipp-port", &fake.ipp.port().to_string()])
         .args(args)
         .env("XDG_CONFIG_HOME", "/nonexistent/washi-test")
+        .env("XDG_CACHE_HOME", cache)
         .env_remove("DBUS_SESSION_BUS_ADDRESS")
         .stdin(Stdio::null())
         .output()
@@ -640,6 +646,72 @@ fn firmware_status_and_links_are_reads() {
     assert!(v["ink"]["url"].as_str().unwrap().contains("&LNG=JP"));
     assert!(v["error"].is_null(), "no code, no error link");
     assert!(fake.writes().is_empty(), "{:?}", fake.writes());
+}
+
+#[test]
+fn links_are_kept_while_the_printer_is_on_and_used_while_it_sleeps() {
+    let fake = FakePrinter::start();
+    let cache = tempfile::tempdir().unwrap();
+    let (out, err) = text(&washi_cached(&fake, cache.path(), &["links"]));
+    assert!(out.contains("ink") && out.contains("maker"), "{out}{err}");
+    assert!(!out.contains("saved"), "a live read is not marked: {out}");
+
+    // Asleep: the printer answers 404 for the script; the kept copy fills in and says so.
+    fake.set_asleep(true);
+    let (out, err) = text(&washi_cached(&fake, cache.path(), &["links", "--code", "1300"]));
+    assert!(out.contains("maker") && out.contains("&ERR=1300"), "{out}{err}");
+    assert!(out.contains("(from the printer, saved "), "{out}");
+    let o = washi_cached(&fake, cache.path(), &["links", "--json"]);
+    let v: serde_json::Value = serde_json::from_slice(&o.stdout).unwrap();
+    assert!(v["saved_at"].as_u64().is_some_and(|t| t > 1_700_000_000), "{v}");
+    assert_eq!(v["from_printer"], true);
+
+    // With nothing kept it is the printer's own page, as before.
+    let empty = tempfile::tempdir().unwrap();
+    let (out, _) = text(&washi_cached(&fake, empty.path(), &["links"]));
+    assert!(out.contains("offered no links of its own") && !out.contains("saved"), "{out}");
+    assert!(fake.writes().is_empty());
+}
+
+#[test]
+fn a_sleeping_printer_is_never_reported_as_up_to_date() {
+    let fake = FakePrinter::start();
+    fake.offer_firmware_update("1.061", 100);
+    let cache = tempfile::tempdir().unwrap();
+    // Awake: the offer is read, and the status read keeps a snapshot for later.
+    let (out, _) = text(&washi_cached(&fake, cache.path(), &["status"]));
+    assert!(out.contains("Power     on"), "{out}");
+
+    // Asleep the printer says `unavailable`; with the snapshot kept, the offer is remembered.
+    fake.set_asleep(true);
+    let o = washi_cached(&fake, cache.path(), &["firmware"]);
+    let (out, err) = text(&o);
+    assert!(o.status.success(), "{out}{err}");
+    assert!(out.contains("checks for updates while it is on"), "{out}");
+    assert!(out.contains("last known: an update was available"), "{out}");
+    assert!(!out.contains("up to date"), "{out}");
+    let o = washi_cached(&fake, cache.path(), &["firmware", "--json"]);
+    let v: serde_json::Value = serde_json::from_slice(&o.stdout).unwrap();
+    assert_eq!(
+        (v["update"].as_str(), v["asleep"].as_bool(), v["remembered"].as_bool()),
+        (Some("available"), Some(true), Some(true))
+    );
+
+    // Nothing kept: not known (not "up to date" either).
+    let empty = tempfile::tempdir().unwrap();
+    let (out, _) = text(&washi_cached(&fake, empty.path(), &["firmware"]));
+    assert!(out.contains("last known: not known yet"), "{out}");
+    assert!(!out.contains("up to date"), "{out}");
+
+    // An update is not started on the strength of that.
+    let o = washi_cached(&fake, cache.path(), &["firmware", "update", "--confirm"]);
+    assert!(!o.status.success());
+    assert!(text(&o).1.contains("auto power-off"), "{}", text(&o).1);
+    assert!(fake.writes().is_empty(), "{:?}", fake.writes());
+
+    // `washi info` says the same instead of a bare `unavailable`.
+    let (out, _) = text(&washi_cached(&fake, cache.path(), &["info"]));
+    assert!(out.contains("only while it is on"), "{out}");
 }
 
 #[test]

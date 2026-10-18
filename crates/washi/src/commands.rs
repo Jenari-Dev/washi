@@ -46,6 +46,8 @@ pub fn run(cli: Cli) -> Result<()> {
         Cmd::Media { source, size } => jobs::media(&cli, *source, size.as_deref()),
         Cmd::Scanner => jobs::scanner(&cli),
         Cmd::Tools => jobs::tools(&cli),
+        Cmd::Doctor => crate::doctor::doctor(&cli),
+        Cmd::NotifyTest => notify_test(&cli),
     }
 }
 
@@ -206,6 +208,48 @@ fn watch(cli: &Cli, interval: u64, count: Option<u32>, no_daemon: bool) -> Resul
     }
 }
 
+/// `washi notify-test`: ask the running `washid` to show a sample notification through the same
+/// code that shows the real ones. Does not touch the printer. If the service is not running but
+/// D-Bus can start it, D-Bus does.
+fn notify_test(cli: &Cli) -> Result<()> {
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build()?;
+    let reply = rt.block_on(async {
+        let conn = zbus::Connection::session()
+            .await
+            .context("no D-Bus session bus: run this inside your desktop session")?;
+        let proxy = zbus::Proxy::new(&conn, DAEMON_NAME, DAEMON_PATH, DAEMON_IFACE).await?;
+        let call = proxy.call::<_, _, ()>("SendTestNotification", &());
+        match tokio::time::timeout(Duration::from_secs(20), call).await {
+            Err(_) => bail!("washid did not answer in time"),
+            Ok(Ok(())) => Ok(None),
+            Ok(Err(zbus::Error::MethodError(name, msg, _))) => {
+                let name = name.as_str().to_string();
+                let text = msg.unwrap_or_default();
+                if name.ends_with(".Error.Notification") {
+                    Ok(Some(text))
+                } else if name.contains("ServiceUnknown") || name.contains("NameHasNoOwner") {
+                    bail!(
+                        "washid is not running (start it with `washid`, `systemctl --user start washid`, or open the app)"
+                    )
+                } else {
+                    bail!("{name}: {text}")
+                }
+            }
+            Ok(Err(e)) => bail!("{e}"),
+        }
+    })?;
+    match reply {
+        None if cli.json => print_json(&serde_json::json!({ "sent": true }))?,
+        None => println!("Sent: a test notification should be on your screen now."),
+        Some(why) if cli.json => {
+            print_json(&serde_json::json!({ "sent": false, "error": why }))?;
+            bail!("{why}");
+        }
+        Some(why) => bail!("{why}"),
+    }
+    Ok(())
+}
+
 #[derive(Serialize)]
 struct InfoJson<'a> {
     manufacturer: &'a str,
@@ -228,7 +272,8 @@ fn info(cli: &Cli) -> Result<()> {
             counters: &st,
         });
     }
-    print!("{}", render::render_info(&cap, &st));
+    let asleep = !p.print_service_awake();
+    print!("{}", render::render_info(&cap, &st, asleep));
     Ok(())
 }
 
@@ -377,7 +422,8 @@ fn describe_changes(s: &DeviceSettings) -> Vec<String> {
         });
     }
     if let Some(v) = &s.papergap {
-        out.push(format!("paper gap = {v}"));
+        let on = v.eq_ignore_ascii_case("wide");
+        out.push(format!("prevent paper abrasion = {}", if on { "on" } else { "off" }));
     }
     if let Some(v) = s.drylevel {
         out.push(format!("dry level = {v}"));

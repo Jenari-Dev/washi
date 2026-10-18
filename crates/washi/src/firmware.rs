@@ -18,7 +18,9 @@ pub fn firmware(cli: &Cli, cmd: Option<&FirmwareCmd>) -> Result<()> {
 
 fn status(cli: &Cli) -> Result<()> {
     let p = connect(cli)?;
-    let s = p.firmware_status()?;
+    // The snapshot kept from the last time the printer was on says what it offered then.
+    let last = p.default_cache().and_then(|c| c.load());
+    let s = p.firmware_status_with(last.as_ref())?;
     if cli.json {
         return print_json(&s);
     }
@@ -27,10 +29,26 @@ fn status(cli: &Cli) -> Result<()> {
 }
 
 pub(crate) fn render_status(s: &FirmwareStatus) -> String {
-    let verdict = match s.update {
-        FirmwareUpdate::Unavailable => "up to date (the printer reports no update)",
-        FirmwareUpdate::Available => "an update is available",
-        FirmwareUpdate::Unknown => "the printer does not say whether an update is available",
+    let verdict = if s.asleep && !(s.update == FirmwareUpdate::Available && !s.remembered) {
+        // In auto power-off the printer does not check for updates, so its "no update" is no
+        // answer. Say what was known from the last time it was on.
+        let known = match s.update {
+            FirmwareUpdate::Unavailable => "up to date",
+            FirmwareUpdate::Available => "an update was available",
+            FirmwareUpdate::Unknown => "not known yet",
+        };
+        format!(
+            "the printer checks for updates while it is on; last known: {known} (wake it with \
+             `washi power on` to check)"
+        )
+    } else {
+        match s.update {
+            FirmwareUpdate::Unavailable => "up to date (the printer reports no update)".into(),
+            FirmwareUpdate::Available => "an update is available".into(),
+            FirmwareUpdate::Unknown => {
+                "the printer does not say whether an update is available".into()
+            }
+        }
     };
     format!("Firmware  {}\nUpdate    {verdict}\n", s.version)
 }
@@ -88,7 +106,9 @@ pub fn links(cli: &Cli, code: Option<&str>, lang: LinkLang) -> Result<()> {
         LinkLang::En => Language::En,
         LinkLang::Ja => Language::Ja,
     };
-    let l = p.web_links(code, lang);
+    // The printer serves its links only while it is awake: the copy kept from then fills in.
+    let cache = washi_core::LocalizationCache::for_printer(p.host(), p.chmp_port());
+    let l = p.web_links_kept(code, lang, cache.as_ref());
     if cli.json {
         return print_json(&l);
     }
@@ -113,7 +133,12 @@ pub(crate) fn render_links(l: &WebLinks) -> String {
     o.push_str(&row("support", &l.support));
     o.push_str(&row("printer page", &l.printer_page));
     o.push_str(&row("maintenance", &l.maintenance_page));
-    if !l.from_printer {
+    if let (true, Some(at)) = (l.from_printer, l.saved_at) {
+        o.push_str(&format!(
+            "(from the printer, saved {}; it serves them only while it is on)\n",
+            render::fmt_date(at)
+        ));
+    } else if !l.from_printer {
         o.push_str("(the printer offered no links of its own: these are its web page)\n");
     }
     o

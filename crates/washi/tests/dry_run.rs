@@ -97,6 +97,14 @@ fn settings_commands_are_dry_by_default() {
             .contains("<ivec:papergap>wide</ivec:papergap>")
     );
     assert!(
+        assert_dry(&["set", "paper-abrasion", "on"], &["SetConfiguration"])
+            .contains("<ivec:papergap>wide</ivec:papergap>")
+    );
+    assert!(
+        assert_dry(&["set", "paper-abrasion", "off"], &["SetConfiguration"])
+            .contains("<ivec:papergap>auto</ivec:papergap>")
+    );
+    assert!(
         assert_dry(&["set", "auto-firmware", "off"], &["SetConfiguration"])
             .contains("<vcn:auto_printer_rom_update>OFF</vcn:auto_printer_rom_update>")
     );

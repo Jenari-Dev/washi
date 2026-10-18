@@ -3,6 +3,7 @@
 
 mod cli;
 mod commands;
+mod doctor;
 mod firmware;
 mod jobs;
 mod render;

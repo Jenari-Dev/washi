@@ -15,7 +15,7 @@ use washi_core::{parse_auto_power_off, parse_quiet};
     about = "Washi: open-source Canon PRINT replacement for Canon CHMP/IVEC inkjet printers",
     long_about = "Washi talks to Canon inkjet printers over their CHMP/IVEC management channel (status, \
         maintenance), IPP (printing) and eSCL (scanning).\n\n\
-        Reads (status, info, settings, caps, raw, discover, scanner, media, jobs, tools) are always \
+        Reads (status, info, settings, caps, raw, discover, scanner, media, jobs, tools, doctor) are always \
         safe. Commands that change the printer or move paper or the scanner (maint, set, power, \
         scan, print, disc, identify, cancel) only print the exact request they would send unless \
         --confirm is given."
@@ -156,6 +156,13 @@ pub enum Cmd {
     Scanner,
     /// Which optional helper programs are installed (poppler, LibreOffice, tesseract).
     Tools,
+    /// Check the setup: the versions of washi, washid and the app, how the service starts, the
+    /// printer's channels, helper programs, the notification service, locales and paths. Read-only;
+    /// each line is a tick, a cross or a dash with a hint (`--json` for scripts).
+    Doctor,
+    /// Show a sample desktop notification through the running washid (does not touch the
+    /// printer): finds out whether notifications reach your desktop.
+    NotifyTest,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
@@ -547,7 +554,14 @@ pub enum SetCmd {
         #[arg(value_parser = clap::value_parser!(u8).range(1..=5))]
         level: u8,
     },
-    /// Paper gap: auto, or wide (prevents paper abrasion).
+    /// Prevent paper abrasion: raise the print head a little so that thick or curled paper is
+    /// not scuffed (printing can be slower). On is the printer's paper gap `wide`, off is `auto`.
+    PaperAbrasion {
+        #[arg(value_enum)]
+        value: Toggle,
+    },
+    /// The printer's own name for "prevent paper abrasion": `wide` = on, `auto` = off.
+    #[command(hide = true)]
     PaperGap {
         #[arg(value_enum)]
         value: PaperGapArg,
@@ -619,6 +633,15 @@ impl SetCmd {
             }
             SetCmd::Quiet { value } => s.silentmode = Some(parse_quiet(value)?),
             SetCmd::DryLevel { level } => s.drylevel = Some(*level),
+            SetCmd::PaperAbrasion { value } => {
+                s.papergap = Some(
+                    match value {
+                        Toggle::On => "wide",
+                        Toggle::Off => "auto",
+                    }
+                    .to_string(),
+                );
+            }
             SetCmd::PaperGap { value } => {
                 s.papergap = Some(
                     match value {
@@ -710,6 +733,8 @@ mod tests {
         assert!(parse(&["set", "dry-level", "6"]).is_err());
         assert!(parse(&["set", "dry-level", "5"]).is_ok());
         assert!(parse(&["set", "paper-gap", "narrow"]).is_err());
+        assert!(parse(&["set", "paper-abrasion", "wide"]).is_err());
+        assert!(parse(&["set", "paper-abrasion", "on"]).is_ok());
         assert!(parse(&["set", "auto-power-on", "maybe"]).is_err());
         assert!(parse(&["set", "auto-firmware", "off"]).is_ok());
     }
@@ -762,5 +787,9 @@ mod tests {
         assert!(s.autopoweroff.is_none());
         let s = SetCmd::PaperGap { value: PaperGapArg::Wide }.to_settings().unwrap();
         assert_eq!(s.papergap.as_deref(), Some("wide"));
+        let s = SetCmd::PaperAbrasion { value: Toggle::On }.to_settings().unwrap();
+        assert_eq!(s.papergap.as_deref(), Some("wide"));
+        let s = SetCmd::PaperAbrasion { value: Toggle::Off }.to_settings().unwrap();
+        assert_eq!(s.papergap.as_deref(), Some("auto"));
     }
 }

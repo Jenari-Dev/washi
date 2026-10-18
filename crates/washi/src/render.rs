@@ -65,6 +65,21 @@ pub fn fmt_ago(secs: u64) -> String {
     }
 }
 
+/// `YYYY-MM-DD` (UTC) of a Unix time.
+pub fn fmt_date(unix: u64) -> String {
+    // Days since 1970-01-01 to a calendar date (Howard Hinnant's civil-from-days).
+    let z = (unix / 86400) as i64 + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    format!("{year:04}-{month:02}-{day:02}")
+}
+
 fn ink_flag(i: &InkLevel) -> &'static str {
     match i.status {
         InkStatus::Ok => "",
@@ -192,13 +207,22 @@ pub fn watch_line(s: &PrinterSnapshot, clock: &str) -> String {
     o
 }
 
-pub fn render_info(cap: &DeviceCapability, st: &DeviceStatus) -> String {
+/// `asleep`: the printer is in auto power-off, where it does not check for firmware updates and
+/// says `unavailable` whatever is true.
+pub fn render_info(cap: &DeviceCapability, st: &DeviceStatus, asleep: bool) -> String {
     let mut o = String::new();
     let _ = writeln!(o, "Model       {} {}", cap.manufacturer, cap.model);
     let _ = writeln!(o, "Firmware    {}", cap.firmver);
     let _ = writeln!(o, "Services    {}", cap.services.join(", "));
     if let Some(u) = &st.networkupdate_available {
-        let _ = writeln!(o, "Update      network firmware update: {u}");
+        if asleep && u.trim().eq_ignore_ascii_case("unavailable") {
+            let _ = writeln!(
+                o,
+                "Update      not known: the printer checks for firmware updates only while it is on"
+            );
+        } else {
+            let _ = writeln!(o, "Update      network firmware update: {u}");
+        }
     }
     let _ = writeln!(o, "\nSheets fed per tray");
     for (bin, n) in &st.total_paper_num {
@@ -244,6 +268,23 @@ fn list(v: &[String]) -> String {
     if v.is_empty() { "-".to_string() } else { v.join(", ") }
 }
 
+/// The printer's paper gap as the on/off switch Canon's own apps show: `wide` = on, `auto` = off.
+fn abrasion(papergap: Option<&str>) -> String {
+    match papergap {
+        Some(v) if v.eq_ignore_ascii_case("wide") => "on".into(),
+        Some(v) if v.eq_ignore_ascii_case("auto") => "off".into(),
+        Some(v) => v.to_string(),
+        None => "-".into(),
+    }
+}
+
+fn abrasion_allowed(allowed: &[String]) -> String {
+    if allowed.is_empty() {
+        return "-".into();
+    }
+    allowed.iter().map(|v| abrasion(Some(v))).collect::<Vec<_>>().join(", ")
+}
+
 pub fn render_settings(cfg: &DeviceConfig, cap: &DeviceCapability) -> String {
     let silent = cfg.silentmode.as_ref().map_or("-".to_string(), |s| {
         let mode = s.mode.map_or("?".to_string(), |m| m.to_string());
@@ -272,7 +313,11 @@ pub fn render_settings(cfg: &DeviceConfig, cap: &DeviceCapability) -> String {
                 format!("{} (time = daily window, HHMM-HHMM)", s.modes.join(", "))
             }),
         ),
-        ("Paper gap", opt(&cfg.papergap), list(&cap.papergap)),
+        (
+            "Prevent paper abrasion",
+            abrasion(cfg.papergap.as_deref()),
+            abrasion_allowed(&cap.papergap),
+        ),
         ("Ink drying time (dry level)", opt(&cfg.drylevel), dry),
         (
             "Auto firmware update",
@@ -514,14 +559,32 @@ mod tests {
     }
 
     #[test]
+    fn dates() {
+        assert_eq!(fmt_date(0), "1970-01-01");
+        assert_eq!(fmt_date(951_782_400), "2000-02-29");
+        assert_eq!(fmt_date(1_791_936_000), "2026-10-14");
+    }
+
+    #[test]
     fn info_text() {
         let s = render_info(
             &DeviceCapability::parse(CAP).unwrap(),
             &DeviceStatus::parse(DEVICE).unwrap(),
+            false,
         );
         assert!(s.contains("Firmware    1.060"), "{s}");
         assert!(s.contains("54"), "{s}");
+        assert!(s.contains("firmware update: unavailable"), "{s}");
         assert!(!s.contains("XXXXXXXXX"));
+        let asleep = render_info(
+            &DeviceCapability::parse(CAP).unwrap(),
+            &DeviceStatus::parse(DEVICE).unwrap(),
+            true,
+        );
+        assert!(
+            asleep.contains("only while it is on") && !asleep.contains("unavailable"),
+            "{asleep}"
+        );
     }
 
     #[test]
