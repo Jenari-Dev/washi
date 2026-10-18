@@ -37,11 +37,17 @@ fn status_of_an_awake_printer() {
     assert!(r.stdout.contains("Cassette"), "{}", r.stdout);
     assert!(!r.stdout.contains("auto power-off"));
     assert!(fake.writes().is_empty());
-    // The cache file is named by a hash, not by the host.
-    let files: Vec<_> = std::fs::read_dir(cache.path().join("washi")).unwrap().collect();
-    assert_eq!(files.len(), 1);
-    let name = files[0].as_ref().unwrap().file_name().to_string_lossy().into_owned();
-    assert!(name.len() == 21 && name.ends_with(".json") && !name.contains("127"), "{name}");
+    // Cache files are named by a hash, not by the host. Besides the snapshot, the printer's saved
+    // web links (`<hash>-links.json`) may already be there: they are fetched in the background
+    // while the printer is awake.
+    let names: Vec<String> = std::fs::read_dir(cache.path().join("washi"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    assert!(names.iter().all(|n| !n.contains("127") && n.ends_with(".json")), "{names:?}");
+    let snapshots: Vec<_> = names.iter().filter(|n| n.len() == 21).collect();
+    assert_eq!(snapshots.len(), 1, "{names:?}");
+    assert!(names.iter().all(|n| n.len() == 21 || n.ends_with("-links.json")), "{names:?}");
 }
 
 #[test]
