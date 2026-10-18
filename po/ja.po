@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:56+0900\n"
+"POT-Creation-Date: 2026-10-18 20:21+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -67,6 +67,43 @@ msgstr "プリンターがエラーを報告したとき"
 #, no-javascript-format
 msgid "The printer is back online"
 msgstr "プリンターがオンラインに戻ったとき"
+
+#, no-javascript-format
+msgid "Send a test notification"
+msgstr "テスト通知を送る"
+
+#, no-javascript-format
+msgid "Sent. If a notification appeared on your desktop, notifications work."
+msgstr "送信しました。デスクトップに通知が表示されていれば、通知は正常に動作しています。"
+
+#, no-javascript-format
+msgid "Check setup"
+msgstr "セットアップを確認"
+
+#, no-javascript-format
+msgid "Looks at the Washi service, your printer, the desktop and the optional helper programs. The printer is only asked read-only questions, and nothing is sent to anyone else."
+msgstr "Washiのサービス、プリンター、デスクトップ、任意の補助プログラムの状態を確認します。プリンターには読み取りの問い合わせだけを行い、それ以外の相手には何も送信しません。"
+
+#, no-javascript-format
+msgid "Check again"
+msgstr "もう一度確認"
+
+#, no-javascript-format
+msgid "Checking…"
+msgstr "確認中…"
+
+#, no-javascript-format
+msgid "The service is not running, so the setup cannot be checked. Run “washi doctor” in a terminal to check without it."
+msgstr "サービスが動いていないため、セットアップを確認できません。サービスなしで確認するには、ターミナルで「washi doctor」を実行してください。"
+
+#, no-javascript-format
+msgid "No problems found."
+msgstr "問題は見つかりませんでした。"
+
+#, no-javascript-format
+msgid "%1 problem found."
+msgid_plural "%1 problems found."
+msgstr[0] "%1件の問題が見つかりました。"
 
 #, no-javascript-format
 msgid "About Washi"
@@ -153,6 +190,26 @@ msgid "Network (over IP)"
 msgstr "ネットワーク（IP）"
 
 #, no-javascript-format
+msgid "An update was available the last time the printer was on."
+msgstr "プリンターの電源が入っていた前回は、更新がありました。"
+
+#, no-javascript-format
+msgid "An update is available."
+msgstr "更新があります。"
+
+#, no-javascript-format
+msgid "Up to date the last time the printer was on."
+msgstr "プリンターの電源が入っていた前回は、最新の状態でした。"
+
+#, no-javascript-format
+msgid "Up to date."
+msgstr "最新の状態です。"
+
+#, no-javascript-format
+msgid "The printer checks for updates while it is on."
+msgstr "プリンターは電源が入っている間だけ更新を確認します。"
+
+#, no-javascript-format
 msgid "Printer name"
 msgstr "プリンター名"
 
@@ -163,14 +220,6 @@ msgstr "モデル名"
 #, no-javascript-format
 msgid "Firmware version"
 msgstr "ファームウェアのバージョン"
-
-#, no-javascript-format
-msgid "An update is available."
-msgstr "更新があります。"
-
-#, no-javascript-format
-msgid "Up to date."
-msgstr "最新の状態です。"
 
 #, no-javascript-format
 msgid "IP address"
@@ -209,20 +258,28 @@ msgid "Firmware"
 msgstr "ファームウェア"
 
 #, no-javascript-format
+msgid "A firmware update was available the last time the printer was on (installed: %1)."
+msgstr "プリンターの電源が入っていた前回は、ファームウェアの更新がありました（現在のバージョン：%1）。"
+
+#, no-javascript-format
 msgid "A firmware update is available (installed: %1)."
 msgstr "ファームウェアの更新があります（現在のバージョン：%1）。"
+
+#, no-javascript-format
+msgid "The firmware was up to date the last time the printer was on (%1). The printer checks for updates only while it is on."
+msgstr "プリンターの電源が入っていた前回は、ファームウェアが最新でした（%1）。プリンターは電源が入っている間だけ更新を確認します。"
 
 #, no-javascript-format
 msgid "The firmware is up to date (%1). The printer reports no update."
 msgstr "ファームウェアは最新です（%1）。プリンターは更新なしと報告しています。"
 
 #, no-javascript-format
-msgid "The printer does not say whether a firmware update is available (installed: %1)."
-msgstr "ファームウェアの更新があるかどうか、プリンターから情報を得られません（現在のバージョン：%1）。"
+msgid "The printer checks for firmware updates only while it is on, and it is asleep now (installed: %1)."
+msgstr "プリンターは電源が入っている間だけファームウェアの更新を確認します。今はスリープ中のため確認できません（現在のバージョン：%1）。"
 
 #, no-javascript-format
-msgid "Checking…"
-msgstr "確認中…"
+msgid "The printer does not say whether a firmware update is available (installed: %1)."
+msgstr "ファームウェアの更新があるかどうか、プリンターから情報を得られません（現在のバージョン：%1）。"
 
 #, no-javascript-format
 msgid "Check for Updates"
@@ -870,7 +927,7 @@ msgid "Quiet mode"
 msgstr "静音モード"
 
 #, no-javascript-format
-msgid "Paper gap"
+msgid "Prevent paper abrasion"
 msgstr "用紙のこすれ防止"
 
 #, no-javascript-format
@@ -968,6 +1025,10 @@ msgstr "プリンター本体のウェブページ（%1）をウェブブラウ�
 #, no-javascript-format
 msgid "The printer gave no address of its own for this, so this opens the printer's own web page in your web browser (%1)."
 msgstr "プリンターがこの用途のアドレスを提供していないため、プリンター本体のウェブページ（%1）をウェブブラウザーで開きます。"
+
+#, no-javascript-format
+msgid "From the printer (saved %1). The printer gives out this address only while it is awake."
+msgstr "プリンターから取得したアドレスです（保存日：%1）。プリンターは電源が入っている間だけこのアドレスを提供します。"
 
 #, no-javascript-format
 msgid "Look for: %1."
@@ -2344,10 +2405,6 @@ msgid "Ink Drying Time"
 msgstr "インク乾燥時間"
 
 #, no-javascript-format
-msgid "Paper Gap"
-msgstr "用紙のこすれ防止"
-
-#, no-javascript-format
 msgid "Auto Power On"
 msgstr "自動電源オン"
 
@@ -2413,8 +2470,8 @@ msgid "Longer"
 msgstr "長い"
 
 #, no-javascript-format
-msgid "Choose Wide if thick or curled paper gets scuffed by the print head."
-msgstr "厚い用紙や反った用紙がプリントヘッドでこすれるときは、「広い」を選んでください。"
+msgid "Raises the print head a little so that thick or curled paper is not scuffed. Printing can be slower."
+msgstr "プリントヘッドを少し持ち上げて、厚い紙や反った紙がこすれないようにします。印刷が遅くなることがあります。"
 
 #, no-javascript-format
 msgid "Turn on “%1” for %2?"
@@ -2601,10 +2658,6 @@ msgstr "常時、または指定した時間帯に、印刷の音を静かにし
 #, no-javascript-format
 msgid "Adds a pause between pages so the ink can dry before the next one lands on it."
 msgstr "ページの間に待ち時間を入れて、次のページが重なる前にインクを乾かします。"
-
-#, no-javascript-format
-msgid "Widens the space between print head and paper to avoid scuffs on thick paper."
-msgstr "プリントヘッドと用紙の間隔を広げて、厚い用紙のこすれを防ぎます。"
 
 #, no-javascript-format
 msgid "Lets the printer install new firmware by itself when it is available."

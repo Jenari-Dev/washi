@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 12:56+0900\n"
+"POT-Creation-Date: 2026-10-18 20:21+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,6 +77,49 @@ msgstr ""
 #, no-javascript-format
 msgid "The printer is back online"
 msgstr ""
+
+#, no-javascript-format
+msgid "Send a test notification"
+msgstr ""
+
+#, no-javascript-format
+msgid "Sent. If a notification appeared on your desktop, notifications work."
+msgstr ""
+
+#, no-javascript-format
+msgid "Check setup"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"Looks at the Washi service, your printer, the desktop and the optional "
+"helper programs. The printer is only asked read-only questions, and nothing "
+"is sent to anyone else."
+msgstr ""
+
+#, no-javascript-format
+msgid "Check again"
+msgstr ""
+
+#, no-javascript-format
+msgid "Checking…"
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The service is not running, so the setup cannot be checked. Run “washi "
+"doctor” in a terminal to check without it."
+msgstr ""
+
+#, no-javascript-format
+msgid "No problems found."
+msgstr ""
+
+#, no-javascript-format
+msgid "%1 problem found."
+msgid_plural "%1 problems found."
+msgstr[0] ""
+msgstr[1] ""
 
 #, no-javascript-format
 msgid "About Washi"
@@ -172,6 +215,26 @@ msgid "Network (over IP)"
 msgstr ""
 
 #, no-javascript-format
+msgid "An update was available the last time the printer was on."
+msgstr ""
+
+#, no-javascript-format
+msgid "An update is available."
+msgstr ""
+
+#, no-javascript-format
+msgid "Up to date the last time the printer was on."
+msgstr ""
+
+#, no-javascript-format
+msgid "Up to date."
+msgstr ""
+
+#, no-javascript-format
+msgid "The printer checks for updates while it is on."
+msgstr ""
+
+#, no-javascript-format
 msgid "Printer name"
 msgstr ""
 
@@ -181,14 +244,6 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Firmware version"
-msgstr ""
-
-#, no-javascript-format
-msgid "An update is available."
-msgstr ""
-
-#, no-javascript-format
-msgid "Up to date."
 msgstr ""
 
 #, no-javascript-format
@@ -228,7 +283,19 @@ msgid "Firmware"
 msgstr ""
 
 #, no-javascript-format
+msgid ""
+"A firmware update was available the last time the printer was on (installed: "
+"%1)."
+msgstr ""
+
+#, no-javascript-format
 msgid "A firmware update is available (installed: %1)."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"The firmware was up to date the last time the printer was on (%1). The "
+"printer checks for updates only while it is on."
 msgstr ""
 
 #, no-javascript-format
@@ -237,12 +304,14 @@ msgstr ""
 
 #, no-javascript-format
 msgid ""
-"The printer does not say whether a firmware update is available (installed: "
-"%1)."
+"The printer checks for firmware updates only while it is on, and it is "
+"asleep now (installed: %1)."
 msgstr ""
 
 #, no-javascript-format
-msgid "Checking…"
+msgid ""
+"The printer does not say whether a firmware update is available (installed: "
+"%1)."
 msgstr ""
 
 #, no-javascript-format
@@ -935,7 +1004,7 @@ msgid "Quiet mode"
 msgstr ""
 
 #, no-javascript-format
-msgid "Paper gap"
+msgid "Prevent paper abrasion"
 msgstr ""
 
 #, no-javascript-format
@@ -1044,6 +1113,12 @@ msgstr ""
 msgid ""
 "The printer gave no address of its own for this, so this opens the printer's "
 "own web page in your web browser (%1)."
+msgstr ""
+
+#, no-javascript-format
+msgid ""
+"From the printer (saved %1). The printer gives out this address only while "
+"it is awake."
 msgstr ""
 
 #, no-javascript-format
@@ -2494,10 +2569,6 @@ msgid "Ink Drying Time"
 msgstr ""
 
 #, no-javascript-format
-msgid "Paper Gap"
-msgstr ""
-
-#, no-javascript-format
 msgid "Auto Power On"
 msgstr ""
 
@@ -2566,7 +2637,9 @@ msgid "Longer"
 msgstr ""
 
 #, no-javascript-format
-msgid "Choose Wide if thick or curled paper gets scuffed by the print head."
+msgid ""
+"Raises the print head a little so that thick or curled paper is not scuffed. "
+"Printing can be slower."
 msgstr ""
 
 #, no-javascript-format
@@ -2766,11 +2839,6 @@ msgstr ""
 msgid ""
 "Adds a pause between pages so the ink can dry before the next one lands on "
 "it."
-msgstr ""
-
-#, no-javascript-format
-msgid ""
-"Widens the space between print head and paper to avoid scuffs on thick paper."
 msgstr ""
 
 #, no-javascript-format

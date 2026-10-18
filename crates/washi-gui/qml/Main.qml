@@ -182,6 +182,7 @@ QQC2.ApplicationWindow {
                 case "manual-align-enter": manualAlign.open(); manualAlign.begin(); manualAlign.patternDone(); break;
                 case "quiet": setting.open({ field: "quiet" }); break;
                 case "autopoweroff": setting.open({ field: "autopoweroff" }); break;
+                case "abrasion": setting.open({ field: "paper_gap", value: true }); break;
                 case "discover": discoverDlg.open(); break;
                 case "ink-models": inkDlg.open(); break;
                 case "license": licenseDlg.open(); break;

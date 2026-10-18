@@ -298,6 +298,65 @@ Item {
             loader.sourceComponent = null;
         }
 
+        function test_the_test_notification_asks_the_service_and_shows_how_it_went() {
+            boot({});
+            loader.sourceComponent = settingsComp;
+            tryVerify(() => loader.item !== null);
+            const button = findChild(loader.item, "testNotifyButton");
+            verify(button.enabled);
+            verify(!findChild(loader.item, "testNotifyResult").visible);
+            fake.clearCalls();
+            button.clicked();
+            tryVerify(() => fake.called("SendTestNotification").length === 1);
+            compare(fake.called("SendTestNotification")[0].args.length, 0);
+            tryVerify(() => findChild(loader.item, "testNotifyResult").visible);
+            verify(findChild(loader.item, "testNotifyResult").text.indexOf("Sent.") === 0);
+            // Not available: the service says why, in its own words.
+            fake.overrides = ({ SendTestNotification: [false, JSON.stringify({ name: "Notification", message: "No notification service answered (org.freedesktop.Notifications)." })] });
+            button.clicked();
+            tryVerify(() => findChild(loader.item, "testNotifyResult").text.indexOf("No notification service") === 0);
+            compare(findChild(loader.item, "testNotifyResult").kind, "error");
+            fake.overrides = ({});
+            loader.sourceComponent = null;
+        }
+
+        function test_the_test_notification_works_in_read_only_mode_too() {
+            boot({}, true);
+            loader.sourceComponent = settingsComp;
+            tryVerify(() => loader.item !== null);
+            const button = findChild(loader.item, "testNotifyButton");
+            verify(button.enabled, "it does not touch the printer");
+            fake.clearCalls();
+            button.clicked();
+            tryVerify(() => fake.called("SendTestNotification").length === 1);
+            loader.sourceComponent = null;
+        }
+
+        function test_check_setup_lists_every_check_with_its_mark_and_hint() {
+            boot({});
+            loader.sourceComponent = settingsComp;
+            tryVerify(() => loader.item !== null);
+            verify(!findChild(loader.item, "setupReport").visible);
+            const button = findChild(loader.item, "checkSetupButton");
+            compare(button.text, "Check setup");
+            fake.clearCalls();
+            button.clicked();
+            tryVerify(() => fake.called("Doctor").length === 1);
+            tryVerify(() => findChild(loader.item, "setupReport").visible);
+            compare(findChild(loader.item, "setupSummary").text, "1 problem found.");
+            verify(findChild(loader.item, "check-printer.chmp") !== null);
+            verify(findChild(loader.item, "check-printer.escl") !== null);
+            verify(findChild(loader.item, "check-printer.mdns") !== null);
+            compare(findChild(loader.item, "checkSetupButton").text, "Check again");
+            // A failed question shows its reason.
+            fake.overrides = ({ Doctor: [false, JSON.stringify({ name: "Timeout", message: "" })] });
+            findChild(loader.item, "checkSetupButton").clicked();
+            tryVerify(() => findChild(loader.item, "setupError").visible);
+            verify(!findChild(loader.item, "setupReport").visible);
+            fake.overrides = ({});
+            loader.sourceComponent = null;
+        }
+
         function test_a_printer_can_be_removed_from_the_list() {
             boot({});
             loader.sourceComponent = listComp;

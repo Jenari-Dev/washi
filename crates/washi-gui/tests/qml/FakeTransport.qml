@@ -106,6 +106,19 @@ QtObject {
         status: { state: "Idle", jobs: [] }
     })
     property var notifications: ({ enabled: true, ink: true, errors: true, online: true })
+    // What Doctor answers (the service's self-check).
+    property var doctor: ({
+        source: "washid", language: "en",
+        groups: [
+            { id: "service", title: "Washi service (washid)", checks: [
+                { id: "service.version", status: "ok", label: "Service (washid)", detail: "0.1.3", hint: "" }] },
+            { id: "printer", title: "Printer", checks: [
+                { id: "printer.mdns", status: "skip", label: "Found by mDNS discovery", detail: "no Canon printer answered", hint: "fine with a fixed address" },
+                { id: "printer.chmp", status: "ok", label: "Management channel (CHMP)", detail: "XK140 series, firmware 1.060", hint: "" },
+                { id: "printer.escl", status: "fail", label: "Scanning channel (eSCL)", detail: "no answer: timed out", hint: "scanning is unavailable until the printer's web server answers" }] }
+        ],
+        summary: { ok: 2, fail: 1, skip: 1 }
+    })
     // What GetWebLinks answers; `error` appears when the app asks with a support code.
     property var webLinks: ({
         ink: { url: "https://links.example.org/ink?DEV=XK140+series&LNG=EN", source: "maker" },
@@ -177,6 +190,8 @@ QtObject {
         case "UpdateFirmware": return [true, "job-1"];
         case "GetNotificationSettings": return [true, JSON.stringify(notifications)];
         case "SetNotificationSettings": notifications = Object.assign({}, notifications, JSON.parse(args[0])); return [true, JSON.stringify(notifications)];
+        case "SendTestNotification": return [true, ""];
+        case "Doctor": return [true, JSON.stringify(doctor)];
         case "ForgetPrinter": return [true, JSON.stringify({ forgotten: true, persistent: true, active: null })];
         case "ApplySettings": return [true, JSON.stringify({ changed: true, changes: [{ field: "silentmode", before: "OFF", after: "time 2230-0600" }], current: settings.current })];
         case "x-Resolve": return [true, "192.0.2.10"];

@@ -149,7 +149,7 @@ NAMES = set("""Canon XK140 series Washi PGBK BK PDF JPEG PNG BMP dpi OCR IPP LAN
 LibreOffice Simple Scan Photo Paper Pro Platinum Crystal Grade Luster Glossy Matte Plus Semi gloss High Resolution Fine Art
 Office poppler pdftoppm pdfinfo washid systemctl user enable now start config toml txt jpg jpeg doc docx xls xlsx ppt
 pptx odt ods odp rtf bmp png pdf UI Remote HH MM in mm pt GPL GNU PIXUS PIXMA PRINT IP TCP HTTP mDNS JIS DL You Chou
-IPv Level PowerOn read only readonly washi Summer mix Hagaki Letter Legal GNOME Bus DTP Web""".split())
+IPv Level PowerOn read only readonly washi doctor Summer mix Hagaki Letter Legal GNOME Bus DTP Web""".split())
 
 
 def check_japanese(po, entries):

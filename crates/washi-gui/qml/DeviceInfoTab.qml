@@ -28,10 +28,21 @@ PageScroll {
         return keys.map(k => k + " " + Fmt.number(map[k])).join("  ·  ");
     }
 
+    // What the Firmware row says under the version. A printer in auto power-off does not check for
+    // updates, so for a sleeping printer this is what it said the last time it was on.
+    readonly property string firmwareDetail: {
+        const remembered = Store.firmwareUpdateRemembered;
+        switch (Store.firmwareUpdate) {
+        case "available": return remembered ? i18n("An update was available the last time the printer was on.") : i18n("An update is available.");
+        case "unavailable": return remembered ? i18n("Up to date the last time the printer was on.") : i18n("Up to date.");
+        default: return Store.power === "sleeping" ? i18n("The printer checks for updates while it is on.") : "";
+        }
+    }
+
     readonly property var rows: [
         { label: i18n("Printer name"), value: Store.activePrinter ? Store.printerLabel(Store.activePrinter) : "" },
         { label: i18n("Model name"), value: Store.modelName },
-        { label: i18n("Firmware version"), value: Store.firmware, detail: Store.firmwareUpdate === "available" ? i18n("An update is available.") : (Store.firmwareUpdate === "unavailable" ? i18n("Up to date.") : ""), accent: Store.firmwareUpdate === "available" },
+        { label: i18n("Firmware version"), value: Store.firmware, detail: tab.firmwareDetail, accent: Store.firmwareUpdate === "available" },
         { label: i18n("IP address"), value: tab.hostText },
         { label: i18n("Connection"), value: tab.connectionText },
         { label: i18n("Total pages fed"), value: counters.total_paper_num ? Fmt.number(Fmt.sum(counters.total_paper_num)) : "", detail: counters.total_paper_num ? perTray(counters.total_paper_num) : "" },
@@ -164,9 +175,15 @@ PageScroll {
                 font.weight: fwCard.update === "available" ? Font.DemiBold : Font.Normal
                 text: {
                     switch (fwCard.update) {
-                    case "available": return i18n("A firmware update is available (installed: %1).", Store.firmware);
-                    case "unavailable": return i18n("The firmware is up to date (%1). The printer reports no update.", Store.firmware);
-                    default: return i18n("The printer does not say whether a firmware update is available (installed: %1).", Store.firmware);
+                    case "available": return Store.firmwareUpdateRemembered
+                        ? i18n("A firmware update was available the last time the printer was on (installed: %1).", Store.firmware)
+                        : i18n("A firmware update is available (installed: %1).", Store.firmware);
+                    case "unavailable": return Store.firmwareUpdateRemembered
+                        ? i18n("The firmware was up to date the last time the printer was on (%1). The printer checks for updates only while it is on.", Store.firmware)
+                        : i18n("The firmware is up to date (%1). The printer reports no update.", Store.firmware);
+                    default: return Store.power === "sleeping"
+                        ? i18n("The printer checks for firmware updates only while it is on, and it is asleep now (installed: %1).", Store.firmware)
+                        : i18n("The printer does not say whether a firmware update is available (installed: %1).", Store.firmware);
                     }
                 }
             }

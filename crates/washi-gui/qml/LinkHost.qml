@@ -13,6 +13,9 @@ Item {
     property string code: ""
     property var link: null             // {url, source: "maker" | "printer"}
     property bool loading: false
+    // Unix seconds when the maker's links were saved, if they come from the copy kept from the
+    // last time the printer was awake (it serves them only then); 0 for a live read.
+    property real savedAt: 0
 
     readonly property bool fromMaker: !!link && link.source === "maker"
     // The host name of the address, for the question ("rs.example.net").
@@ -57,6 +60,7 @@ Item {
         kind = args.kind || "help";
         code = kind === "error" ? (args.code !== undefined ? String(args.code) : (Store.support ? String(Store.support.code) : "")) : "";
         link = null;
+        savedAt = 0;
         loading = true;
         dlg.open();
         const k = kind;
@@ -66,6 +70,7 @@ Item {
             }
             loading = false;
             link = ok && links ? pick(links, k) : { url: "http://" + Store.activeHost + "/", source: "printer" };
+            savedAt = ok && links && links.saved_at ? links.saved_at : 0;
         });
     }
 
@@ -110,6 +115,14 @@ Item {
                     : (host.asked
                         ? i18n("This opens the printer's own web page in your web browser (%1).", host.where)
                         : i18n("The printer gave no address of its own for this, so this opens the printer's own web page in your web browser (%1).", host.where))
+            }
+            WText {
+                objectName: "linkSavedHint"
+                visible: host.fromMaker && host.savedAt > 0
+                Layout.fillWidth: true
+                kind: "dim"
+                wrapMode: Text.WordWrap
+                text: i18n("From the printer (saved %1). The printer gives out this address only while it is awake.", Fmt.day(host.savedAt))
             }
             WText {
                 objectName: "linkInkHint"

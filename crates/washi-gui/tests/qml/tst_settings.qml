@@ -108,13 +108,29 @@ Item {
             tryVerify(() => dlg.stage === "done");
             dlg.cancel();
             fake.clearCalls();
+            // "Prevent paper abrasion": off at first (the printer says auto), asking turns it on.
             dlg.open({ field: "paper_gap" });
-            dlg.gap = "wide";
+            compare(dlg.titleFor("paper_gap"), "Prevent paper abrasion");
+            compare(dlg.toggleValue, true);
             dlg.apply();
             tryVerify(() => applyCalls().length === 1);
             compare(JSON.parse(applyCalls()[0].args[1]).paper_gap, "wide");
             tryVerify(() => dlg.stage === "done");
             dlg.cancel();
+            fake.clearCalls();
+            dlg.open({ field: "paper_gap", value: false });
+            dlg.apply();
+            tryVerify(() => applyCalls().length === 1);
+            compare(JSON.parse(applyCalls()[0].args[1]).paper_gap, "auto");
+            tryVerify(() => dlg.stage === "done");
+            dlg.cancel();
+        }
+
+        function test_abrasion_result_reads_on_and_off() {
+            compare(Fmt.settingLabel("papergap"), "Prevent paper abrasion");
+            compare(Fmt.settingValueFor("papergap", "wide"), "On");
+            compare(Fmt.settingValueFor("papergap", "auto"), "Off");
+            compare(Fmt.settingValueFor("drylevel", "3"), "3");
         }
 
         function test_error_is_shown() {

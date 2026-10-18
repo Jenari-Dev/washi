@@ -25,6 +25,15 @@
 #                             family, bold and italic), the scan stitch direction, the unprintable
 #                             edge on the Photo Print and Document Print previews, and the page
 #                             order of Document Print; output target/screens-r5/<name>.png.
+#   tests/screens.sh r6       the completion round in English and Japanese: "Prevent paper abrasion"
+#                             (the Utilities switch and its question), App Settings with the test
+#                             notification (sent, then refused because no notification service
+#                             answers) and Check setup with its report, the Device Information
+#                             card and the link question of a printer that has fallen asleep (the
+#                             offer and the web links remembered from when it was on); output
+#                             target/screens-r6/<name>-<lang>.png. The bus has no service files, so
+#                             nothing is started behind your back; tests/fake-notifications.py (a
+#                             made-up notification server, needs python3-dbus) plays the desktop.
 #   tests/screens.sh i18n     the main pages and one dialog of each kind in English and in Japanese
 #                             (WASHI_LANG=en|ja) against the fake printer; output
 #                             target/screens-i18n/<name>-<lang>.png (override with WASHI_SCREENS).
@@ -42,6 +51,26 @@ mode=${1:-fake}
 
 if [ -z "${WASHI_SCREENS_INNER:-}" ]; then
     # Everything runs on a private session bus, so nothing touches the desktop's washid.
+    if [ "$mode" = r6 ]; then
+        # A bus without service files: asking for a name nobody owns fails at once instead of
+        # starting whatever notification daemon this machine has installed.
+        bus_conf=$(mktemp)
+        cat >"$bus_conf" <<'EOF_BUS'
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <listen>unix:tmpdir=/tmp</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+EOF_BUS
+        exec env WASHI_SCREENS_INNER=1 WASHI_BUS_CONFIG="$bus_conf" dbus-run-session --config-file "$bus_conf" -- "$0" "$@"
+    fi
     exec env WASHI_SCREENS_INNER=1 dbus-run-session -- "$0" "$@"
 fi
 
@@ -53,12 +82,14 @@ out=${WASHI_SCREENS:-$root/target/screens}
 [ "$mode" = r3 ] && out=${WASHI_SCREENS:-$root/target/screens-r3}
 [ "$mode" = r4 ] && out=${WASHI_SCREENS:-$root/target/screens-r4}
 [ "$mode" = r5 ] && out=${WASHI_SCREENS:-$root/target/screens-r5}
+[ "$mode" = r6 ] && out=${WASHI_SCREENS:-$root/target/screens-r6}
 mkdir -p "$out"
 work=$(mktemp -d)
 pids=""
 cleanup() {
     for p in $pids; do kill "$p" 2>/dev/null || true; done
     rm -rf "$work"
+    [ -z "${WASHI_BUS_CONFIG:-}" ] || rm -f "$WASHI_BUS_CONFIG"
 }
 trap cleanup EXIT INT TERM
 
@@ -407,8 +438,57 @@ r5)
             "WASHI_DISC_FONT=0:Noto Sans CJK JP:b:-;1:DejaVu Serif:-:i" WASHI_DIALOG=nav-disc-preview WASHI_SHOT_DELAY_MS=3500
     done
     ;;
+r6)
+    export XDG_CONFIG_HOME=$work/config XDG_CACHE_HOME=$work/cache XDG_STATE_HOME=$work/state XDG_DATA_HOME=$work/data
+    mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
+    langs=${WASHI_LANGS:-"en ja"}
+    # The fake printer takes its control commands (sleep, wake, ...) from a FIFO.
+    mkfifo "$work/fake.ctl"
+    "$fake" --chmp-port 18080 --ipp-port 18631 --firmware-update 1.061 <>"$work/fake.ctl" >"$work/fake.log" 2>&1 &
+    pids="$pids $!"
+    sleep 0.5
+    "$washid" --printer 127.0.0.1:18080 --ipp-port 18631 --poll-interval 1 >"$work/washid.log" 2>&1 &
+    pids="$pids $!"
+    # Awake first: washid reads the printer's web links and keeps them for the hours it sleeps.
+    sleep 3
+    for lang in $langs; do
+        l="WASHI_LANG=$lang"
+        shot "utilities-abrasion-$lang" $l WASHI_PAGE=utilities WASHI_SIZE=1040x1500 WASHI_SHOT_DELAY_MS=1500
+        shot "dialog-abrasion-$lang" $l WASHI_PAGE=utilities WASHI_DIALOG=abrasion
+    done
+    # The printer falls asleep. It would now say "no update"; the offer from before is remembered
+    # and marked, and the web links come from the copy kept while it was on.
+    echo sleep >"$work/fake.ctl"
+    sleep 3
+    for lang in $langs; do
+        l="WASHI_LANG=$lang"
+        shot "device-info-sleeping-$lang" $l WASHI_PAGE=device-info WASHI_SIZE=1040x1050 WASHI_SHOT_DELAY_MS=1500
+        shot "dialog-link-ink-saved-$lang" $l WASHI_PAGE=consumables WASHI_DIALOG=order-ink WASHI_SHOT_DELAY_MS=1500
+    done
+    echo wake >"$work/fake.ctl"
+    sleep 2
+    # App Settings: no notification service answers.
+    for lang in $langs; do
+        l="WASHI_LANG=$lang"
+        shot "app-settings-test-refused-$lang" $l WASHI_PAGE=app-settings WASHI_APPSETTINGS_RUN=test-notify WASHI_SIZE=1040x900 WASHI_SHOT_DELAY_MS=3000
+    done
+    # A (made-up) notification server joins the bus: the test goes through and the report is full.
+    if python3 -c 'import dbus, gi' 2>/dev/null; then
+        python3 "$root/crates/washi-gui/tests/fake-notifications.py" >"$work/notifications.log" 2>&1 &
+        pids="$pids $!"
+        sleep 1
+        for lang in $langs; do
+            l="WASHI_LANG=$lang"
+            shot "app-settings-test-sent-$lang" $l WASHI_PAGE=app-settings WASHI_APPSETTINGS_RUN=test-notify WASHI_SIZE=1040x900 WASHI_SHOT_DELAY_MS=3000
+            shot "app-settings-check-setup-$lang" $l WASHI_PAGE=app-settings WASHI_APPSETTINGS_RUN=check-setup WASHI_SIZE=1040x2300 WASHI_SHOT_DELAY_MS=10000
+        done
+        cat "$work/notifications.log"
+    else
+        echo "python3-dbus is missing: the screens with a notification server are skipped" >&2
+    fi
+    ;;
 *)
-    echo "usage: $0 real|fake|sleep|i18n|r3|r4|r5 [real]" >&2
+    echo "usage: $0 real|fake|sleep|i18n|r3|r4|r5|r6 [real]" >&2
     exit 2
     ;;
 esac

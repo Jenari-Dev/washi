@@ -211,6 +211,11 @@ QtObject {
         return date.toLocaleTimeString(Lang.locale, "hh:mm:ss");
     }
 
+    // The day of a Unix time (seconds) in the app's language, e.g. "2026/10/14" or "10/14/26".
+    function day(unix) {
+        return new Date(unix * 1000).toLocaleDateString(Lang.locale, Locale.ShortFormat);
+    }
+
     // A value as the printer reports it in a settings read-back.
     function settingValue(v) {
         const s = String(v);
@@ -232,13 +237,28 @@ QtObject {
         }
     }
 
+    // The value of one setting as the printer reports it. The paper gap is shown as the on/off
+    // switch it is in the app: wide is on, automatic is off.
+    function settingValueFor(field, v) {
+        if (field === "papergap") {
+            const s = String(v).toLowerCase();
+            if (s === "wide") {
+                return i18n("On");
+            }
+            if (s === "auto") {
+                return i18n("Off");
+            }
+        }
+        return settingValue(v);
+    }
+
     function settingLabel(field) {
         switch (field) {
         case "autopoweron": return i18n("Auto power on");
         case "autopoweroff": return i18n("Auto power off");
         case "autopoweroff_standalone": return i18n("Auto power off (not connected)");
         case "silentmode": return i18n("Quiet mode");
-        case "papergap": return i18n("Paper gap");
+        case "papergap": return i18n("Prevent paper abrasion");
         case "drylevel": return i18n("Ink drying time");
         case "auto_printer_rom_update": return i18n("Automatic firmware update");
         case "mqtt_connection": return i18n("Cloud link");

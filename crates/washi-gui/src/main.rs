@@ -8,6 +8,11 @@ mod imaging;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QQuickStyle, QString, QUrl};
 
 fn main() {
+    // `washi doctor` asks the app for its version; this must work without a display.
+    if std::env::args().skip(1).any(|a| a == "--version" || a == "-V") {
+        println!("washi-app {}", env!("CARGO_PKG_VERSION"));
+        return;
+    }
     // The Basic style has no platform theming: every control in the UI is styled in QML.
     if std::env::var_os("QT_QUICK_CONTROLS_STYLE").is_none() {
         QQuickStyle::set_style(&QString::from("Basic"));

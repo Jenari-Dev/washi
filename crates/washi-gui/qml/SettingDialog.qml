@@ -8,7 +8,7 @@ Item {
 
     // edit | working | done
     property string stage: "edit"
-    // autopoweroff | quiet | dry_level | paper_gap | autopoweron | auto_firmware
+    // autopoweroff | quiet | dry_level | paper_gap (Prevent paper abrasion) | autopoweron | auto_firmware
     property string field: "quiet"
     property bool ok: false
     // Why the change was refused: a message source (see Fmt.text()).
@@ -25,7 +25,6 @@ Item {
     property string quietStart: "21:00"
     property string quietEnd: "07:00"
     property int dryLevel: 3
-    property string gap: "auto"
     property bool toggleValue: false
 
     readonly property var allowed: Store.settings ? Store.settings.allowed : ({})
@@ -44,7 +43,7 @@ Item {
         case "autopoweroff": return i18n("Auto Power Off");
         case "quiet": return i18n("Quiet Mode");
         case "dry_level": return i18n("Ink Drying Time");
-        case "paper_gap": return i18n("Paper Gap");
+        case "paper_gap": return i18n("Prevent paper abrasion");
         case "autopoweron": return i18n("Auto Power On");
         case "auto_firmware": return i18n("Automatic Firmware Update");
         default: return i18n("Setting");
@@ -69,8 +68,7 @@ Item {
         quietStart = Fmt.hhmm(q.start) || "21:00";
         quietEnd = Fmt.hhmm(q.end) || "07:00";
         dryLevel = c.drylevel || 3;
-        gap = c.papergap || "auto";
-        toggleValue = args.value !== undefined ? args.value : (field === "autopoweron" ? c.autopoweron !== "ON" : c.auto_printer_rom_update !== "ON");
+        toggleValue = args.value !== undefined ? args.value : (field === "autopoweron" ? c.autopoweron !== "ON" : (field === "paper_gap" ? c.papergap !== "wide" : c.auto_printer_rom_update !== "ON"));
         dlg.open();
     }
 
@@ -90,7 +88,7 @@ Item {
             }
             return { quiet: quietMode === "ON" ? "on" : "off" };
         case "dry_level": return { dry_level: dryLevel };
-        case "paper_gap": return { paper_gap: gap };
+        case "paper_gap": return { paper_gap: toggleValue ? "wide" : "auto" };
         case "autopoweron": return { auto_power_on: toggleValue };
         case "auto_firmware": return { auto_firmware: toggleValue };
         }
@@ -296,35 +294,18 @@ Item {
             }
         }
 
-        // ---- edit: Paper gap
+        // ---- edit: on/off switches
         ColumnLayout {
-            visible: host.stage === "edit" && host.field === "paper_gap"
+            visible: host.stage === "edit" && (host.field === "autopoweron" || host.field === "auto_firmware" || host.field === "paper_gap")
             Layout.fillWidth: true
-            spacing: 4
+            spacing: 8
             WText {
+                visible: host.field === "paper_gap"
                 Layout.fillWidth: true
                 kind: "dim"
                 wrapMode: Text.WordWrap
-                text: i18n("Choose Wide if thick or curled paper gets scuffed by the print head.")
+                text: i18n("Raises the print head a little so that thick or curled paper is not scuffed. Printing can be slower.")
             }
-            WRadio {
-                objectName: "gapAuto"
-                text: i18n("Automatic")
-                checked: host.gap === "auto"
-                onClicked: host.gap = "auto"
-            }
-            WRadio {
-                objectName: "gapWide"
-                text: i18n("Wide")
-                checked: host.gap === "wide"
-                onClicked: host.gap = "wide"
-            }
-        }
-
-        // ---- edit: on/off switches
-        ColumnLayout {
-            visible: host.stage === "edit" && (host.field === "autopoweron" || host.field === "auto_firmware")
-            Layout.fillWidth: true
             WText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
@@ -378,7 +359,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.leftMargin: 38
                     wrapMode: Text.WordWrap
-                    text: i18n("%1: %2  →  %3", Fmt.settingLabel(modelData.field), Fmt.settingValue(modelData.before), Fmt.settingValue(modelData.after))
+                    text: i18n("%1: %2  →  %3", Fmt.settingLabel(modelData.field), Fmt.settingValueFor(modelData.field, modelData.before), Fmt.settingValueFor(modelData.field, modelData.after))
                 }
             }
             WText {

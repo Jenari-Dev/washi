@@ -130,6 +130,9 @@ QtObject {
 
     // Whether the printer offers a firmware update: "available", "unavailable" or "unknown".
     readonly property string firmwareUpdate: snap.firmware_update || "unknown"
+    // That answer is what the printer said the last time it was on: a printer in auto power-off
+    // does not check for updates and would say "unavailable" whatever is true.
+    readonly property bool firmwareUpdateRemembered: !!snap.firmware_update_remembered
     // Writes that wake or restart the printer need it reachable and free.
     readonly property bool canUpdateFirmware: canChange && power === "on" && !busy && firmwareUpdate === "available"
 
@@ -565,7 +568,9 @@ QtObject {
     }
 
     // The web pages the printer points to (read-only): cb(ok, links) with
-    // links = {ink, help, error, support, printer_page, maintenance_page: {url, source}, from_printer}.
+    // links = {ink, help, error, support, printer_page, maintenance_page: {url, source}, from_printer,
+    // saved_at}; saved_at (Unix seconds) is set when the maker's links are the copy kept from
+    // the last time the printer was awake.
     // `code` is the support code to find help for ("" for none).
     function getWebLinks(code, cb) {
         const host = activeHost;
@@ -716,6 +721,20 @@ QtObject {
                 cb(ok, body);
             }
         });
+    }
+
+    // Show a sample desktop notification through the service (it does not touch the printer, so
+    // it works in read-only mode): cb(ok, errorBody) with the service's reason on failure.
+    function sendTestNotification(cb) {
+        call("SendTestNotification", [], cb);
+    }
+
+    // The service's self-check (read-only questions to the printer, the desktop and this
+    // computer): cb(ok, report) with report = {groups: [{id, title, checks: [{id, status:
+    // "ok" | "fail" | "skip", label, detail, hint}]}], summary: {ok, fail, skip}}; on failure
+    // `report` is the error body.
+    function checkSetup(cb) {
+        call("Doctor", [], (ok, body) => cb(ok, ok ? parse(body) : body));
     }
 
     // ---- jobs (only ever called after the user asked for them) -------------------------------------

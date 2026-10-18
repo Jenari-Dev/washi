@@ -4,12 +4,66 @@ import QtQuick.Layouts
 PageScroll {
     id: page
 
-    Component.onCompleted: Store.loadNotifications()
+    // The test notification: "" | "sending" | "ok" | "error".
+    property string testState: ""
+    property var testErrorSource: ""
+    // The self-check: null until it has run; running while it is asked.
+    property var setupReport: null
+    property bool setupRunning: false
+    property var setupErrorSource: ""
+
+    function sendTest() {
+        testState = "sending";
+        Store.sendTestNotification((ok, body) => {
+            testErrorSource = ok ? "" : Fmt.errorSource(body);
+            testState = ok ? "ok" : "error";
+        });
+    }
+
+    function checkSetup() {
+        setupRunning = true;
+        setupErrorSource = "";
+        Store.checkSetup((ok, result) => {
+            setupRunning = false;
+            setupReport = ok ? result : null;
+            setupErrorSource = ok ? "" : Fmt.errorSource(result);
+        });
+    }
+
+    // The screenshot checks do what a click does: WASHI_APPSETTINGS_RUN="test-notify check-setup".
+    property bool ranFromEnv: false
+    function runFromEnv() {
+        if (ranFromEnv || !Store.connected) {
+            return;
+        }
+        ranFromEnv = true;
+        const todo = Store.env("WASHI_APPSETTINGS_RUN").split(" ");
+        if (todo.indexOf("test-notify") >= 0) {
+            sendTest();
+        }
+        if (todo.indexOf("check-setup") >= 0) {
+            checkSetup();
+        }
+    }
+
+    Component.onCompleted: {
+        Store.loadNotifications();
+        runFromEnv();
+    }
+    // The report is worded by the service in the language of the moment: ask again after a switch.
+    Connections {
+        target: Lang
+        function onCurrentChanged() {
+            page.setupReport = null;
+            page.testState = "";
+        }
+    }
     Connections {
         target: Store
         function onConnectedChanged() {
             if (Store.connected) {
                 Store.loadNotifications();
+                page.runFromEnv();
             }
         }
     }
@@ -92,6 +146,174 @@ PageScroll {
                         const want = checked;
                         checked = Qt.binding(() => Store.notifications ? !!Store.notifications[modelData.key] : false);
                         Store.setNotifications({ [modelData.key]: want }, null);
+                    }
+                }
+            }
+            RowLayout {
+                Layout.topMargin: 6
+                spacing: 12
+                WButton {
+                    objectName: "testNotifyButton"
+                    glyph: "bell"
+                    text: i18n("Send a test notification")
+                    enabled: Store.connected && page.testState !== "sending"
+                    onClicked: page.sendTest()
+                }
+                Spinner {
+                    visible: page.testState === "sending"
+                    size: 22
+                    running: page.testState === "sending"
+                }
+            }
+            InfoBar {
+                objectName: "testNotifyResult"
+                Layout.fillWidth: true
+                visible: page.testState === "ok" || page.testState === "error"
+                kind: page.testState === "ok" ? "info" : "error"
+                text: page.testState === "ok"
+                    ? i18n("Sent. If a notification appeared on your desktop, notifications work.")
+                    : Fmt.text(page.testErrorSource)
+            }
+        }
+    }
+
+    // Check setup
+    WCard {
+        Layout.fillWidth: true
+        implicitHeight: setupCol.implicitHeight + 36
+        ColumnLayout {
+            id: setupCol
+            anchors.fill: parent
+            anchors.margins: 18
+            spacing: 10
+            WText {
+                kind: "heading"
+                text: i18n("Check setup")
+            }
+            WText {
+                Layout.fillWidth: true
+                kind: "dim"
+                wrapMode: Text.WordWrap
+                text: i18n("Looks at the Washi service, your printer, the desktop and the optional helper programs. The printer is only asked read-only questions, and nothing is sent to anyone else.")
+            }
+            RowLayout {
+                spacing: 12
+                WButton {
+                    objectName: "checkSetupButton"
+                    glyph: "refresh"
+                    text: page.setupReport ? i18n("Check again") : i18n("Check setup")
+                    enabled: Store.connected && !page.setupRunning
+                    onClicked: page.checkSetup()
+                }
+                Spinner {
+                    visible: page.setupRunning
+                    size: 22
+                    running: page.setupRunning
+                }
+                WText {
+                    visible: page.setupRunning
+                    kind: "dim"
+                    text: i18n("Checking…")
+                }
+            }
+            InfoBar {
+                objectName: "setupUnavailable"
+                Layout.fillWidth: true
+                visible: !Store.connected
+                kind: "info"
+                text: i18n("The service is not running, so the setup cannot be checked. Run “washi doctor” in a terminal to check without it.")
+            }
+            InfoBar {
+                objectName: "setupError"
+                Layout.fillWidth: true
+                visible: Fmt.text(page.setupErrorSource) !== ""
+                kind: "error"
+                text: Fmt.text(page.setupErrorSource)
+            }
+            ColumnLayout {
+                id: reportCol
+                objectName: "setupReport"
+                visible: page.setupReport !== null
+                Layout.fillWidth: true
+                spacing: 12
+                WText {
+                    objectName: "setupSummary"
+                    font.weight: Font.DemiBold
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    text: page.setupReport
+                        ? (page.setupReport.summary.fail === 0
+                            ? i18n("No problems found.")
+                            : i18np("%1 problem found.", "%1 problems found.", page.setupReport.summary.fail))
+                        : ""
+                }
+                Repeater {
+                    model: page.setupReport ? page.setupReport.groups : []
+                    delegate: ColumnLayout {
+                        id: grp
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 6
+                        WText {
+                            kind: "heading"
+                            text: grp.modelData.title
+                        }
+                        Repeater {
+                            model: grp.modelData.checks
+                            delegate: RowLayout {
+                                id: row
+                                required property var modelData
+                                objectName: "check-" + modelData.id
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 4
+                                spacing: 10
+                                Item {
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    Layout.alignment: Qt.AlignTop
+                                    Glyph {
+                                        anchors.centerIn: parent
+                                        visible: row.modelData.status !== "skip"
+                                        name: row.modelData.status === "ok" ? "success" : "error"
+                                        size: 20
+                                        weight: 1.8
+                                        color: row.modelData.status === "ok" ? Theme.ok : Theme.danger
+                                    }
+                                    WText {
+                                        anchors.centerIn: parent
+                                        visible: row.modelData.status === "skip"
+                                        text: "–"
+                                        kind: "dim"
+                                        font.pixelSize: 18
+                                    }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    WText {
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        font.weight: Font.DemiBold
+                                        text: row.modelData.label
+                                    }
+                                    WText {
+                                        visible: row.modelData.detail !== ""
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WrapAnywhere
+                                        kind: "small"
+                                        text: row.modelData.detail
+                                    }
+                                    WText {
+                                        visible: row.modelData.hint !== ""
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        kind: "small"
+                                        color: row.modelData.status === "fail" ? Theme.danger : Theme.textDim
+                                        text: row.modelData.hint
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

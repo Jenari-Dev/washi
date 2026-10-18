@@ -72,5 +72,17 @@ Item {
             verify(findChild(page, "card-nozzle") !== null);
             verify(findChild(page, "card-quiet") !== null);
         }
+
+        function test_prevent_paper_abrasion_is_a_switch_not_a_paper_gap_dialog() {
+            mouseClick(findChild(page, "tab-utilities"));
+            tryVerify(() => findChild(page, "card-gap") !== null);
+            const card = findChild(page, "card-gap");
+            compare(card.title, "Prevent paper abrasion");
+            verify(card.description.indexOf("print head") >= 0, card.description);
+            compare(card.kind, "toggle");
+            compare(card.checked, false, "the printer says papergap auto");
+            verify(findChild(card, "toggleSwitch").visible);
+            verify(findChild(page, "card-gap-missing") === null);
+        }
     }
 }

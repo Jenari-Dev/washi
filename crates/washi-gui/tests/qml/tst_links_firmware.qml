@@ -153,6 +153,24 @@ Item {
             compare(opened.signalArguments[0][0], "http://printer.test/");
         }
 
+        function test_links_kept_from_the_last_time_the_printer_was_awake_say_so() {
+            const kept = JSON.parse(JSON.stringify(fake.webLinks));
+            kept.saved_at = 1791936000;
+            boot({}, { webLinks: [true, JSON.stringify(kept)] });
+            Nav.dialog("order-ink");
+            tryVerify(() => links.link !== null);
+            const hint = findChild(popupOf(links), "linkSavedHint");
+            verify(hint.visible, "the copy is marked");
+            verify(hint.text.indexOf("From the printer (saved ") === 0 && hint.text.indexOf("only while it is awake") >= 0, hint.text);
+            verify(hint.text.indexOf("2026") >= 0 || hint.text.indexOf("26") >= 0, hint.text);
+            popupOf(links).close();
+            // A live read is not marked.
+            boot({});
+            Nav.dialog("order-ink");
+            tryVerify(() => links.link !== null);
+            verify(!findChild(popupOf(links), "linkSavedHint").visible);
+        }
+
         function test_without_an_answer_from_the_service_the_printers_page_is_the_fallback() {
             boot({}, { webLinks: [false, JSON.stringify({ name: "NotRunning", message: "" })] });
             Nav.openLink("printer");
@@ -225,6 +243,24 @@ Item {
             boot({ firmware_update: "available" }, { tab: "device-info", readOnly: true });
             tryVerify(() => findChild(page, "firmwareCard") !== null);
             verify(!findChild(page, "updateFirmwareButton").enabled, "read-only");
+        }
+
+        function test_a_sleeping_printers_answer_is_marked_as_the_last_known() {
+            // Asleep, with an offer remembered from the last time it was on.
+            boot({ power: "sleeping", firmware_update: "available", firmware_update_remembered: true }, { tab: "device-info" });
+            tryVerify(() => findChild(page, "firmwareCard") !== null);
+            verify(findChild(page, "firmwareStatus").text.indexOf("was available the last time the printer was on") >= 0, findChild(page, "firmwareStatus").text);
+            verify(!findChild(page, "updateFirmwareButton").enabled, "not on a remembered offer while asleep");
+            // Asleep, up to date as of the last time it was on.
+            boot({ power: "sleeping", firmware_update: "unavailable", firmware_update_remembered: true }, { tab: "device-info" });
+            tryVerify(() => findChild(page, "firmwareCard") !== null);
+            const t = findChild(page, "firmwareStatus").text;
+            verify(t.indexOf("up to date the last time the printer was on") >= 0 && t.indexOf("only while it is on") >= 0, t);
+            // Asleep and nothing known: it is not "up to date".
+            boot({ power: "sleeping", firmware_update: "unknown" }, { tab: "device-info" });
+            tryVerify(() => findChild(page, "firmwareCard") !== null);
+            const u = findChild(page, "firmwareStatus").text;
+            verify(u.indexOf("only while it is on") >= 0 && u.indexOf("up to date") < 0, u);
         }
 
         function test_check_for_updates_reads_the_printer_again() {

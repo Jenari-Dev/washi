@@ -83,7 +83,7 @@ PageScroll {
             out.push({ id: "dry", glyph: "hourglass", title: i18n("Ink Drying Time"), desc: i18n("Adds a pause between pages so the ink can dry before the next one lands on it."), kind: "settings", field: "dry_level", current: c.drylevel ? i18n("Level %1", c.drylevel) : "" });
         }
         if (a.papergap && a.papergap.length > 0) {
-            out.push({ id: "gap", glyph: "gap", title: i18n("Paper Gap"), desc: i18n("Widens the space between print head and paper to avoid scuffs on thick paper."), kind: "settings", field: "paper_gap", current: c.papergap === "wide" ? i18n("Wide") : (c.papergap ? i18n("Automatic") : "") });
+            out.push({ id: "gap", glyph: "gap", title: i18n("Prevent paper abrasion"), desc: i18n("Raises the print head a little so that thick or curled paper is not scuffed. Printing can be slower."), kind: "toggle", field: "paper_gap", checked: c.papergap === "wide" });
         }
         if (a.auto_printer_rom_update && a.auto_printer_rom_update.length > 0) {
             out.push({ id: "firmware", glyph: "firmware", title: i18n("Automatic Firmware Update"), desc: i18n("Lets the printer install new firmware by itself when it is available."), kind: "toggle", field: "auto_firmware", checked: c.auto_printer_rom_update === "ON" });
