@@ -108,8 +108,11 @@ pub struct SettingsSpec {
     /// `off`, `on` or `HHMM-HHMM`.
     pub quiet: Option<String>,
     pub dry_level: Option<u8>,
-    /// `auto` or `wide`.
+    /// `auto` or `wide` (the printer's own `papergap`).
     pub paper_gap: Option<String>,
+    /// "Prevent paper abrasion": `true` / `"on"` = `papergap` `wide`, `false` / `"off"` =
+    /// `auto`. The same setting as `paper_gap`; give one of the two.
+    pub paper_abrasion: Option<Toggle>,
     pub auto_firmware: Option<Toggle>,
     pub cloud_link: Option<Toggle>,
     /// Manual print head alignment values: set id (`"1"`..`"3"`) -> sign (`"A"`..) -> value,
@@ -149,12 +152,23 @@ impl SettingsSpec {
 
     /// The change set; an empty spec is an error.
     pub fn to_settings(&self) -> Result<DeviceSettings> {
+        if self.paper_gap.is_some() && self.paper_abrasion.is_some() {
+            return Err(Error::Invalid(
+                "paper_gap and paper_abrasion are the same setting: give only one".into(),
+            ));
+        }
+        let papergap = match (&self.paper_gap, self.paper_abrasion) {
+            (Some(v), _) => Some(v.trim().to_ascii_lowercase()),
+            (None, Some(Toggle(OnOff::On))) => Some("wide".to_string()),
+            (None, Some(Toggle(OnOff::Off))) => Some("auto".to_string()),
+            (None, None) => None,
+        };
         let s = DeviceSettings {
             autopoweron: self.auto_power_on.map(|t| t.0),
             autopoweroff: self.auto_power_off.as_ref().map(|p| p.0),
             autopoweroff_standalone: self.auto_power_off_standalone.as_ref().map(|p| p.0),
             silentmode: self.quiet.as_deref().map(parse_quiet).transpose()?,
-            papergap: self.paper_gap.as_deref().map(|v| v.trim().to_ascii_lowercase()),
+            papergap,
             drylevel: self.dry_level,
             auto_printer_rom_update: self.auto_firmware.map(|t| t.0),
             mqtt_connection: self.cloud_link.map(|t| t.0),
@@ -286,6 +300,25 @@ mod tests {
         assert_eq!(d.auto_printer_rom_update, Some(OnOff::Off));
         assert_eq!(d.mqtt_connection, Some(OnOff::On));
         assert_eq!(d.silentmode.unwrap().kind, SilentKind::Time);
+    }
+
+    #[test]
+    fn paper_abrasion_is_the_paper_gap_setting() {
+        for (json, want) in [
+            (r#"{"paper_abrasion": true}"#, "wide"),
+            (r#"{"paper_abrasion": "ON"}"#, "wide"),
+            (r#"{"paper_abrasion": false}"#, "auto"),
+            (r#"{"paper_abrasion": "off"}"#, "auto"),
+            (r#"{"paper_gap": "Auto"}"#, "auto"),
+        ] {
+            let d = SettingsSpec::from_json(json).unwrap().to_settings().unwrap();
+            assert_eq!(d.papergap.as_deref(), Some(want), "{json}");
+        }
+        let both = SettingsSpec::from_json(r#"{"paper_abrasion": true, "paper_gap": "wide"}"#)
+            .unwrap()
+            .to_settings();
+        assert!(both.is_err(), "two spellings of one setting are refused");
+        assert!(SettingsSpec::from_json(r#"{"paper_abrasion": "maybe"}"#).is_err());
     }
 
     #[test]

@@ -3,9 +3,11 @@
 //!
 //! * the **strings**: its display names for the keywords it uses (`media-type.<keyword>`, ...), as
 //!   a `.strings` file per language, named by IPP `printer-strings-uri`;
-//! * the **picture**: a product image of the printer, named by IPP `printer-icons`.
+//! * the **picture**: a product image of the printer, named by IPP `printer-icons`;
+//! * the **web links**: the ink shop, manual, error help and support addresses of its `model.js`,
+//!   which the printer serves only while it is awake.
 //!
-//! Both come from the user's own printer at run time (read-only IPP and HTTP reads) and are kept
+//! All come from the user's own printer at run time (read-only IPP and HTTP reads) and are kept
 //! in the user's cache directory, `~/.cache/washi/`. They are not part of Washi and are not
 //! redistributed.
 //!
@@ -18,7 +20,9 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use washi_net::web::{PrinterIcon, WebOptions, fetch_icon, fetch_strings};
+use washi_net::web::{
+    ModelLinks, PrinterIcon, WebOptions, fetch_icon, fetch_model_links, fetch_strings,
+};
 use washi_net::{ipp::normalize_language, web::png_size};
 
 use crate::cache::printer_key;
@@ -62,6 +66,15 @@ pub struct FetchedStrings {
     pub firmware: Option<String>,
 }
 
+/// The web addresses the printer's `model.js` names (not worded for any language: see
+/// [`ModelLinks::with_language`]).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FetchedLinks {
+    pub links: ModelLinks,
+    /// The firmware version the printer reported with them.
+    pub firmware: Option<String>,
+}
+
 /// The printer's picture.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FetchedIcon {
@@ -90,6 +103,18 @@ impl Printer {
             out.strings = fetch_strings(self.host(), self.chmp_port(), &path, &opts)?;
         }
         Ok(out)
+    }
+
+    /// Read the printer's web links (`GET /JS_MDL/model.js`, read-only) and its firmware version.
+    /// The printer serves the script only while it is awake: asleep it answers `404`, which is an
+    /// error here. A script without any usable address is an error too.
+    pub fn fetch_links(&self) -> Result<FetchedLinks> {
+        let links = fetch_model_links(self.host(), self.chmp_port(), &WebOptions::default())?;
+        if links.is_empty() {
+            return Err(Error::Invalid("the printer's web script names no links".into()));
+        }
+        let firmware = self.device_capability().ok().map(|c| c.firmver).filter(|f| !f.is_empty());
+        Ok(FetchedLinks { links, firmware })
     }
 
     /// Read the printer's picture (read-only). The largest the printer lists is taken and its
@@ -180,6 +205,28 @@ struct IconMeta {
     height: u32,
 }
 
+#[derive(Serialize, Deserialize)]
+struct LinksFile {
+    version: u32,
+    firmware: Option<String>,
+    fetched_at: u64,
+    links: ModelLinks,
+}
+
+/// Web links read earlier.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CachedLinks {
+    pub links: ModelLinks,
+    pub firmware: Option<String>,
+    pub fetched_at: u64,
+}
+
+impl CachedLinks {
+    pub fn is_current(&self, current_firmware: Option<&str>, now: u64) -> bool {
+        is_current(self.fetched_at, self.firmware.as_deref(), current_firmware, now)
+    }
+}
+
 /// Strings read earlier.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachedStrings {
@@ -233,6 +280,10 @@ impl LocalizationCache {
         Some(self.dir.join(format!("{}-strings-{lang}.json", self.key)))
     }
 
+    fn links_path(&self) -> PathBuf {
+        self.dir.join(format!("{}-links.json", self.key))
+    }
+
     fn icon_meta_path(&self) -> PathBuf {
         self.dir.join(format!("{}-icon.json", self.key))
     }
@@ -280,6 +331,29 @@ impl LocalizationCache {
         })
         .map_err(io::Error::other)?;
         self.write_atomic(&path, text.as_bytes())
+    }
+
+    /// The web links kept. A missing, unreadable, corrupt or other-version file, or one without
+    /// any address, is `None`.
+    pub fn links(&self) -> Option<CachedLinks> {
+        let text = std::fs::read_to_string(self.links_path()).ok()?;
+        let f: LinksFile = serde_json::from_str(&text).ok()?;
+        (f.version == CACHE_VERSION && !f.links.is_empty()).then_some(CachedLinks {
+            links: f.links,
+            firmware: f.firmware,
+            fetched_at: f.fetched_at,
+        })
+    }
+
+    pub fn store_links(&self, fetched: &FetchedLinks, now: u64) -> io::Result<()> {
+        let text = serde_json::to_string(&LinksFile {
+            version: CACHE_VERSION,
+            firmware: fetched.firmware.clone(),
+            fetched_at: now,
+            links: fetched.links.clone(),
+        })
+        .map_err(io::Error::other)?;
+        self.write_atomic(&self.links_path(), text.as_bytes())
     }
 
     /// The picture kept (or the note that there is none). A missing or corrupt note, or a note
@@ -484,5 +558,36 @@ mod tests {
         assert_eq!((none.path.as_ref(), none.fetched_at), (None, 70));
         assert!(!c.icon_path().exists());
         assert!(none.is_current(Some("1.061"), 80) && !none.is_current(Some("1.062"), 80));
+    }
+
+    #[test]
+    fn links_round_trip_and_go_stale_like_the_rest() {
+        let dir = tempfile::tempdir().unwrap();
+        let c = LocalizationCache::in_dir(&dir.path().join("washi"), "printer.local", 80);
+        assert_eq!(c.links(), None);
+        let links = ModelLinks {
+            ink: Some("https://shop.example/ink".into()),
+            support: Some("https://example.org/support".into()),
+            ..Default::default()
+        };
+        c.store_links(&FetchedLinks { links: links.clone(), firmware: Some("1.060".into()) }, 500)
+            .unwrap();
+        let k = c.links().unwrap();
+        assert_eq!((&k.links, k.firmware.as_deref(), k.fetched_at), (&links, Some("1.060"), 500));
+        assert!(k.is_current(Some("1.060"), 500 + 24 * 3600));
+        assert!(!k.is_current(Some("1.061"), 501), "new firmware");
+        assert!(!k.is_current(Some("1.060"), 500 + MAX_AGE_SECS), "30 days");
+        // The file name carries no host name.
+        let names: Vec<String> = std::fs::read_dir(dir.path().join("washi"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(names.len(), 1);
+        assert!(names[0].ends_with("-links.json") && !names[0].contains("printer"), "{names:?}");
+        // Garbage, or a note with no address, is no copy.
+        std::fs::write(dir.path().join("washi").join(&names[0]), "{ nope").unwrap();
+        assert_eq!(c.links(), None);
+        c.store_links(&FetchedLinks::default(), 600).unwrap();
+        assert_eq!(c.links(), None, "nothing usable in it");
     }
 }

@@ -59,6 +59,10 @@ pub struct WebLinks {
     pub maintenance_page: Link,
     /// The printer offered its own links (`model.js` was read and had at least one).
     pub from_printer: bool,
+    /// When the maker's links were saved (Unix time), if they come from the copy kept from an
+    /// earlier read instead of from the printer just now: the printer serves them only while it
+    /// is awake. `None` for a live read and for the fallbacks.
+    pub saved_at: Option<u64>,
 }
 
 /// Put the links together from what was read. Pure: no I/O.
@@ -90,6 +94,7 @@ pub fn compose(
             .map_or_else(|| printer_page.clone(), Link::printer),
         printer_page,
         from_printer: !model.is_empty(),
+        saved_at: None,
     }
 }
 
@@ -109,12 +114,18 @@ pub struct WebSources {
     pub language: Language,
     pub model: Option<ModelLinks>,
     pub pages: BTreeMap<String, String>,
+    /// `model` is the copy saved at this time (Unix), not a read made just now.
+    pub saved_at: Option<u64>,
 }
 
 impl WebSources {
     /// Put the links together for a support code and a language.
     pub fn links(&self, host: &str, port: u16, code: Option<&str>, lang: Language) -> WebLinks {
-        compose(host, port, self.model.as_ref(), &self.pages, code, lang)
+        let mut l = compose(host, port, self.model.as_ref(), &self.pages, code, lang);
+        if l.from_printer {
+            l.saved_at = self.saved_at;
+        }
+        l
     }
 }
 
@@ -122,19 +133,63 @@ impl Printer {
     /// Read what the printer says about its web pages (`GET /JS_MDL/model.js` and
     /// `GetCapability device`, both read-only). Never fails: what cannot be read is left out.
     pub fn web_sources(&self, lang: Language) -> WebSources {
+        self.web_sources_kept(lang, None)
+    }
+
+    /// Like [`Printer::web_sources`], but with the copy of the printer's links kept in `cache`:
+    /// the XK140 serves `model.js` only while it is awake (asleep it answers `404`), so a read
+    /// that finds links keeps them, and a read that does not falls back to the kept copy, which
+    /// is then marked with the time it was saved. Without a copy the links fall back to the
+    /// printer's own page, as before.
+    pub fn web_sources_kept(
+        &self,
+        lang: Language,
+        cache: Option<&crate::localization::LocalizationCache>,
+    ) -> WebSources {
         let opts = washi_net::WebOptions {
             accept_language: lang.code().to_string(),
             ..washi_net::WebOptions::default()
         };
-        let model = washi_net::fetch_model_links(self.host(), self.chmp_port(), &opts).ok();
-        let pages = self.device_capability().map(|c| c.remote_pages).unwrap_or_default();
-        WebSources { language: lang, model, pages }
+        let live = washi_net::fetch_model_links(self.host(), self.chmp_port(), &opts)
+            .ok()
+            .filter(|m| !m.is_empty());
+        let capability = self.device_capability().ok();
+        let firmware = capability.as_ref().map(|c| c.firmver.clone()).filter(|f| !f.is_empty());
+        let pages = capability.map(|c| c.remote_pages).unwrap_or_default();
+        let (model, saved_at) = match live {
+            Some(m) => {
+                if let Some(c) = cache {
+                    // Failing to keep a copy only costs the next sleeping read its links.
+                    let _ = c.store_links(
+                        &crate::localization::FetchedLinks { links: m.clone(), firmware },
+                        crate::printer::unix_now(),
+                    );
+                }
+                (Some(m), None)
+            }
+            None => match cache.and_then(|c| c.links()) {
+                Some(k) => (Some(k.links), Some(k.fetched_at)),
+                None => (None, None),
+            },
+        };
+        WebSources { language: lang, model, pages, saved_at }
     }
 
     /// The web links for a support code (see [`Printer::web_sources`]); fallbacks for whatever the
     /// printer does not offer.
     pub fn web_links(&self, code: Option<&str>, lang: Language) -> WebLinks {
         self.web_sources(lang).links(self.host(), self.chmp_port(), code, lang)
+    }
+
+    /// Like [`Printer::web_links`], with the kept copy of the printer's links (see
+    /// [`Printer::web_sources_kept`]).
+    pub fn web_links_kept(
+        &self,
+        code: Option<&str>,
+        lang: Language,
+        cache: Option<&crate::localization::LocalizationCache>,
+    ) -> WebLinks {
+        self.web_sources_kept(lang, cache).links(self.host(), self.chmp_port(), code, lang)
     }
 }
 

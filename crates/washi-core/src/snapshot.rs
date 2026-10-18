@@ -205,6 +205,10 @@ pub struct PrinterSnapshot {
     /// Whether the printer offers a firmware update (`networkupdate_available` of
     /// `GetStatus device`; remembered while the printer is not answering).
     pub firmware_update: FirmwareUpdate,
+    /// `firmware_update` is what the printer said the last time it was on, not a reading made
+    /// now: a printer in auto power-off does not check for updates and says `unavailable`
+    /// whatever is true, so that answer is not used while it sleeps.
+    pub firmware_update_remembered: bool,
     /// `wifi`, `lan` or `unknown` (`network_interface` of `GetStatus device`; remembered while
     /// the printer is not answering).
     pub connection: Connection,
@@ -367,6 +371,47 @@ fn ipp_state(ipp: Option<&PrinterAttributes>) -> Option<String> {
     ipp?.state.map(|s| s.as_str().to_string())
 }
 
+/// What an earlier snapshot knew about firmware updates that can still be relied on: the value
+/// and whether it was itself remembered. A printer that was asleep and said `unavailable` is not
+/// relied on (snapshots kept by older versions hold that).
+pub(crate) fn carried_update(prev: Option<&PrinterSnapshot>) -> Option<(FirmwareUpdate, bool)> {
+    let p = prev?;
+    match p.firmware_update {
+        FirmwareUpdate::Unknown => None,
+        FirmwareUpdate::Unavailable
+            if p.power == Power::Sleeping && !p.firmware_update_remembered =>
+        {
+            None
+        }
+        v => Some((v, p.firmware_update_remembered)),
+    }
+}
+
+/// The firmware update state of a new snapshot and whether it is remembered. A printer in auto
+/// power-off does not check for updates: it answers `unavailable` while an update is really on
+/// offer (seen on a real XK140). So a sleeping printer's `unavailable` (or silence) is ignored
+/// and the value from the last time it was on is kept, `Unknown` when there is none. `available`
+/// can be trusted whenever it is read. `fresh` says whether the counters were read now (else
+/// they are carried over and so is the state).
+fn firmware_update_of(
+    power: Power,
+    fresh: bool,
+    reported: Option<&str>,
+    prev: Option<&PrinterSnapshot>,
+) -> (FirmwareUpdate, bool) {
+    if !fresh {
+        return carried_update(prev).unwrap_or((FirmwareUpdate::Unknown, false));
+    }
+    let now = FirmwareUpdate::from_reported(reported);
+    if power == Power::Sleeping && now != FirmwareUpdate::Available {
+        return match carried_update(prev) {
+            Some((v, _)) => (v, true),
+            None => (FirmwareUpdate::Unknown, false),
+        };
+    }
+    (now, false)
+}
+
 impl PrinterSnapshot {
     /// Merge one [`Observation`] with the previous snapshot (`prev`, usually from the cache).
     pub fn compose(obs: Observation, prev: Option<&PrinterSnapshot>, now: u64) -> PrinterSnapshot {
@@ -461,6 +506,7 @@ impl PrinterSnapshot {
         };
 
         // Counters.
+        let fresh_counters = device_status.is_some();
         let counters = if device_status.is_some() {
             device_status
         } else if let Some(c) = prev.and_then(|p| p.counters.clone()) {
@@ -470,8 +516,11 @@ impl PrinterSnapshot {
             None
         };
 
-        let firmware_update = FirmwareUpdate::from_reported(
+        let (firmware_update, firmware_update_remembered) = firmware_update_of(
+            power,
+            fresh_counters,
             counters.as_ref().and_then(|c| c.networkupdate_available.as_deref()),
+            prev,
         );
 
         let last_awake = if power == Power::On && ivec_answered {
@@ -493,6 +542,7 @@ impl PrinterSnapshot {
                 counters.as_ref().and_then(|c| c.connection.as_deref()),
             ),
             firmware_update,
+            firmware_update_remembered,
             counters,
             address: prev.and_then(|p| p.address.clone()),
             from_cache,
@@ -877,5 +927,84 @@ mod tests {
         assert_eq!(Power::Sleeping.message(), SLEEPING_MESSAGE);
         assert_eq!(Power::Offline.message_key(), "power.offline");
         assert_eq!(Power::On.as_str(), "on");
+    }
+
+    fn with_update(mut obs: Observation, reported: &str) -> Observation {
+        let mut st = obs.device_status.take().unwrap();
+        st.networkupdate_available = Some(reported.to_string());
+        obs.device_status = Some(st);
+        obs
+    }
+
+    #[test]
+    fn a_sleeping_printers_unavailable_is_not_an_answer() {
+        // Awake and `unavailable`: up to date, for real.
+        let awake = PrinterSnapshot::compose(awake_obs(), None, 1000);
+        assert_eq!(
+            (awake.firmware_update, awake.firmware_update_remembered),
+            (FirmwareUpdate::Unavailable, false)
+        );
+        // Asleep, `unavailable`, and nothing from an awake reading: unknown.
+        let asleep = PrinterSnapshot::compose(sleeping_obs([Some(50); 5]), None, 2000);
+        assert_eq!(
+            (asleep.firmware_update, asleep.firmware_update_remembered),
+            (FirmwareUpdate::Unknown, false)
+        );
+        // Asleep, `unavailable`, after an awake `available`: the update is still on offer, and
+        // it is marked as remembered.
+        let offered = PrinterSnapshot::compose(with_update(awake_obs(), "available"), None, 3000);
+        assert_eq!(offered.firmware_update, FirmwareUpdate::Available);
+        let asleep = PrinterSnapshot::compose(sleeping_obs([Some(50); 5]), Some(&offered), 4000);
+        assert_eq!(
+            (asleep.firmware_update, asleep.firmware_update_remembered),
+            (FirmwareUpdate::Available, true)
+        );
+        // It stays so across several sleeping readings...
+        let again = PrinterSnapshot::compose(sleeping_obs([Some(50); 5]), Some(&asleep), 5000);
+        assert_eq!(
+            (again.firmware_update, again.firmware_update_remembered),
+            (FirmwareUpdate::Available, true)
+        );
+        // ...and the printer being unreachable does not change what was known.
+        let off = Observation {
+            print: PrintProbe::Unreachable("down".into()),
+            device_status: None,
+            device_cap: None,
+            ipp: None,
+            ..awake_obs()
+        };
+        let offline = PrinterSnapshot::compose(off, Some(&again), 5500);
+        assert_eq!(offline.power, Power::Offline);
+        assert_eq!(
+            (offline.firmware_update, offline.firmware_update_remembered),
+            (FirmwareUpdate::Available, true)
+        );
+        // `available` read while asleep can be trusted and is not marked remembered.
+        let mut seen_asleep = sleeping_obs([Some(50); 5]);
+        seen_asleep = with_update(seen_asleep, "available");
+        let s = PrinterSnapshot::compose(seen_asleep, None, 6000);
+        assert_eq!(
+            (s.firmware_update, s.firmware_update_remembered),
+            (FirmwareUpdate::Available, false)
+        );
+        // The printer wakes up and says `unavailable`: now it is believed.
+        let woke = PrinterSnapshot::compose(awake_obs(), Some(&again), 7000);
+        assert_eq!(
+            (woke.firmware_update, woke.firmware_update_remembered),
+            (FirmwareUpdate::Unavailable, false)
+        );
+    }
+
+    #[test]
+    fn a_sleeping_unavailable_kept_by_an_older_version_is_not_carried_forward() {
+        let mut old = PrinterSnapshot::compose(awake_obs(), None, 1000);
+        old.power = Power::Sleeping;
+        old.firmware_update = FirmwareUpdate::Unavailable;
+        old.firmware_update_remembered = false;
+        let s = PrinterSnapshot::compose(sleeping_obs([Some(50); 5]), Some(&old), 2000);
+        assert_eq!(
+            (s.firmware_update, s.firmware_update_remembered),
+            (FirmwareUpdate::Unknown, false)
+        );
     }
 }

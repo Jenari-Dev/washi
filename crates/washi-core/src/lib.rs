@@ -8,6 +8,7 @@
 mod cache;
 mod config;
 pub mod disc;
+pub mod doctor;
 mod error;
 pub mod firmware;
 mod lang;
@@ -41,7 +42,8 @@ pub use firmware::{
 pub use lang::{Language, LanguageSetting, system_language};
 pub use links::{Link, LinkSource, WebLinks, WebSources};
 pub use localization::{
-    CachedIcon, CachedStrings, FetchedIcon, FetchedStrings, LocalizationCache, MAX_AGE_SECS,
+    CachedIcon, CachedLinks, CachedStrings, FetchedIcon, FetchedLinks, FetchedStrings,
+    LocalizationCache, MAX_AGE_SECS,
 };
 pub use maintenance::{MaintOp, MaintOptions, MaintReport, Progress};
 pub use plan::{Plan, Step};

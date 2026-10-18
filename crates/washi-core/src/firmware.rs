@@ -61,6 +61,12 @@ pub struct FirmwareStatus {
     pub update: FirmwareUpdate,
     /// The raw `networkupdate_available` value.
     pub reported: Option<String>,
+    /// The printer is in auto power-off. It does not check for updates then and says
+    /// `unavailable` whatever is true, so `update` is not that answer: see `remembered`.
+    pub asleep: bool,
+    /// `update` is what the printer said the last time it was on (from the earlier snapshot
+    /// given), `unknown` when there is none.
+    pub remembered: bool,
 }
 
 /// Timing of the update wait.
@@ -126,14 +132,37 @@ pub fn plan_update() -> Plan {
 }
 
 impl Printer {
-    /// The firmware version and whether an update is offered (two reads).
+    /// The firmware version and whether an update is offered (three reads).
     pub fn firmware_status(&self) -> Result<FirmwareStatus> {
+        self.firmware_status_with(None)
+    }
+
+    /// Like [`Printer::firmware_status`]. A printer in auto power-off answers `unavailable` to
+    /// the question even when an update is on offer, so there that answer is ignored and the
+    /// one from the last time the printer was on is used instead: `last` is the snapshot kept
+    /// from then (`unknown` without one). `available` is believed whenever it is read.
+    pub fn firmware_status_with(
+        &self,
+        last: Option<&crate::snapshot::PrinterSnapshot>,
+    ) -> Result<FirmwareStatus> {
         let cap = self.device_capability()?;
         let status = self.device_status()?;
+        let asleep = !self.print_service_awake();
+        let said = FirmwareUpdate::from_reported(status.networkupdate_available.as_deref());
+        let (update, remembered) = if asleep && said != FirmwareUpdate::Available {
+            match crate::snapshot::carried_update(last) {
+                Some((v, _)) => (v, true),
+                None => (FirmwareUpdate::Unknown, false),
+            }
+        } else {
+            (said, false)
+        };
         Ok(FirmwareStatus {
             version: cap.firmver,
-            update: FirmwareUpdate::from_reported(status.networkupdate_available.as_deref()),
+            update,
             reported: status.networkupdate_available,
+            asleep,
+            remembered,
         })
     }
 
@@ -151,6 +180,13 @@ impl Printer {
         progress: &mut dyn FnMut(FirmwareProgress),
     ) -> Result<FirmwareReport> {
         let before = self.firmware_status()?;
+        if before.asleep && (before.update != FirmwareUpdate::Available || before.remembered) {
+            return Err(Error::Invalid(
+                "the printer is in auto power-off and only checks for firmware updates while it \
+                 is on: wake it first (`washi power on`) and try again"
+                    .to_string(),
+            ));
+        }
         match before.update {
             FirmwareUpdate::Available => {}
             FirmwareUpdate::Unavailable => {

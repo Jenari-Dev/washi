@@ -2,7 +2,9 @@
 //! A scriptable fake Canon printer for tests: CHMP/IVEC on one local TCP port and IPP on another.
 //!
 //! It serves the scrubbed fixtures of `washi-ivec`, can "fall asleep" (IVEC print/maintenance
-//! services answer `NG Suspended`; device status and IPP keep working), simulates a maintenance
+//! services answer `NG Suspended`; device status and IPP keep working, but as on the real
+//! printer the device status then says no firmware update is available and `model.js` is a
+//! `404`), simulates a maintenance
 //! job (the print status says `printing` for a few polls) and a few `SetConfiguration` fields,
 //! and records every request so tests can assert exactly what was (not) sent.
 //!
@@ -49,7 +51,8 @@ struct State {
     roller_cleaning: bool,
     /// Extra `Cleaning` types the maintenance capability lists (`roller`, `platen`, `choke`...).
     cleaning_types: Vec<String>,
-    /// What `GET /JS_MDL/model.js` serves (`None` = 404).
+    /// What `GET /JS_MDL/model.js` serves (`None` = 404). Like the real printer, it is served
+    /// only while the printer is awake: asleep every request gets a `404`.
     model_js: Option<String>,
     /// The printer's own words and pictures (`printer-strings-uri`, `printer-icons`).
     words: Words,
@@ -669,13 +672,17 @@ fn answer(shared: &Shared, op: &str, service: &str, body: &str) -> String {
             st.busy_polls = st.busy_polls.saturating_sub(1);
             xml
         }
-        ("GetStatus", "device") => match &st.firmware.update_available {
-            Some(v) => DEVICE_STATUS.replace(
-                "<ivec:networkupdate_available>unavailable</ivec:networkupdate_available>",
-                &format!("<ivec:networkupdate_available>{v}</ivec:networkupdate_available>"),
-            ),
-            None => DEVICE_STATUS.to_string(),
-        },
+        // Like the real XK140: in auto power-off the printer does not check for firmware
+        // updates and says `unavailable` whatever is true.
+        ("GetStatus", "device") => {
+            match st.firmware.update_available.as_ref().filter(|_| !st.asleep) {
+                Some(v) => DEVICE_STATUS.replace(
+                    "<ivec:networkupdate_available>unavailable</ivec:networkupdate_available>",
+                    &format!("<ivec:networkupdate_available>{v}</ivec:networkupdate_available>"),
+                ),
+                None => DEVICE_STATUS.to_string(),
+            }
+        }
         ("GetStatus", "maintenance") => MAINT_STATUS.to_string(),
         ("GetCapability", "device") => DEVICE_CAP.replace(
             "<ivec:firmver>1.060</ivec:firmver>",
@@ -878,7 +885,10 @@ fn serve_web(shared: &Shared, req: &Request) -> Vec<u8> {
             // Like the real printer: the file is served for a language only (`Accept-Language`
             // here; `lang=` and a cookie work on the real one) and worded for it.
             let lang = req.header("accept-language").map(str::to_ascii_lowercase);
-            let script = shared.state.lock().unwrap().model_js.clone();
+            let script = {
+                let st = shared.state.lock().unwrap();
+                st.model_js.clone().filter(|_| !st.asleep)
+            };
             match (script, lang) {
                 (Some(js), Some(lang)) => {
                     let js =
