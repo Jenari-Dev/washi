@@ -6,7 +6,7 @@
 # distributed under the terms of the GPL-3.0-or-later (see NOTICE.md and THIRD-PARTY-LICENSES.md).
 
 pkgname=washi
-pkgver=0.1.3
+pkgver=0.1.4
 pkgrel=1
 pkgdesc='Status, maintenance, printing and scanning for Canon inkjet printers (a Canon PRINT replacement)'
 arch=('x86_64')

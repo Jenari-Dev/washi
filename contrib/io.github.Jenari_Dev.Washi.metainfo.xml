@@ -97,6 +97,23 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.4" date="2026-10-18">
+      <description>
+        <p>Setup check, test notification and more reliable printer information.</p>
+        <p xml:lang="ja">セットアップの確認、テスト通知、プリンター情報の信頼性向上。</p>
+        <ul>
+          <li>"Check setup" and washi doctor test the service, the printer and the helper programs</li>
+          <li xml:lang="ja">「セットアップを確認」と washi doctor で、サービス・プリンター・補助プログラムを確認できます</li>
+          <li>A button sends a test notification</li>
+          <li xml:lang="ja">テスト通知を送るボタンを追加しました</li>
+          <li>"Prevent paper abrasion" switch, as the printer names it</li>
+          <li xml:lang="ja">プリンターの名称に合わせた「用紙のこすれ防止」スイッチ</li>
+          <li>Web links and the firmware update state are remembered while the printer sleeps</li>
+          <li xml:lang="ja">プリンターがスリープ中でも、Web リンクとファームウェア更新の状態を保持します</li>
+        </ul>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.3" date="2026-10-14">
       <description>
         <p>Fonts for disc labels, more scan and print options.</p>
