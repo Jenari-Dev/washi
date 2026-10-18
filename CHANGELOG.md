@@ -4,6 +4,14 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-10-18
+
+### Changed
+- Firmware update: Washi waits up to 30 minutes (was 10) for the printer to switch into update
+  mode, and says that the printer downloads the update first while its screen can stay on the home
+  menu. Verified on a PIXUS XK140 (1.060 → 1.070): the download took about 8 minutes.
+- README: the hardware verification table now lists everything that was run on the XK140.
+
 ## [0.1.4] - 2026-10-18
 
 ### Added

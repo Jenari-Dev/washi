@@ -97,6 +97,13 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.5" date="2026-10-18">
+      <description>
+        <p>Firmware updates allow for the printer's download time.</p>
+        <p xml:lang="ja">ファームウェア更新で、プリンターのダウンロード時間を考慮するようにしました。</p>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.4" date="2026-10-18">
       <description>
         <p>Setup check, test notification and more reliable printer information.</p>

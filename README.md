@@ -66,7 +66,7 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
 
 | Printer | Status |
 |---|---|
-| Canon PIXUS XK140, firmware 1.060 | **Verified.** The [table below](#what-has-been-run-on-a-real-printer) says what exactly. |
+| Canon PIXUS XK140, firmware 1.060 and 1.070 | **Verified.** The [table below](#what-has-been-run-on-a-real-printer) says what exactly. |
 | Other Canon inkjet printers that advertise `_canon-chmp._tcp` on the network (`washi discover` lists them) | **Untested.** They should behave the same way, and Washi reads each printer's tanks, trays, cleaning types and settings from the printer instead of assuming them, but nobody has tried yet. |
 
 If you have another model, a report is very welcome: the
@@ -78,11 +78,11 @@ with; they use ink and paper.
 
 ### Arch Linux
 
-Download `washi-0.1.4-1-x86_64.pkg.tar.zst` from the
+Download `washi-0.1.5-1-x86_64.pkg.tar.zst` from the
 [latest release](https://github.com/Jenari-Dev/washi/releases/latest) and install it:
 
 ```
-sudo pacman -U washi-0.1.4-1-x86_64.pkg.tar.zst
+sudo pacman -U washi-0.1.5-1-x86_64.pkg.tar.zst
 ```
 
 or build the package yourself from the PKGBUILD in this repository:
@@ -98,13 +98,13 @@ Details and the optional dependencies (OCR, Office files, PDF preview) are in
 
 ### Flatpak
 
-Download `Washi-0.1.4-x86_64.flatpak` from the
+Download `Washi-0.1.5-x86_64.flatpak` from the
 [latest release](https://github.com/Jenari-Dev/washi/releases/latest). It needs the KDE 6.11 runtime
 from Flathub:
 
 ```
 flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user Washi-0.1.4-x86_64.flatpak
+flatpak install --user Washi-0.1.5-x86_64.flatpak
 flatpak run io.github.Jenari_Dev.Washi
 ```
 
@@ -196,31 +196,25 @@ The full list of commands and options is in [docs/USAGE.md](docs/USAGE.md) (or `
   inside the printer's own job, and read back; a mismatch is an error.
 - **Left out on purpose:** service counters and their resets, anything about ink authentication,
   and the printer's firmware image. The optional firmware update only asks the printer to run its
-  own update, after a strong warning, and is unverified (see the table below).
+  own update, after a strong warning (verified on the XK140, see the table below).
 - **Identifiers stay out.** Serial numbers and hardware addresses in replies are not copied into
   Washi's data, are not logged, and are blanked in `washi raw`.
 
 ## What has been run on a real printer
 
-Washi was written against a PIXUS XK140 (firmware 1.060) and everything that only *reads* has been
-checked on it. Writes are different: they use ink and paper and cannot be undone, so they were
-tried one at a time, and most of them have so far only run against Washi's fake printer (a test
-double that speaks the same protocols). Please treat the right-hand column as "should work", and
-tell us what you find.
+Everything below was run on a Canon PIXUS XK140 (firmware 1.060, then 1.070 after an update made
+with Washi itself) between 2026-10-13 and 2026-10-18, from the app and the command line.
 
-| Area | Verified on the XK140 | Implemented, tested against the fake printer only |
+| Area | Verified on the XK140 | Not testable on the XK140 (implemented, tested against the fake printer) |
 |---|---|---|
-| Discovery and printer list | finding the printer by mDNS, status polling | removing a printer from the list, switching between several printers |
-| Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links, the printer's own paper names (English and Japanese) and picture | support-code messages and notifications for a real error (the printer was never in an error state) |
-| Settings | reading every setting and its allowed values | **writing** any of them: quiet mode, auto power on / off, ink drying time, prevent paper abrasion, automatic firmware update; manual head alignment values |
-| Maintenance | **nozzle check** (printed, with progress and completion) | cleaning, deep cleaning, automatic alignment, alignment check, manual alignment sheets; roller and bottom plate cleaning (the XK140 offers neither) |
-| Firmware | reading the version and the update flag | the **firmware update** itself |
-| Power | **wake** (`washi power on --confirm`, the request the Wake button sends: the printer came out of auto power-off; XK140, firmware 1.060, 2026-10-14) | power off |
-| Printing | reading the media list (1335 entries), paper sizes, trays and the disc tray entry; **one PDF page** on plain A4 paper from the cassette, draft quality, black and white | photos and borderless printing, colour, several pictures per sheet, two-sided printing, other paper types and the rear tray |
-| Scanning | reading the scanner's capabilities; **one A4 page** at 150 dpi in grey as PDF | colour scans, photo mode, other resolutions, several pages in one session |
-| Scan editing, OCR | | rotate, crop, slant, colour correction, auto crop, multi-photo, stitching, OCR (these run on the computer, not on the printer) |
-| Disc labels | reading the disc tray entry | printing a label |
-| Notifications, English / Japanese interface | | everything (covered by the automated tests and screenshots) |
+| Discovery, status, ink | finding the printer, online / sleeping, ink levels and tank models, paper per tray, counters, device information, the printer's own paper names (English and Japanese), picture and web links | switching between several printers (only one was available); a real support code (the printer reported no error) |
+| Settings | reading and **writing**: ink drying time, quiet mode, prevent paper abrasion (read back after each change) | manual head alignment values |
+| Maintenance | nozzle check, cleaning, automatic print head alignment | roller and bottom plate cleaning (the XK140 offers neither; Washi links to the printer's own page) |
+| Firmware | the **firmware update** from the app (1.060 → 1.070, with progress until the printer was back) | |
+| Power | wake from auto power-off | power off |
+| Printing | documents (two-sided), photos with margins and borderless, the disc tray (disc label) | |
+| Scanning | scan, rotate / crop, image correction, save as PDF | |
+| App | Check setup, test notification, English / Japanese switch (kept after a restart) | |
 
 ## What is not included, and why
 
