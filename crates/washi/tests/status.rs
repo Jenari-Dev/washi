@@ -44,10 +44,12 @@ fn status_of_an_awake_printer() {
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
         .collect();
-    assert!(names.iter().all(|n| !n.contains("127") && n.ends_with(".json")), "{names:?}");
-    let snapshots: Vec<_> = names.iter().filter(|n| n.len() == 21).collect();
+    // (A `-links.tmp` can exist for a moment while that file is written.)
+    assert!(names.iter().all(|n| !n.contains("127")), "{names:?}");
+    let snapshots: Vec<_> =
+        names.iter().filter(|n| n.len() == 21 && n.ends_with(".json")).collect();
     assert_eq!(snapshots.len(), 1, "{names:?}");
-    assert!(names.iter().all(|n| n.len() == 21 || n.ends_with("-links.json")), "{names:?}");
+    assert!(names.iter().all(|n| n.len() == 21 || n.contains("-links.")), "{names:?}");
 }
 
 #[test]
