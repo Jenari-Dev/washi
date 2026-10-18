@@ -4,6 +4,8 @@
 //! behind the [`Notifier`] trait.
 
 use std::collections::{HashMap, HashSet};
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use washi_core::{
@@ -25,8 +27,37 @@ pub struct Notification {
     pub critical: bool,
 }
 
+/// Why a notification could not be delivered.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DeliverError {
+    /// Nobody owns `org.freedesktop.Notifications` and nothing can start it.
+    Unavailable,
+    /// The service answered with an error (its text, in English).
+    Failed(String),
+}
+
+/// What delivering one notification comes to.
+pub type Delivery<'a> = Pin<Box<dyn Future<Output = Result<(), DeliverError>> + Send + 'a>>;
+
+/// The name of the notification server that answered.
+pub type Probe<'a> = Pin<Box<dyn Future<Output = Result<String, DeliverError>> + Send + 'a>>;
+
 pub trait Notifier: Send + Sync {
+    /// Ask the notification service who it is (`GetServerInformation`), for the self-check.
+    fn probe(&self) -> Probe<'_> {
+        Box::pin(std::future::ready(Ok("(no notification service)".to_string())))
+    }
+
+    /// Show a notification without waiting for it (the polling thread never waits for the
+    /// notification service); a failure is only logged.
     fn send(&self, n: Notification);
+
+    /// Show a notification and say whether the desktop took it. The same delivery as
+    /// [`Notifier::send`], for the test notification. The default does not fail.
+    fn send_checked(&self, n: Notification) -> Delivery<'_> {
+        self.send(n);
+        Box::pin(std::future::ready(Ok(())))
+    }
 }
 
 /// What has already been announced for one printer. Conditions are announced when they appear
@@ -167,6 +198,8 @@ trait Notifications {
         hints: HashMap<&str, Value<'_>>,
         expire_timeout: i32,
     ) -> zbus::Result<u32>;
+
+    fn get_server_information(&self) -> zbus::Result<(String, String, String, String)>;
 }
 
 impl DbusNotifier {
@@ -180,42 +213,97 @@ impl DbusNotifier {
     }
 }
 
+impl DbusNotifier {
+    /// Hand one notification to the notification service and wait for its answer. This is the
+    /// only place that talks to `org.freedesktop.Notifications`: real notifications and the
+    /// test notification both come through here.
+    async fn deliver(
+        conn: &zbus::Connection,
+        ids: &Mutex<HashMap<String, u32>>,
+        n: &Notification,
+    ) -> Result<u32, DeliverError> {
+        let replaces = ids.lock().unwrap_or_else(PoisonError::into_inner).get(&n.key).copied();
+        let proxy =
+            NotificationsProxy::new(conn).await.map_err(|e| DeliverError::Failed(e.to_string()))?;
+        let mut hints: HashMap<&str, Value<'_>> = HashMap::new();
+        hints.insert("urgency", Value::U8(if n.critical { 2 } else { 1 }));
+        hints.insert("desktop-entry", Value::from("io.github.Jenari_Dev.Washi"));
+        let timeout = if n.critical { 0 } else { 10_000 };
+        match proxy
+            .notify(
+                "Washi",
+                replaces.unwrap_or(0),
+                n.icon,
+                &n.summary,
+                &n.body,
+                &[],
+                hints,
+                timeout,
+            )
+            .await
+        {
+            Ok(id) => {
+                ids.lock().unwrap_or_else(PoisonError::into_inner).insert(n.key.clone(), id);
+                Ok(id)
+            }
+            Err(e) => Err(classify(&e)),
+        }
+    }
+}
+
+/// Nobody there (or nothing that can be started) versus an error from the service itself.
+fn classify(e: &zbus::Error) -> DeliverError {
+    let unavailable = match e {
+        zbus::Error::MethodError(name, _, _) => {
+            let name = name.as_str();
+            name.ends_with(".ServiceUnknown")
+                || name.ends_with(".NameHasNoOwner")
+                || name.ends_with(".Spawn.ServiceNotFound")
+                || name.ends_with(".Spawn.ChildExited")
+        }
+        _ => false,
+    };
+    if unavailable { DeliverError::Unavailable } else { DeliverError::Failed(e.to_string()) }
+}
+
 impl Notifier for DbusNotifier {
     fn send(&self, n: Notification) {
         let (conn, ids) = (self.conn.clone(), self.ids.clone());
         self.handle.spawn(async move {
-            let replaces = ids.lock().unwrap_or_else(PoisonError::into_inner).get(&n.key).copied();
-            let proxy = match NotificationsProxy::new(&conn).await {
-                Ok(p) => p,
-                Err(e) => {
-                    tracing::debug!("no notification service: {e}");
-                    return;
-                }
-            };
-            let mut hints: HashMap<&str, Value<'_>> = HashMap::new();
-            hints.insert("urgency", Value::U8(if n.critical { 2 } else { 1 }));
-            hints.insert("desktop-entry", Value::from("io.github.Jenari_Dev.Washi"));
-            let timeout = if n.critical { 0 } else { 10_000 };
-            match proxy
-                .notify(
-                    "Washi",
-                    replaces.unwrap_or(0),
-                    n.icon,
-                    &n.summary,
-                    &n.body,
-                    &[],
-                    hints,
-                    timeout,
-                )
-                .await
-            {
-                Ok(id) => {
-                    ids.lock().unwrap_or_else(PoisonError::into_inner).insert(n.key.clone(), id);
-                    tracing::info!("notification sent: {}", n.key);
-                }
-                Err(e) => tracing::debug!("notification failed: {e}"),
+            match Self::deliver(&conn, &ids, &n).await {
+                Ok(_) => tracing::info!("notification sent: {}", n.key),
+                Err(DeliverError::Unavailable) => tracing::debug!("no notification service"),
+                Err(DeliverError::Failed(e)) => tracing::debug!("notification failed: {e}"),
             }
         });
+    }
+
+    fn probe(&self) -> Probe<'_> {
+        Box::pin(async move {
+            let proxy = NotificationsProxy::new(&self.conn)
+                .await
+                .map_err(|e| DeliverError::Failed(e.to_string()))?;
+            match tokio::time::timeout(
+                std::time::Duration::from_secs(3),
+                proxy.get_server_information(),
+            )
+            .await
+            {
+                Ok(Ok((name, _vendor, _version, _spec))) => Ok(name),
+                Ok(Err(e)) => Err(classify(&e)),
+                Err(_) => Err(DeliverError::Failed("no answer in time".into())),
+            }
+        })
+    }
+
+    fn send_checked(&self, n: Notification) -> Delivery<'_> {
+        Box::pin(async move {
+            let r = Self::deliver(&self.conn, &self.ids, &n).await.map(|_| ());
+            if r.is_ok() {
+                tracing::info!("notification sent: {}", n.key);
+            }
+            r
+        })
     }
 }
 

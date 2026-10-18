@@ -31,7 +31,7 @@ use washi_core::{
 };
 
 use crate::messages::{self, JobKind, Text};
-use crate::notify::{Notifier, NotifyState};
+use crate::notify::{DeliverError, Notification, Notifier, NotifyState};
 use crate::state::{StateFile, StoredPrinter};
 
 /// How long a request waits for the per-printer lock before giving up.
@@ -44,6 +44,12 @@ const PRINT_CAPS_MAX_AGE: Duration = Duration::from_secs(30 * 60);
 
 /// How long what the printer says about its web pages is reused.
 const WEB_SOURCES_MAX_AGE: Duration = Duration::from_secs(30 * 60);
+/// How long web links that came from the copy kept on disk (the printer was asleep) are reused:
+/// short, so that links read from the awake printer replace them soon after it wakes up.
+const WEB_SOURCES_KEPT_MAX_AGE: Duration = Duration::from_secs(2 * 60);
+/// After a failed read of the printer's web links while it was awake, the next try waits this
+/// long (the printer may simply not offer a script).
+const LINKS_RETRY_AFTER: Duration = Duration::from_secs(10 * 60);
 
 /// After a failed read of the printer's strings or picture, the next try waits this long.
 const LOCALIZATION_RETRY_AFTER: Duration = Duration::from_secs(60);
@@ -66,6 +72,9 @@ pub enum ServiceError {
     Busy(Text),
     #[error("{0}")]
     Printer(Text),
+    /// The desktop's notification service is missing or refused a notification.
+    #[error("{0}")]
+    Notification(Text),
 }
 
 impl ServiceError {
@@ -76,9 +85,10 @@ impl ServiceError {
             ServiceError::UnknownPrinter(key) => messages::unknown_printer(lang, key),
             ServiceError::NoPrinter => messages::no_printer(lang),
             ServiceError::NotConfirmed(what) => messages::not_confirmed(lang, what),
-            ServiceError::InvalidArgs(t) | ServiceError::Busy(t) | ServiceError::Printer(t) => {
-                t.get(lang).to_string()
-            }
+            ServiceError::InvalidArgs(t)
+            | ServiceError::Busy(t)
+            | ServiceError::Printer(t)
+            | ServiceError::Notification(t) => t.get(lang).to_string(),
         }
     }
 
@@ -205,6 +215,9 @@ pub struct Options {
     /// How to build a [`Printer`] for a host string (tests inject fakes here).
     pub printer_factory: Option<PrinterFactory>,
     pub discover_timeout: Duration,
+    /// Read the web links of a printer that is seen awake in the background and keep them (the
+    /// printer serves them only while it is awake). Tests that count requests turn this off.
+    pub keep_web_links: bool,
 }
 
 impl Default for Options {
@@ -219,6 +232,7 @@ impl Default for Options {
             language: None,
             printer_factory: None,
             discover_timeout: Duration::from_secs(3),
+            keep_web_links: true,
         }
     }
 }
@@ -340,6 +354,25 @@ impl Slot {
         }
     }
 
+    /// Read the web links again and keep them. The caller holds the device lock and the printer
+    /// is awake (it serves the script only then).
+    fn read_links(&self) {
+        match self.printer.fetch_links() {
+            Ok(fetched) => {
+                lk(&self.words).failed.remove("links");
+                if let Some(c) = &self.words_cache {
+                    if let Err(e) = c.store_links(&fetched, unix_now()) {
+                        debug!("printer {}: cannot keep the web links: {e}", self.log_id);
+                    }
+                }
+            }
+            Err(e) => {
+                debug!("printer {}: web links not read: {e}", self.log_id);
+                lk(&self.words).failed.insert("links".to_string(), Instant::now());
+            }
+        }
+    }
+
     /// Read the picture again and keep it (or the fact that there is none), returning its path
     /// (`""` for none). The caller holds the device lock.
     fn read_icon(&self) -> washi_core::Result<String> {
@@ -406,6 +439,7 @@ pub struct Service {
     events: broadcast::Sender<Event>,
     notifier: OnceLock<Arc<dyn Notifier>>,
     jobs: AtomicU64,
+    keep_web_links: bool,
 }
 
 /// What a running maintenance job is doing, from the printer's `jobinfo`
@@ -481,6 +515,7 @@ impl Service {
             registry: Mutex::new(Registry { slots: Vec::new(), active: None }),
             events,
             notifier: OnceLock::new(),
+            keep_web_links: opts.keep_web_links,
             jobs: AtomicU64::new(0),
         };
         for h in &opts.printers {
@@ -752,9 +787,39 @@ impl Service {
         reread_info: bool,
     ) -> Result<PrinterSnapshot> {
         let svc = self.clone();
-        tokio::task::spawn_blocking(move || svc.refresh_blocking(&slot, reread_info))
+        let worker = slot.clone();
+        let snap = tokio::task::spawn_blocking(move || svc.refresh_blocking(&worker, reread_info))
             .await
-            .map_err(|e| ServiceError::internal(format!("refresh task failed: {e}")))?
+            .map_err(|e| ServiceError::internal(format!("refresh task failed: {e}")))??;
+        // The printer serves its web links only while it is awake, and it sleeps most of the
+        // time: whenever it is seen awake, make sure a good copy is kept for the sleeping hours.
+        if snap.power == Power::On {
+            // Links that were answered from the kept copy are replaced by a real read now.
+            let mut web = lk(&slot.web);
+            if web.as_ref().is_some_and(|(_, w)| w.saved_at.is_some()) {
+                *web = None;
+            }
+            drop(web);
+            self.keep_links_fresh(&slot);
+        }
+        Ok(snap)
+    }
+
+    /// Read the printer's web links in the background when no current copy is kept.
+    fn keep_links_fresh(self: &Arc<Self>, slot: &Arc<Slot>) {
+        let Some(cache) = slot.words_cache.as_ref().filter(|_| self.keep_web_links) else {
+            return;
+        };
+        if cache
+            .links()
+            .is_some_and(|k| k.is_current(slot.current_firmware().as_deref(), unix_now()))
+        {
+            return;
+        }
+        if lk(&slot.words).failed.get("links").is_some_and(|t| t.elapsed() < LINKS_RETRY_AFTER) {
+            return;
+        }
+        self.read_words_in_background(slot, "links".to_string(), |s| s.read_links());
     }
 
     fn refresh_blocking(&self, slot: &Arc<Slot>, reread_info: bool) -> Result<PrinterSnapshot> {
@@ -1075,6 +1140,163 @@ impl Service {
         Ok(serde_json::to_string(&n).unwrap_or_else(|_| "{}".to_string()))
     }
 
+    /// Show a sample notification through the very code that shows the real ones, in the
+    /// language of the app. It does not touch the printer, so it works with `--read-only`. The
+    /// `[notifications]` switches do not apply: the point is to find out whether the desktop
+    /// shows anything. Fails with the reason when notifications are off for this daemon
+    /// (`--no-notify`) or the desktop has no notification service.
+    pub async fn send_test_notification(&self) -> Result<()> {
+        let Some(notifier) = self.notifier.get().cloned() else {
+            return Err(ServiceError::Notification(messages::notifications_off()));
+        };
+        let lang = self.lang();
+        let note = Notification {
+            key: "test".into(),
+            summary: messages::test_notification_title(lang),
+            body: messages::test_notification_body(lang),
+            icon: "preferences-desktop-notification",
+            critical: false,
+        };
+        match notifier.send_checked(note).await {
+            Ok(()) => Ok(()),
+            Err(DeliverError::Unavailable) => {
+                Err(ServiceError::Notification(messages::notifications_unavailable()))
+            }
+            Err(DeliverError::Failed(e)) => {
+                Err(ServiceError::Notification(messages::notification_failed(&e)))
+            }
+        }
+    }
+
+    /// The self-check behind the app's "Check setup": the service itself, the active printer's
+    /// channels (read-only requests; waits for the printer's lock briefly and says so when a
+    /// job holds it), the notification service, helper programs, locales and files. Returns the
+    /// report (`washi_core::doctor::Report`) as JSON, worded in the app's language. Never
+    /// writes to the printer, so it works with `--read-only`.
+    pub async fn doctor(self: &Arc<Self>) -> Result<String> {
+        use washi_core::doctor::{self as dr, Check, Group, Report, tr};
+        let lang = self.lang();
+        let mut groups = Vec::new();
+
+        let mut service = vec![Check::ok(
+            "service.version",
+            tr(lang, "Service (washid)", "サービス（washid）"),
+            format!(
+                "{}{}",
+                version(),
+                if self.read_only {
+                    tr(lang, ", read-only", "、読み取り専用")
+                } else {
+                    String::new()
+                }
+            ),
+        )];
+        service.push(Check::ok(
+            "service.polling",
+            tr(lang, "Polling the active printer", "選択中のプリンターの状態取得"),
+            tr(
+                lang,
+                &format!("every {} s", self.poll_interval.as_secs()),
+                &format!("{}秒ごと", self.poll_interval.as_secs()),
+            ),
+        ));
+        groups.push(Group::new("service", dr::group_title(lang, "service"), service));
+
+        // The printer.
+        let title = dr::group_title(lang, "printer");
+        let slot = self.resolve("").ok();
+        let printer_checks = match slot {
+            None => vec![dr::no_printer_check(lang)],
+            Some(slot) => {
+                let worker = slot.clone();
+                let cache_dir = self.cache_dir.clone();
+                let discover_timeout = self.discover_timeout;
+                // Look at the job now: the discovery below takes seconds.
+                let job = worker.job_text();
+                tokio::task::spawn_blocking(move || {
+                    let mut v = vec![dr::mdns_check(lang, &worker.host, discover_timeout)];
+                    if let Some(label) = job {
+                        v.push(Check::skip(
+                            "printer.busy",
+                            tr(lang, "Printer channels", "プリンターの各チャンネル"),
+                            tr(
+                                lang,
+                                &format!("busy: {}", label.en()),
+                                &format!("使用中：{}", label.get(Language::Ja)),
+                            ),
+                            tr(
+                                lang,
+                                "check again when the job is done",
+                                "処理が終わってからもう一度確認してください",
+                            ),
+                        ));
+                        return v;
+                    }
+                    match worker.lock_device(Duration::from_secs(5)) {
+                        Some(_guard) => {
+                            let cache = worker.words_cache.clone().or_else(|| {
+                                cache_dir.as_deref().map(|d| {
+                                    LocalizationCache::in_dir(
+                                        d,
+                                        worker.printer.host(),
+                                        worker.printer.chmp_port(),
+                                    )
+                                })
+                            });
+                            v.extend(dr::printer_checks(lang, &worker.printer, cache.as_ref()));
+                        }
+                        None => v.push(Check::skip(
+                            "printer.busy",
+                            tr(lang, "Printer channels", "プリンターの各チャンネル"),
+                            tr(lang, "the printer is busy", "プリンターが使用中です"),
+                            tr(
+                                lang,
+                                "check again in a moment",
+                                "しばらくしてからもう一度確認してください",
+                            ),
+                        )),
+                    }
+                    v
+                })
+                .await
+                .map_err(ServiceError::internal)?
+            }
+        };
+        groups.push(Group::new("printer", title, printer_checks));
+
+        // The desktop, the helper programs and the files.
+        let notification = match self.notifier.get() {
+            None => dr::notification_off_check(lang),
+            Some(n) => match n.probe().await {
+                Ok(name) => dr::notification_check(lang, Ok(&name)),
+                Err(DeliverError::Unavailable) => dr::notification_check(
+                    lang,
+                    Err(&tr(
+                        lang,
+                        "nothing answers on org.freedesktop.Notifications",
+                        "org.freedesktop.Notifications に応答するものがありません",
+                    )),
+                ),
+                Err(DeliverError::Failed(e)) => dr::notification_check(lang, Err(&e)),
+            },
+        };
+        let config = self.config_file.clone().or_else(Config::default_path);
+        let cache = self.cache_dir.clone().or_else(SnapshotCache::default_dir);
+        let tools =
+            tokio::task::spawn_blocking(Tools::detect).await.map_err(ServiceError::internal)?;
+        let computer = {
+            let (config, cache) = (config.clone(), cache.clone());
+            tokio::task::spawn_blocking(move || {
+                dr::computer_groups(lang, notification, config.as_deref(), cache.as_deref(), &tools)
+            })
+            .await
+            .map_err(ServiceError::internal)?
+        };
+        groups.extend(computer);
+        serde_json::to_string(&Report::new("washid", lang, groups))
+            .map_err(|e| ServiceError::internal(format!("cannot encode the report: {e}")))
+    }
+
     /// Remove a printer from the list. Printers that came from `--printer` or `config.toml`
     /// are only forgotten until the daemon restarts; the rest are also dropped from the state
     /// file. With `--read-only` nothing is saved, so the printer returns on the next start.
@@ -1298,19 +1520,30 @@ impl Service {
         let code = Some(code.trim()).filter(|c| !c.is_empty()).map(str::to_string);
         let cached = lk(&slot.web)
             .as_ref()
-            .filter(|(at, w)| at.elapsed() < WEB_SOURCES_MAX_AGE && w.language == lang)
+            .filter(|(at, w)| {
+                let max = if w.saved_at.is_some() {
+                    WEB_SOURCES_KEPT_MAX_AGE
+                } else {
+                    WEB_SOURCES_MAX_AGE
+                };
+                at.elapsed() < max && w.language == lang
+            })
             .map(|(_, w)| w.clone());
         let sources = match cached {
             Some(w) => w,
-            // A running job owns the printer: do not queue behind it for a menu entry.
-            None if slot.job_text().is_some() => {
-                WebSources { language: lang, ..Default::default() }
-            }
+            // A running job owns the printer: do not queue behind it for a menu entry. The
+            // links kept on disk need no printer, though.
+            None if slot.job_text().is_some() => WebSources {
+                language: lang,
+                model: slot.words_cache.as_ref().and_then(|c| c.links()).map(|k| k.links),
+                saved_at: slot.words_cache.as_ref().and_then(|c| c.links()).map(|k| k.fetched_at),
+                ..Default::default()
+            },
             None => {
                 let worker = slot.clone();
                 let read = tokio::task::spawn_blocking(move || {
                     let _guard = worker.lock_device(Duration::from_secs(5))?;
-                    Some(worker.printer.web_sources(lang))
+                    Some(worker.printer.web_sources_kept(lang, worker.words_cache.as_ref()))
                 })
                 .await
                 .map_err(ServiceError::internal)?;
@@ -1322,7 +1555,17 @@ impl Service {
                         }
                         w
                     }
-                    None => WebSources { language: lang, ..Default::default() },
+                    // The printer is busy: the copy kept on disk still answers.
+                    None => WebSources {
+                        language: lang,
+                        model: slot.words_cache.as_ref().and_then(|c| c.links()).map(|k| k.links),
+                        saved_at: slot
+                            .words_cache
+                            .as_ref()
+                            .and_then(|c| c.links())
+                            .map(|k| k.fetched_at),
+                        ..Default::default()
+                    },
                 }
             }
         };

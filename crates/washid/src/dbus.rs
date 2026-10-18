@@ -4,7 +4,7 @@
 //! Bus name `io.github.Jenari_Dev.Washi`, object `/io/github/Jenari_Dev/Washi`, interface
 //! `io.github.Jenari_Dev.Washi1`. Structured data is passed as JSON strings. Errors carry names
 //! below `io.github.Jenari_Dev.Washi.Error.` (`ReadOnly`, `UnknownPrinter`, `InvalidArgs`,
-//! `NotConfirmed`, `Busy`, `Printer`).
+//! `NotConfirmed`, `Busy`, `Printer`, `Notification`).
 
 use std::sync::Arc;
 
@@ -28,6 +28,7 @@ pub enum DbusError {
     NotConfirmed(String),
     Busy(String),
     Printer(String),
+    Notification(String),
 }
 
 impl DbusError {
@@ -43,6 +44,7 @@ impl DbusError {
             ServiceError::NotConfirmed(_) => DbusError::NotConfirmed(msg),
             ServiceError::Busy(_) => DbusError::Busy(msg),
             ServiceError::Printer(_) => DbusError::Printer(msg),
+            ServiceError::Notification(_) => DbusError::Notification(msg),
         }
     }
 }
@@ -246,6 +248,27 @@ impl Washi {
     /// save them to `config.toml`; returns all four. Refused with `--read-only`.
     async fn set_notification_settings(&self, settings_json: String) -> Result<String, DbusError> {
         self.svc.set_notification_settings(&settings_json).map_err(|e| self.err(e))
+    }
+
+    /// Show a sample notification ("Washi test notification" / "Notifications from Washi work.",
+    /// in the app's language) through the same code as the real ones, so a user can find out
+    /// whether notifications reach the desktop. Does not touch the printer: allowed with
+    /// `--read-only`, and independent of the `[notifications]` switches. Fails with
+    /// `Error.Notification` and a message when the notification service
+    /// (`org.freedesktop.Notifications`) is not available or washid runs with `--no-notify`.
+    async fn send_test_notification(&self) -> Result<(), DbusError> {
+        self.svc.send_test_notification().await.map_err(|e| self.err(e))
+    }
+
+    /// The self-check behind the app's "Check setup", as JSON (`washi doctor --json` has the same
+    /// shape): `{"source", "language", "groups": [{"id", "title", "checks": [{"id", "status":
+    /// "ok" | "fail" | "skip", "label", "detail", "hint"}]}], "summary": {"ok", "fail", "skip"}}`,
+    /// worded in the app's language. It checks washid, the active printer's channels (read-only
+    /// requests, a few seconds), the notification service, helper programs, locales and files.
+    /// No serial numbers, hardware addresses or printer addresses appear in it. Allowed with
+    /// `--read-only`.
+    async fn doctor(&self) -> Result<String, DbusError> {
+        self.svc.doctor().await.map_err(|e| self.err(e))
     }
 
     /// Remove a printer from the list (never touches the printer). Returns

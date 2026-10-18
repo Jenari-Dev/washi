@@ -75,6 +75,12 @@ fn factory(fake_ipp_port: u16) -> PrinterFactory {
 }
 
 fn rig(fake: &FakePrinter, read_only: bool, poll: Duration) -> Rig {
+    rig_with(fake, read_only, poll, false)
+}
+
+/// `keep_links`: read the web links of an awake printer in the background (off in most tests,
+/// which count requests).
+fn rig_with(fake: &FakePrinter, read_only: bool, poll: Duration, keep_links: bool) -> Rig {
     let dir = tempfile::tempdir().unwrap();
     let host = fake.chmp_target();
     let svc = Service::new(Options {
@@ -89,6 +95,7 @@ fn rig(fake: &FakePrinter, read_only: bool, poll: Duration) -> Rig {
         language: Some(LanguageSetting::En),
         printer_factory: Some(factory(fake.ipp.port())),
         discover_timeout: Duration::from_millis(50),
+        keep_web_links: keep_links,
     })
     .unwrap();
     Rig { svc, host, dir }
@@ -1183,6 +1190,86 @@ async fn web_links_are_a_cached_read_even_when_read_only() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn web_links_are_kept_when_the_printer_is_seen_awake_and_used_while_it_sleeps() {
+    let fake = FakePrinter::start();
+    let r = rig_with(&fake, true, Duration::from_secs(60), true);
+    let cache = words_cache(&r, &fake);
+    assert!(cache.links().is_none());
+
+    // The first snapshot shows the printer awake: its links are read and kept in the
+    // background, without anyone asking for them (and even with --read-only).
+    let s = r.svc.get_snapshot("").await.unwrap();
+    assert_eq!(s.power, Power::On);
+    eventually(|| cache.links().is_some()).await;
+    let kept = cache.links().unwrap();
+    assert_eq!(kept.firmware.as_deref(), Some("1.060"));
+    assert!(fake.writes().is_empty());
+
+    // It falls asleep: the printer now answers 404 for the script, and the dialogs get the
+    // kept copy, with the day it was saved.
+    fake.set_asleep(true);
+    let asleep = r.svc.refresh(&r.host).await.unwrap();
+    assert_eq!(asleep.power, Power::Sleeping);
+    let j = parse(&r.svc.get_web_links(&r.host, "1300").await.unwrap());
+    assert_eq!(j["from_printer"], true, "{j}");
+    assert_eq!(j["saved_at"], kept.fetched_at, "{j}");
+    assert_eq!(j["ink"]["source"], "maker");
+    assert!(j["ink"]["url"].as_str().unwrap().starts_with("https://links.example.org/"));
+    assert!(j["error"]["url"].as_str().unwrap().ends_with("&ERR=1300"), "{j}");
+
+    // Awake again with a changed script: the next answer is a live read, no longer "saved",
+    // and the kept copy is replaced.
+    fake.set_asleep(false);
+    fake.set_model_js(Some("var g_ink_url = 'https://links.example.org/new?LNG=EN';"));
+    r.svc.refresh(&r.host).await.unwrap();
+    let j = parse(&r.svc.get_web_links(&r.host, "").await.unwrap());
+    assert!(j["saved_at"].is_null(), "{j}");
+    assert!(j["ink"]["url"].as_str().unwrap().contains("/new?"), "{j}");
+    assert!(cache.links().unwrap().links.ink.unwrap().contains("/new?"));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_kept_web_links_are_refreshed_after_a_firmware_change_and_not_asked_for_otherwise() {
+    let fake = FakePrinter::start();
+    let r = rig_with(&fake, false, Duration::from_secs(60), true);
+    let cache = words_cache(&r, &fake);
+    // A copy from older firmware.
+    let old = washi_core::FetchedLinks {
+        links: washi_core::net::ModelLinks {
+            ink: Some("https://links.example.org/old".into()),
+            ..Default::default()
+        },
+        firmware: Some("1.059".into()),
+    };
+    cache.store_links(&old, washi_core::unix_now() - 3600).unwrap();
+    r.svc.get_snapshot("").await.unwrap();
+    eventually(|| cache.links().is_some_and(|k| k.firmware.as_deref() == Some("1.060"))).await;
+    assert!(!cache.links().unwrap().links.ink.unwrap().ends_with("/old"));
+
+    // A current copy is left alone: later awake snapshots do not ask the printer for the script.
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    fake.clear_log();
+    for _ in 0..3 {
+        r.svc.refresh(&r.host).await.unwrap();
+    }
+    tokio::time::sleep(Duration::from_millis(150)).await;
+    assert!(!fake.log().iter().any(|l| l == "Web/model.js"), "{:?}", fake.log());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_sleeping_printer_without_kept_links_falls_back_to_its_own_page() {
+    let fake = FakePrinter::start();
+    fake.set_asleep(true);
+    let r = rig_with(&fake, false, Duration::from_secs(60), true);
+    r.svc.get_snapshot("").await.unwrap();
+    let j = parse(&r.svc.get_web_links(&r.host, "").await.unwrap());
+    assert_eq!(j["from_printer"], false);
+    assert!(j["saved_at"].is_null());
+    assert_eq!(j["ink"]["source"], "printer");
+    assert!(words_cache(&r, &fake).links().is_none());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn web_links_fall_back_to_the_printers_own_page() {
     let fake = FakePrinter::start();
     fake.set_model_js(None);
@@ -1480,4 +1567,116 @@ async fn reading_the_words_waits_for_nothing_while_a_job_runs() {
     assert!(matches!(e, ServiceError::Busy(_)), "{e}");
     assert!(t.elapsed() < Duration::from_secs(2));
     r.svc.cancel_job(&job);
+}
+
+// ---- the test notification and the self-check ---------------------------------------------------
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_test_notification_is_a_notification_in_the_apps_language_even_when_read_only() {
+    let fake = FakePrinter::start();
+    let r = rig(&fake, true, Duration::from_secs(60));
+    // Without a notifier (washid --no-notify) there is nothing to test: it says so.
+    let e = r.svc.send_test_notification().await.unwrap_err();
+    assert!(matches!(e, ServiceError::Notification(_)), "{e}");
+    assert!(e.message(Language::En).contains("--no-notify"), "{e}");
+    assert!(e.message(Language::Ja).contains("--no-notify"));
+
+    let rec = Arc::new(Recorder(Mutex::new(Vec::new())));
+    r.svc.set_notifier(rec.clone());
+    r.svc.send_test_notification().await.unwrap();
+    {
+        let sent = rec.0.lock().unwrap();
+        assert_eq!(sent.len(), 1);
+        assert_eq!(
+            (sent[0].summary.as_str(), sent[0].body.as_str()),
+            ("Washi test notification", "Notifications from Washi work.")
+        );
+        assert!(!sent[0].critical);
+    }
+    // The [notifications] switches do not apply to a test.
+    assert!(fake.log().is_empty() && fake.writes().is_empty(), "the printer was not asked");
+    r.svc.set_language("ja").unwrap();
+    r.svc.send_test_notification().await.unwrap();
+    let sent = rec.0.lock().unwrap();
+    assert_eq!(sent[1].summary, "Washiのテスト通知");
+    assert!(sent[1].body.contains("Washi"), "{}", sent[1].body);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_self_check_reads_every_channel_and_names_no_address() {
+    let fake = FakePrinter::start();
+    let r = rig(&fake, true, Duration::from_secs(60));
+    let before = fake.writes();
+    let report = parse(&r.svc.doctor().await.unwrap());
+    assert_eq!(report["source"], "washid");
+    assert_eq!(report["language"], "en");
+    let all: Vec<&serde_json::Value> = report["groups"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|g| g["checks"].as_array().unwrap())
+        .collect();
+    let status = |id: &str| {
+        all.iter().find(|c| c["id"] == id).unwrap_or_else(|| panic!("no check {id}"))["status"]
+            .clone()
+    };
+    for id in ["printer.chmp", "printer.ipp", "printer.escl", "printer.links", "service.version"] {
+        assert_eq!(status(id), "ok", "{id}");
+    }
+    // No notifier in this rig (as with --no-notify): optional, not a problem.
+    assert_eq!(status("desktop.notifications"), "skip");
+    assert!(report["summary"]["ok"].as_u64().unwrap() >= 5, "{report}");
+    let text = report.to_string();
+    assert!(!text.contains("127.0.0.1"), "no address in the report: {text}");
+    assert_eq!(fake.writes(), before, "a self-check writes nothing");
+
+    // The words follow the app's language.
+    r.svc.set_language("ja").unwrap();
+    let ja = parse(&r.svc.doctor().await.unwrap());
+    assert_eq!(ja["language"], "ja");
+    assert!(ja["groups"][0]["title"].as_str().unwrap().contains("サービス"), "{ja}");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_self_check_does_not_queue_behind_a_running_job() {
+    let fake = FakePrinter::start();
+    fake.set_job_polls(40);
+    let r = rig(&fake, false, Duration::from_secs(60));
+    r.svc.get_snapshot("").await.unwrap();
+    r.svc.run_maintenance(&r.host, r#"{"confirm": true, "op": "nozzle_check"}"#).await.unwrap();
+    let report = parse(&r.svc.doctor().await.unwrap());
+    let busy: Vec<_> = report["groups"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|g| g["checks"].as_array().unwrap())
+        .filter(|c| c["id"] == "printer.busy")
+        .collect();
+    assert_eq!(busy.len(), 1, "{report}");
+    assert_eq!(busy[0]["status"], "skip");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn the_self_check_without_a_printer_says_so() {
+    let dir = tempfile::tempdir().unwrap();
+    let svc = Service::new(Options {
+        read_only: true,
+        config_path: Some(dir.path().join("none.toml")),
+        cache_dir: Some(dir.path().join("cache")),
+        state_path: Some(dir.path().join("state.json")),
+        language: Some(LanguageSetting::En),
+        keep_web_links: false,
+        ..Options::default()
+    })
+    .unwrap();
+    let report = parse(&svc.doctor().await.unwrap());
+    let none = report["groups"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|g| g["checks"].as_array().unwrap())
+        .find(|c| c["id"] == "printer.none")
+        .expect("printer.none");
+    assert_eq!(none["status"], "fail");
+    assert!(none["hint"].as_str().unwrap().contains("discover"), "{none}");
 }

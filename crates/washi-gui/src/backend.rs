@@ -123,6 +123,8 @@ const METHODS: &[&str] = &[
     "UpdateFirmware",
     "GetNotificationSettings",
     "SetNotificationSettings",
+    "SendTestNotification",
+    "Doctor",
     "SetLanguage",
     "ForgetPrinter",
     "Version",

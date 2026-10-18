@@ -87,6 +87,45 @@ pub fn back_online_body(lang: Language) -> String {
     }
 }
 
+/// The sample notification (`SendTestNotification`).
+pub fn test_notification_title(lang: Language) -> String {
+    match lang {
+        Language::En => "Washi test notification".into(),
+        Language::Ja => "Washiのテスト通知".into(),
+    }
+}
+
+pub fn test_notification_body(lang: Language) -> String {
+    match lang {
+        Language::En => "Notifications from Washi work.".into(),
+        Language::Ja => "Washiからの通知は正常に届いています。".into(),
+    }
+}
+
+/// `org.freedesktop.Notifications` is not there.
+pub fn notifications_unavailable() -> Text {
+    Text::new(
+        "No notification service answered (org.freedesktop.Notifications). Start a notification daemon, or use a desktop that has one.",
+        "通知サービス（org.freedesktop.Notifications）から応答がありません。通知デーモンを起動するか、通知機能のあるデスクトップをお使いください。",
+    )
+}
+
+/// The daemon was started with `--no-notify`.
+pub fn notifications_off() -> Text {
+    Text::new(
+        "washid was started with --no-notify, so it sends no notifications. Restart it without that option.",
+        "washid は --no-notify で起動されているため、通知を送りません。このオプションを付けずに再起動してください。",
+    )
+}
+
+/// The notification service answered with an error.
+pub fn notification_failed(detail: &str) -> Text {
+    Text::new(
+        format!("The notification service refused the notification: {detail}"),
+        format!("通知サービスが通知を受け付けませんでした（{detail}）"),
+    )
+}
+
 pub fn ink_low_title(lang: Language, name: &str) -> String {
     match lang {
         Language::En => format!("{name} ink is low"),
@@ -782,6 +821,18 @@ mod tests {
         assert!(support_message(Language::En, "9999").contains("9999"));
         assert!(support_message(Language::Ja, "9999").contains("サポート番号 9999"));
         assert_eq!(generic_printer(Language::En), "Canon printer");
+    }
+
+    #[test]
+    fn the_test_notification_is_translated() {
+        check(both(test_notification_title), &["Washi"]);
+        check(both(test_notification_body), &[]);
+        assert_eq!(test_notification_title(Language::En), "Washi test notification");
+        assert_eq!(test_notification_body(Language::En), "Notifications from Washi work.");
+        for t in [notifications_unavailable(), notifications_off(), notification_failed("oops")] {
+            check((t.en().to_string(), t.get(Language::Ja).to_string()), &[]);
+        }
+        assert!(notification_failed("oops").get(Language::Ja).contains("oops"));
     }
 
     #[test]
