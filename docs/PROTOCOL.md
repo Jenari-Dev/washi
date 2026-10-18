@@ -63,7 +63,7 @@ and `<ivec:response_detail>` (`NotSupportService`, `DataError`, `DeviceBusy`, `S
 | Operation | Service | Returns (selection) |
 |---|---|---|
 | `GetStatus` | `print` | `status` (`idle`, `processing`…), `current_support_code`, per-tray current paper (`currentpapertype`, `currentpapersize` + size in 1/100 mm, attribute `physicalinputbin`), `marker_info/ink` (`model`, `color`, `icon` none/warning/error, `level` %, `order`), `jobstatus` while a job runs |
-| `GetStatus` | `device` | `total_paper_num` per tray, `ink_replacement_count` per colour, `head_replacement_count`, `networkupdate_available` (`unavailable` when there is no update), network interfaces (`communication_method`) |
+| `GetStatus` | `device` | `total_paper_num` per tray, `ink_replacement_count` per colour, `head_replacement_count`, `networkupdate_available` (`unavailable` when there is no update), network interfaces (`communication_method`). While the printer is in auto power-off, `networkupdate_available` says `unavailable` even when an update is on offer (it reads `available` minutes after the printer wakes up), so a sleeping printer's `unavailable` is not an answer |
 | `GetStatus` | `maintenance` | `jobinfo jobID=…` (`maintenance_operation`, `type`, `jobprogress`, `inputbin`, `papertype`) while a maintenance job runs; empty otherwise |
 | `GetCapability` | `device` | model, firmware version (`firmver`), services, `pagelink` entries (relative addresses of the printer's own web pages, e.g. `page="maintenance"` is `index.html?page=PAGE_UTIL`), allowed values of every device setting (below) |
 | `GetCapability` | `maintenance` | `Cleaning/type value=…` (+ `inkgroup` list), `TestPrint/type value=…` (+ tray, paper size/type, sheets) |
@@ -85,7 +85,7 @@ Written with `SetConfiguration` (service `device`) using the same element struct
 | `autopoweroff/mode`, `autopoweroff/time` | `ON`/`OFF`; minutes `15,30,60,120,240` |
 | `autopoweroff_standalone/…` | same (when not connected) |
 | `silentmode/mode`, `starttime`, `endtime` | `ON`, `OFF`, `time`; `HHMM` |
-| `papergap` | `auto`, `wide` |
+| `papergap` | `auto`, `wide` (the printer's Remote UI and Canon's apps call this "Prevent paper abrasion"; `wide` raises the print head a little for thick or curled paper) |
 | `drylevel` | `1`–`5` |
 | `setregistration id="1..3"/item sign="A".."M","a".."e"` | integer ranges per sign (e.g. −5…5; **writing is unverified**) |
 | `vcn:auto_printer_rom_update` | `ON`, `OFF` (automatic firmware update) |
@@ -141,6 +141,12 @@ not found`: send `Accept-Language: en` or `ja`. The printer words the addresses 
 The same applies to the message tables under `/LANG/`. The pages of the Remote UI itself, for
 example `index.html?page=PAGE_UTIL` (maintenance, quiet mode, firmware update, …), ask for the
 printer's administrator password.
+
+**It is served only while the printer is awake.** In auto power-off every variant gets the same
+`404` (with or without `Accept-Language`, a version query, a cookie or a referer); a few minutes
+after the printer wakes up the same request answers `200`. Washi therefore keeps the parsed
+addresses (`~/.cache/washi/<key>-links.json`, like the printer's strings and picture; read again
+after 30 days or a firmware change) and uses the kept copy while the printer sleeps.
 
 Washi validates every address (http or https, a plain host name, no credentials) before it offers
 to open it.

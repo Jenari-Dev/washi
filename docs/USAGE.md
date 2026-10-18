@@ -22,6 +22,8 @@ washi raw GetStatus device        # raw IVEC reply (identifiers blanked; --no-re
 washi config                      # show / set the default printer host
 washi firmware                    # firmware version and whether the printer offers an update
 washi links [--code 1300] [--lang ja]   # the web pages the printer points to (nothing is opened)
+washi doctor                      # self-check of the setup (see "Checking the setup"); --json for scripts
+washi notify-test                 # show a sample desktop notification through the running washid
 ```
 
 Write commands (change the printer; dry run unless `--confirm`):
@@ -38,7 +40,8 @@ washi set auto-power-on on|off
 washi set auto-power-off off|15|30|60|120|240 [--standalone]
 washi set quiet off|on|HHMM-HHMM
 washi set dry-level 1..5
-washi set paper-gap auto|wide
+washi set paper-abrasion on|off   # "Prevent paper abrasion" (the printer's paper gap: on = wide, off = auto)
+washi set paper-gap auto|wide     # the same setting under the printer's own name (hidden alias)
 washi set auto-firmware on|off
 washi power off
 washi power on                    # wake a printer in auto power-off (verified on the XK140)
@@ -46,6 +49,51 @@ washi set registration 1 A=1 B=-2 ...   # manual head alignment values of one se
 ```
 
 Add `-v` to log the HTTP exchanges (status codes and sizes, never bodies) to stderr.
+
+### Checking the setup
+
+`washi doctor` is a read-only self-check. It prints a tick (✓), a cross (✗) or a dash (–) for each
+line, with a one-line hint when there is something to do; `--json` prints the same as data and
+`--host` picks the printer. Nothing is written to the printer, and no serial number, hardware
+address or address of the printer is printed (a printer's host name or address in an error text is
+replaced by `<printer>` / `<address>`). It exits 0 even when it finds problems, so that it can run
+in scripts; read the `summary`.
+
+```
+$ washi doctor
+Washi
+  ✓ washi (this command): 0.1.3
+  ✓ Service (washid) running: version 0.1.3
+  ✓ D-Bus activation (starts the service on demand): installed
+  – systemd user unit (washid.service): disabled
+      to start the service with your session: systemctl --user enable --now washid
+  ✓ App (washi-app): version 0.1.3
+  ✓ Versions agree: washi 0.1.3, washid 0.1.3, washi-app 0.1.3
+Printer
+  ✓ Management channel (CHMP): XK140 series, firmware 1.060
+  ...
+```
+
+* **Washi**: the versions of the command, the running `washid` (asked over D-Bus) and the app
+  (`washi-app --version`, found next to `washi` or on the `PATH`), whether the service is running,
+  D-Bus-activatable and enabled as a systemd user unit, and whether the three versions agree
+  (after an update the old service keeps running until it is restarted).
+* **Printer** (the one you gave, saved or that mDNS finds): whether it answers mDNS, the CHMP
+  management channel (model and firmware), IPP `Get-Printer-Attributes`, eSCL
+  `ScannerCapabilities`, whether the printer's own names, its picture and its web links are kept,
+  and whether the links can be read now (the printer serves them only while it is on).
+* **Desktop**: whether `org.freedesktop.Notifications` answers, and the English and Japanese
+  locales (`locale -a`).
+* **Helper programs** (all optional): `pdftoppm` / `pdfinfo`, `tesseract` and its languages
+  (English and Japanese data), `soffice`.
+* **Files**: the settings file and the cache folder.
+
+The app's *App Settings* → *Check setup* runs the same checks through the daemon (`Doctor()` in
+[DBUS-API.md](DBUS-API.md)) and lists them, worded in the app's language. Its *Notifications* card
+has *Send a test notification*, the same as `washi notify-test`: the daemon shows "Washi test
+notification" through the very code that shows the real ones, and says why when it cannot
+(no notification service on the desktop, or `washid --no-notify`). Neither touches the printer, and
+both work with `washid --read-only`.
 
 ### Sleeping printers
 
@@ -93,14 +141,22 @@ Ink (IPP marker levels)
   (severity `info`) stay quiet. A code in no family still names itself.
 * **Web links.** The printer's own web page serves `GET /JS_MDL/model.js`, from which Washi reads
   four addresses (ink shop, manual, error help with the support code filled in, maker support) and
-  nothing else; `washi links` shows them. They are checked (http / https only, a plain host name)
-  and fall back to the printer's own web page `http://<host>/` when the printer does not offer
-  one. The app always asks first ("This opens a Canon web page in your web browser (host)...") and
+  nothing else; `washi links` shows them. The printer serves the script **only while it is
+  awake** (in auto power-off every request gets a `404`), so the parsed addresses are kept per
+  printer in `~/.cache/washi/<key>-links.json`, like the printer's own names and picture: read
+  again after 30 days or when the firmware changes, refreshed by `washid` in the background
+  whenever it sees the printer awake, and used while it sleeps. `washi links`, `GetWebLinks` and
+  the app's link dialog then say "from the printer (saved <date>)". They are checked (http /
+  https only, a plain host name) and fall back to the printer's own web page `http://<host>/` when
+  the printer offers none and none was kept. The app always asks first ("This opens a Canon web page in your web browser (host)...") and
   opens the page only after "Open". The Utilities tab has a card that opens the printer's own
   maintenance page (the printer asks for its administrator password there).
 * **Firmware.** Device Information shows the version and whether the printer offers an update
-  (`networkupdate_available`; only `unavailable` counts as "no update"), a "Check for Updates"
-  button (a fresh read) and "Update Firmware…", which is enabled only when an update is offered.
+  (`networkupdate_available`; only `unavailable` counts as "no update", but a printer in auto
+  power-off does not check for updates and says `unavailable` whatever is true, so a sleeping
+  printer's answer is not used: Washi shows what the printer said the last time it was on, marked
+  as such, or "unknown" when there is none; `available` can be trusted whenever it is read), a
+  "Check for Updates" button (a fresh read) and "Update Firmware…", which is enabled only when an update is offered.
   The update dialog has a strong warning and a box to tick; then Washi sends `VendorCmd`
   `UpdateFRom` (device service, no job), follows the printer until it has gone away and come
   back, and shows the new version. **The update is unverified on a real printer**; `washi firmware update` is a dry run unless
@@ -201,7 +257,8 @@ which refuses under `--read-only`.
   (link type and IPv4 address come from the printer's `network_interface` and a name lookup;
   the firmware version, a "Check for Updates" button and "Update Firmware…"), the Utilities
   (cleaning, nozzle check, print head alignment automatic and *manual*, quiet mode, auto power
-  on / off, drying time, paper gap, automatic firmware update; **roller cleaning** and **bottom
+  on / off, drying time, **Prevent paper abrasion** (a switch; the printer's paper gap `wide` /
+  `auto`), automatic firmware update; **roller cleaning** and **bottom
   plate cleaning** cards appear only on models whose maintenance capability lists them, and a card
   that opens the printer's own maintenance web page is always there), notification switches saved
   by the service, and "remove printer". The four Printer Management tabs sit in the bottom

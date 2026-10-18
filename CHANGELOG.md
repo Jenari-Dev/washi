@@ -4,6 +4,58 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Prevent paper abrasion.** The printer's `papergap` setting (`auto` / `wide`) is what Canon's
+  own interfaces call "Prevent paper abrasion" (用紙のこすれ防止). The Utilities "Paper Gap" card and
+  dialog are now an On / Off switch with that title (On is `wide`, Off is `auto`) and a description
+  of what it does (raises the print head a little so that thick or curled paper is not scuffed;
+  printing can be slower). `washi set paper-abrasion on|off` (`paper-gap auto|wide` stays as a
+  hidden alias), `washi settings` shows On / Off, and `ApplySettings` takes `paper_abrasion` next to
+  `paper_gap`. `reduce_ink_smudges` is not offered by the XK140 and stays hidden unless a printer
+  reports it.
+- **Test notification.** `SendTestNotification()` on the daemon shows a sample notification
+  ("Washi test notification") through the same code as the real ones, in the app's language, and
+  returns an error with the reason when the desktop has no notification service or washid runs
+  with `--no-notify`. It does not touch the printer and works with `--read-only`. `washi
+  notify-test`, and *App Settings → Notifications → Send a test notification* in the app.
+- **`washi doctor`.** A read-only self-check, human output or `--json`: the versions of the
+  command, the running `washid` and the app and whether they agree; whether the service is
+  running, D-Bus-activatable and enabled as a systemd user unit; for the printer: mDNS, the CHMP,
+  IPP and eSCL channels, the kept names, picture and web links; the notification service, helper
+  programs (poppler, tesseract and its languages, LibreOffice), English and Japanese locales, and
+  the settings and cache paths. Each line is a tick, a cross or a dash with a one-line hint; no
+  serial number, hardware address or printer address is printed. *App Settings → Check setup*
+  shows the same checks through the new `Doctor()` D-Bus method.
+- **Flatpak smoke test.** `.github/workflows/flatpak.yml` (manual, and on changes to
+  `packaging/flatpak/`) builds the bundle, installs it and runs `washi --version`, `washid
+  --version`, `washi doctor --json` and the app offscreen with a screenshot; the same steps run in
+  the release workflow's Flatpak job before the bundle is uploaded. `washi-app --version` prints
+  the app's version without opening a window.
+
+### Fixed
+- **The printer's web links while it sleeps.** The XK140 serves `/JS_MDL/model.js` (ink shop,
+  manual, error help, support) only while it is awake, so the links fell back to the printer's
+  generic page most of the time. The parsed links are now kept per printer like its strings and
+  picture (`~/.cache/washi/<key>-links.json`, read again after 30 days or a firmware change),
+  refreshed in the background whenever the daemon sees the printer awake, and used while it
+  sleeps. `washi links`, `GetWebLinks` (new `saved_at`) and the link dialogs say "from the
+  printer (saved <date>)" when they come from the kept copy; without one the fallback to the
+  printer's own page is as before.
+- **A sleeping printer was shown as "up to date".** In auto power-off the printer does not check
+  for firmware updates and answers `unavailable` to `networkupdate_available`, minutes before it
+  says `available` once awake. A sleeping printer's `unavailable` is now ignored: the snapshot
+  keeps what the printer said the last time it was on (`firmware_update_remembered`), or
+  `unknown` without one, and `washi firmware`, `washi info` and the Device Information tab say
+  "the printer checks for updates while it is on; last known: ..." instead. `available` is
+  believed whenever it is read. `washi firmware update` and the update itself are refused while
+  the printer sleeps unless it says `available` right then.
+
+### Changed
+- The fake printer behaves like the real one in auto power-off: `model.js` answers `404` and the
+  device status says no firmware update is available.
+
 ## [0.1.3] - 2026-10-14
 
 ### Added

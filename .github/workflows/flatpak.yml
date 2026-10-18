@@ -1,0 +1,47 @@
+name: Flatpak smoke test
+
+# Builds the Flatpak bundle like the release workflow does, installs it in the same container and
+# runs washi, washid and the app from the sandbox. Run it by hand, or when the packaging changes.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'packaging/flatpak/**'
+
+permissions:
+  contents: read
+
+jobs:
+  flatpak:
+    name: Build, install and run the bundle
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Version and cargo sources
+        id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          python3 tools/flatpak-cargo-sources.py
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+        with:
+          bundle: Washi-${{ steps.version.outputs.version }}-x86_64.flatpak
+          manifest-path: packaging/flatpak/io.github.Jenari_Dev.Washi.yml
+          arch: x86_64
+          cache-key: flatpak-builder-${{ github.sha }}
+          upload-artifact: false
+
+      - name: Install the bundle and run it
+        run: sh tools/flatpak-smoke.sh Washi-*.flatpak
+
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: flatpak-smoke
+          path: smoke-out/
+          if-no-files-found: warn

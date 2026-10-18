@@ -71,6 +71,9 @@ jobs:
           cache-key: flatpak-builder-${{ github.sha }}
           upload-artifact: false
 
+      - name: Smoke test the bundle (install it, run washi, washid and the app)
+        run: sh tools/flatpak-smoke.sh Washi-*.flatpak
+
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: flatpak-bundle

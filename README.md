@@ -31,9 +31,9 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
 - **Maintenance.** Cleaning and deep cleaning, nozzle check, print head alignment (automatic,
   check sheet, or entering the values by hand), and roller or bottom plate cleaning on models that
   offer them. Jobs show their progress and can be cancelled.
-- **Settings.** Quiet mode (also on a schedule), auto power on and off, ink drying time, paper gap,
-  automatic firmware update. Every change is checked against what the printer allows and read
-  back afterwards.
+- **Settings.** Quiet mode (also on a schedule), auto power on and off, ink drying time, prevent
+  paper abrasion (the printer's paper gap), automatic firmware update. Every change is checked
+  against what the printer allows and read back afterwards.
 - **Printing.** Photos (JPEG, PNG, BMP) with borderless printing, paper type and tray taken from
   the printer's own list, one to sixteen pictures per sheet; PDF documents (and Office files when
   LibreOffice is installed) with page ranges, two-sided printing and page order. A preview shows the
@@ -52,7 +52,12 @@ data. The interface is also available in Japanese ([screenshots](README.ja.md)).
   cache; Washi's own names and drawing are the fallback. A picture pack image of your own, if you
   put one in `~/.local/share/washi/printers/`, comes first.
 - **Notifications.** A small background service (`washid`) tells you when a tank runs low or empty,
-  when the printer reports an error and when it is back online.
+  when the printer reports an error and when it is back online. *App Settings* has a button that
+  sends a test notification (`washi notify-test` does the same).
+- **A self-check.** `washi doctor` (and *App Settings → Check setup*) looks at the versions of the
+  command, the service and the app, how the service starts, the printer's channels, the desktop's
+  notification service, locales and the optional helper programs, and says what to do about each
+  ✗. It only reads, and it never prints a serial number or an address.
 - **English and Japanese.** The app, the notifications and the desktop entry, with a language switch
   in the window that takes effect at once.
 - **A command-line tool** (`washi`) for the same jobs, with JSON output for scripts.
@@ -207,7 +212,7 @@ tell us what you find.
 |---|---|---|
 | Discovery and printer list | finding the printer by mDNS, status polling | removing a printer from the list, switching between several printers |
 | Status and ink | online / sleeping, ink levels and tank models, paper per tray, counters, device information, firmware version and update flag, the printer's web links, the printer's own paper names (English and Japanese) and picture | support-code messages and notifications for a real error (the printer was never in an error state) |
-| Settings | reading every setting and its allowed values | **writing** any of them: quiet mode, auto power on / off, ink drying time, paper gap, automatic firmware update; manual head alignment values |
+| Settings | reading every setting and its allowed values | **writing** any of them: quiet mode, auto power on / off, ink drying time, prevent paper abrasion, automatic firmware update; manual head alignment values |
 | Maintenance | **nozzle check** (printed, with progress and completion) | cleaning, deep cleaning, automatic alignment, alignment check, manual alignment sheets; roller and bottom plate cleaning (the XK140 offers neither) |
 | Firmware | reading the version and the update flag | the **firmware update** itself |
 | Power | **wake** (`washi power on --confirm`, the request the Wake button sends: the printer came out of auto power-off; XK140, firmware 1.060, 2026-10-14) | power off |
