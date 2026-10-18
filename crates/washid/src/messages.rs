@@ -386,11 +386,15 @@ pub fn firmware_waiting(lang: Language, secs: u64, restarted: bool) -> String {
     let (m, s) = (secs / 60, secs % 60);
     match (lang, restarted) {
         (Language::En, false) => {
-            format!("Waiting for the printer to start installing… ({m} min {s} s)")
+            format!(
+                "The printer is downloading the update; its screen can stay on the home menu meanwhile… ({m} min {s} s)"
+            )
         }
         (Language::En, true) => format!("Waiting for the printer to come back… ({m} min {s} s)"),
         (Language::Ja, false) => {
-            format!("プリンターがインストールを始めるのを待っています…（{m}分{s}秒）")
+            format!(
+                "プリンターが更新データをダウンロードしています。その間、本体の画面はホームのままの場合があります…（{m}分{s}秒）"
+            )
         }
         (Language::Ja, true) => format!("プリンターが戻るのを待っています…（{m}分{s}秒）"),
     }
@@ -410,10 +414,10 @@ pub fn firmware_done(lang: Language, r: &washi_core::FirmwareReport) -> String {
     let (before, after) = (r.before.as_str(), r.after.as_str());
     match (lang, r.restarted, before == after) {
         (Language::En, false, _) => format!(
-            "The printer did not restart, so nothing was installed. The firmware version is {after}."
+            "The printer did not switch into update mode within 30 minutes (firmware {after}). If it is still downloading, it may install the update later by itself."
         ),
         (Language::Ja, false, _) => format!(
-            "プリンターが再起動しなかったため、何もインストールされていません。ファームウェアのバージョンは {after} です。"
+            "30分以内にプリンターが更新モードに入りませんでした（ファームウェア {after}）。ダウンロード中の場合は、後で自動的に更新されることがあります。"
         ),
         (Language::En, true, true) => {
             format!("The printer restarted, but its firmware version is still {after}.")

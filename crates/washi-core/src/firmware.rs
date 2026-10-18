@@ -85,7 +85,9 @@ impl Default for FirmwareOptions {
     fn default() -> Self {
         FirmwareOptions {
             poll_interval: Duration::from_secs(3),
-            gone_timeout: Duration::from_secs(10 * 60),
+            // The XK140 first downloads the update from the maker with its screen on the home menu
+            // (about 8 minutes on 2026-10-18) before it switches into update mode.
+            gone_timeout: Duration::from_secs(30 * 60),
             back_timeout: Duration::from_secs(30 * 60),
             stable_polls: 2,
         }

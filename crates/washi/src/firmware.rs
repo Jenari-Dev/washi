@@ -78,13 +78,17 @@ fn update(cli: &Cli) -> Result<()> {
         FirmwareProgress::Waiting { elapsed, restarted } => println!(
             "  [{}] waiting for the printer to {}",
             render::fmt_duration(elapsed),
-            if restarted { "come back" } else { "start installing" }
+            if restarted {
+                "come back"
+            } else {
+                "finish downloading and start installing (its screen can stay on the home menu)"
+            }
         ),
         FirmwareProgress::Back => println!("  the printer is back"),
     })?;
     if !report.restarted {
         println!(
-            "The printer did not restart, so nothing was installed (version {}).",
+            "The printer did not switch into update mode within 30 minutes (version {}). If it is still downloading it may install later by itself; check `washi firmware` again.",
             report.after
         );
     } else if report.before == report.after {
