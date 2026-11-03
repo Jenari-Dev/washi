@@ -4,7 +4,7 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.6] - 2026-11-03
 
 ### Fixed
 - **Disc labels printed without their picture.** The app and `washi disc --confirm` rendered the

@@ -97,6 +97,13 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.6" date="2026-11-03">
+      <description>
+        <p>Disc labels print their picture, transparent parts of pictures no longer print black, and the disc tray goes in when the printer asks for it.</p>
+        <p xml:lang="ja">ディスクレーベルに画像が印刷されるようにし、画像の透明な部分が黒く印刷されないようにしました。ディスクトレイは、プリンターに求められてから差し込むよう案内します。</p>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.5" date="2026-10-18">
       <description>
         <p>Firmware updates allow for the printer's download time.</p>
