@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // "How to load paper": short instructions of our own for the rear tray, the cassette and the
-// disc tray. The first print asks once (Prefs.hideLoadPaperHint remembers "do not show again").
+// disc tray. The first print asks once (Prefs.hideLoadPaperHint remembers "do not show again");
+// the disc guidance comes before every disc print, because the tray must wait for the printer.
 WDialog {
     id: dlg
 
@@ -13,7 +14,7 @@ WDialog {
     property bool reminder: false
     signal proceed()
 
-    title: where === "disc" ? i18n("Load the disc tray") : i18n("How to load paper")
+    title: where === "disc" ? i18n("Printing on a disc") : i18n("How to load paper")
     dialogWidth: 520
 
     function openFor(tray, isPhoto, asReminder) {
@@ -26,10 +27,13 @@ WDialog {
 
     readonly property var steps: {
         if (where === "disc") {
+            // The printer gets ready first and then asks for the tray on its display; a tray
+            // that is already in can damage it.
             return [
-                i18n("Pull out the disc tray guide from the printer's front, the way the printer's display shows."),
+                i18n("Keep the disc tray out of the printer for now and start the print here."),
+                i18n("Wait until the printer's display asks for the disc tray. Inserting it earlier can damage the printer."),
                 i18n("Put the printable disc in the tray with the printable side up and press it flat."),
-                i18n("Slide the tray in until it stops, then press Print here."),
+                i18n("Insert the tray the way the printer's display shows and confirm on the printer."),
                 i18n("Do not touch the printed side until the ink has dried.")
             ];
         }
@@ -87,7 +91,7 @@ WDialog {
     WSwitch {
         id: dontShow
         objectName: "dontShowAgain"
-        visible: dlg.reminder
+        visible: dlg.reminder && dlg.where !== "disc"
         text: i18n("Don't show this next time")
     }
     buttons: [
@@ -105,7 +109,7 @@ WDialog {
             objectName: "loadedButton"
             visible: dlg.reminder
             kind: "primary"
-            text: i18n("Paper is loaded")
+            text: dlg.where === "disc" ? i18n("Next") : i18n("Paper is loaded")
             onClicked: {
                 if (dontShow.checked) {
                     Prefs.hideLoadPaperHint = true;

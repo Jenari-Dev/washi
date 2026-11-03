@@ -164,7 +164,7 @@ RowLayout {
         title: i18n("Print Disc Label")
         acceptText: i18n("Print")
         glyph: "printer"
-        text: i18n("Print this label in %1? Disc type: %2. The disc tray must be loaded.", Store.displayName, DiscMath.mediaLabel(page.design.media))
+        text: i18n("Print this label on %1? Disc type: %2. Insert the disc tray only when the printer asks for it.", Store.displayName, DiscMath.mediaLabel(page.design.media))
         onAccepted: job.startDisc(page.spec("normal"), i18n("disc label"))
     }
 

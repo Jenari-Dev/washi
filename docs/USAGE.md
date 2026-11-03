@@ -223,6 +223,9 @@ washi cancel JOB                       # cancel a job (see `washi jobs`)
   white, so no ink reaches the tray. They print with `media-source=disc`, `media-type`
   `com.canon-mtdisca` (`a`) or `com.canon-mtdiscb` (`b`), media size 120 x 120 mm
   (`om_square_120x120mm`), margins 0.1 mm: the two disc entries of the printer's own database.
+  See-through parts of a picture (PNG with transparency) show the label's background colour, as in
+  the designer. Start the print with the disc tray out of the printer and insert it only when the
+  printer's display asks for it: a tray that is already in can damage the printer.
 * **Text that follows the ring** (`--ring`, "Follow the ring" in the app): the letters sit on a
   circle about the disc centre. `--ring-radius` is the radius of the baseline (mm), `--ring-start`
   the angle in degrees clockwise from the top (0 = top, 90 = right, 180 = bottom), the text is

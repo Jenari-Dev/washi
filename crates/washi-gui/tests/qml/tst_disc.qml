@@ -317,15 +317,20 @@ Item {
             const tray = findChild(p, "discConfirm");
             wait(100);
             compare(fake.called("PrintDisc").length, 0, "nothing before the confirmation");
-            // The tray guidance first ("Paper is loaded"), then the confirmation.
+            // The tray guidance first ("Next"; it comes before every disc print, so it has no
+            // "Don't show this next time"), then the confirmation.
             const loaded = findChild(p.Window.contentItem || p, "loadedButton");
             verify(loaded !== null, "the tray guidance is shown");
+            compare(loaded.text, "Next");
+            verify(!findChild(p.Window.contentItem || p, "dontShowAgain").visible);
             loaded.clicked();
             verify(tray.visible);
             wait(100);
             compare(fake.called("PrintDisc").length, 0);
             findChild(tray, "acceptButton").clicked();
             tryVerify(() => fake.called("PrintDisc").length === 1);
+            verify(findChild(p, "discJob").hint.indexOf("asks for the disc tray") >= 0,
+                   "while it runs, the job says when the tray goes in");
             const body = JSON.parse(fake.called("PrintDisc")[0].args[1]);
             compare(body.confirm, true);
             compare(body.media, "b");

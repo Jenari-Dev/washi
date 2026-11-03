@@ -377,14 +377,20 @@ impl DiscLabel {
 
     /// Render with a canvas of `px` x `px` (previews: a smaller canvas draws the same label).
     pub fn render_sized(&self, px: u32) -> Result<RgbImage> {
-        let bg = match &self.background {
-            Some(b) => Some(crate::print::photo::load_photo(&b.path)?),
-            None => None,
-        };
+        let bg = self.load_background()?;
         self.render_with(bg.as_ref(), px)
     }
 
-    /// Render with an already loaded background picture (a GUI keeps it in memory).
+    /// Load the background picture, its see-through parts laid on the background colour (as
+    /// the designer shows them).
+    pub fn load_background(&self) -> Result<Option<RgbImage>> {
+        self.background
+            .as_ref()
+            .map(|b| crate::print::photo::load_photo_on(&b.path, self.background_color))
+            .transpose()
+    }
+
+    /// Render with an already loaded background picture (see [`DiscLabel::load_background`]).
     pub fn render_with(&self, background: Option<&RgbImage>, px: u32) -> Result<RgbImage> {
         self.geometry.validate()?;
         let px = px.clamp(64, 2 * CANVAS_PX);
@@ -657,7 +663,8 @@ pub fn plan_disc(printer: &Printer, label: &DiscLabel, quality: Quality) -> Resu
             "ring {} mm to {} mm of the 120 mm disc, rendered at 600 dpi ({} x {} px), outside the ring white",
             label.geometry.inner_mm, label.geometry.outer_mm, CANVAS_PX, CANVAS_PX
         ),
-        "put the disc in the disc tray and insert the tray before printing".to_string(),
+        "insert the disc tray only when the printer's display asks for it, not before printing"
+            .to_string(),
         "media size 120 x 120 mm, source `disc`: the entry the printer lists in its media-col-database".to_string(),
     ];
     Ok(DiscPlan { job, request, notes })
@@ -716,7 +723,8 @@ pub fn run_disc(
         return Err(Error::Invalid("the printer does not take srgb_8 raster".into()));
     }
     progress(PrintProgress::Preparing { job: 0, jobs: 1, side: 0, sides: 1 });
-    let mut spool = spool_label(label, &job, None)?;
+    let background = label.load_background()?;
+    let mut spool = spool_label(label, &job, background.as_ref())?;
     progress(PrintProgress::Preparing { job: 0, jobs: 1, side: 1, sides: 1 });
     submit(&ipp, &job, &mut spool, "disc label", (0, 1), opts, confirm, progress)
 }
@@ -784,6 +792,19 @@ mod tests {
         assert_eq!(at(&wide, 25.0, 0.0), [0, 0, 255]);
         // Edge pixels are anti-aliased: some pixel between the colours exists.
         assert!(img.pixels().any(|p| p.0[0] > 200 && p.0[0] < 255 && p.0[1] > 30 && p.0[1] < 255));
+    }
+
+    #[test]
+    fn a_see_through_picture_shows_the_background_colour() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("clear.png");
+        image::RgbaImage::from_pixel(50, 50, image::Rgba([0, 0, 0, 0])).save(&path).unwrap();
+        let label = DiscLabel {
+            background_color: [30, 120, 200],
+            background: Some(Background::new(&path)),
+            ..DiscLabel::default()
+        };
+        assert_eq!(at(&label.render_sized(PX).unwrap(), 0.0, -40.0), [30, 120, 200], "not black");
     }
 
     #[test]

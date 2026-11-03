@@ -4,6 +4,21 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Disc labels printed without their picture.** The app and `washi disc --confirm` rendered the
+  label for the printer without the background picture (only texts and the background colour
+  reached the disc); the preview was right. The picture is now loaded for the print job too, and an
+  end-to-end test checks the raster the printer receives.
+- **Transparent pictures printed black.** See-through parts of a PNG (for example round disc art)
+  were printed in their hidden colour, usually black. Photos now lay them on white paper and disc
+  labels on the label's background colour, as the designer shows them.
+- **Disc tray timing.** The guidance said to insert the disc tray before pressing Print. It now
+  says to start the print with the tray out and to insert it only when the printer's display asks
+  for it (an inserted tray can damage the printer). The guidance comes before every disc print, the
+  print dialog repeats it while the job runs, and `washi disc` says it too.
+
 ## [0.1.5] - 2026-10-18
 
 ### Changed

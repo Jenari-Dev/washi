@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-18 20:21+0900\n"
+"POT-Creation-Date: 2026-11-03 12:36+0900\n"
 "PO-Revision-Date: 2026-10-13 22:30+0900\n"
 "Last-Translator: JenAriDev\n"
 "Language-Team: Japanese\n"
@@ -346,8 +346,8 @@ msgid "Print"
 msgstr "印刷"
 
 #, no-javascript-format
-msgid "Print this label in %1? Disc type: %2. The disc tray must be loaded."
-msgstr "このレーベルを %1 で印刷しますか？ディスクの種類：%2。ディスクトレイをセットしてあることを確認してください。"
+msgid "Print this label on %1? Disc type: %2. Insert the disc tray only when the printer asks for it."
+msgstr "このレーベルを %1 で印刷しますか？ディスクの種類：%2。ディスクトレイは、プリンターに求められてから差し込んでください。"
 
 #, no-javascript-format
 msgid "Select Picture"
@@ -1047,24 +1047,28 @@ msgid "Open Printer Page"
 msgstr "プリンターのページを開く"
 
 #, no-javascript-format
-msgid "Load the disc tray"
-msgstr "ディスクトレイのセット"
+msgid "Printing on a disc"
+msgstr "ディスクへの印刷"
 
 #, no-javascript-format
 msgid "How to load paper"
 msgstr "用紙の入れ方"
 
 #, no-javascript-format
-msgid "Pull out the disc tray guide from the printer's front, the way the printer's display shows."
-msgstr "プリンター前面からディスクトレイガイドを引き出します。引き出し方はプリンター本体の表示にしたがってください。"
+msgid "Keep the disc tray out of the printer for now and start the print here."
+msgstr "ディスクトレイはまだプリンターに差し込まずに、この画面から印刷を始めます。"
+
+#, no-javascript-format
+msgid "Wait until the printer's display asks for the disc tray. Inserting it earlier can damage the printer."
+msgstr "プリンター本体の表示がディスクトレイを求めるまで待ちます。それより前に差し込むと、プリンターが故障するおそれがあります。"
 
 #, no-javascript-format
 msgid "Put the printable disc in the tray with the printable side up and press it flat."
 msgstr "印刷面を上にしてプリンタブルディスクをトレイに載せ、平らになるまで押さえます。"
 
 #, no-javascript-format
-msgid "Slide the tray in until it stops, then press Print here."
-msgstr "トレイを止まるところまで差し込み、この画面で「印刷」を押します。"
+msgid "Insert the tray the way the printer's display shows and confirm on the printer."
+msgstr "プリンター本体の表示にしたがってトレイを差し込み、本体の画面で確定します。"
 
 #, no-javascript-format
 msgid "Do not touch the printed side until the ink has dried."
@@ -1109,6 +1113,10 @@ msgstr "今後は表示しない"
 #, no-javascript-format
 msgid "Open the Manual"
 msgstr "マニュアルを見る"
+
+#, no-javascript-format
+msgid "Next"
+msgstr "次へ"
 
 #, no-javascript-format
 msgid "Paper is loaded"
@@ -1241,10 +1249,6 @@ msgstr "印刷されたパターンを見てください。どの色の線も途
 #, no-javascript-format
 msgid "You can print the alignment check sheet to see the result."
 msgstr "位置調整の確認シートを印刷して、結果を確かめられます。"
-
-#, no-javascript-format
-msgid "Next"
-msgstr "次へ"
 
 #, no-javascript-format
 msgid "Start"
@@ -1439,6 +1443,10 @@ msgid "Printing"
 msgstr "印刷中"
 
 #, no-javascript-format
+msgid "Keep the printer switched on until this finishes."
+msgstr "完了するまで、プリンターの電源を入れたままにしてください。"
+
+#, no-javascript-format
 msgid "Checking what the printer accepts…"
 msgstr "プリンターが受け付ける内容を確認しています…"
 
@@ -1467,16 +1475,16 @@ msgid "Printing disc label"
 msgstr "ディスクレーベルを印刷中"
 
 #, no-javascript-format
+msgid "When the printer's display asks for the disc tray, put the disc on it and insert it. Keep the printer switched on until this finishes."
+msgstr "プリンター本体の表示がディスクトレイを求めたら、ディスクを載せたトレイを差し込んでください。完了するまで、プリンターの電源を入れたままにしてください。"
+
+#, no-javascript-format
 msgid "Stopping…"
 msgstr "停止しています…"
 
 #, no-javascript-format
 msgid "The job was stopped."
 msgstr "ジョブを停止しました。"
-
-#, no-javascript-format
-msgid "Keep the printer switched on until this finishes."
-msgstr "完了するまで、プリンターの電源を入れたままにしてください。"
 
 #, no-javascript-format
 msgid "It did not print."

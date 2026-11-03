@@ -817,3 +817,32 @@ fn a_disc_label_is_rendered_and_printed_from_the_disc_tray() {
     let centre = &pages[0].pixels[(1417 * 2834 + 1417) * 3..][..3];
     assert_eq!(centre, [255, 255, 255], "the hub is not inked");
 }
+
+#[test]
+fn the_disc_picture_is_printed_and_its_clear_parts_show_the_background_colour() {
+    let fake = FakePrinter::start();
+    let p = printer_for(&fake);
+    let dir = tempfile::tempdir().unwrap();
+    // Red with a clear band across the middle, stored as transparent black as most programs do.
+    let mut pic = image::RgbaImage::from_pixel(400, 400, image::Rgba([220, 40, 40, 255]));
+    for y in 150..250 {
+        for x in 0..400 {
+            pic.put_pixel(x, y, image::Rgba([0, 0, 0, 0]));
+        }
+    }
+    let path = dir.path().join("art.png");
+    pic.save(&path).unwrap();
+    let label = DiscLabel {
+        background_color: [30, 120, 200],
+        background: Some(disc::Background::new(&path)),
+        ..DiscLabel::default()
+    };
+    disc::run_disc(&p, &label, Quality::Normal, &quick(), Confirm::explicit(), &mut |_| {})
+        .unwrap();
+    let pages = pwg::decode(&fake.printed_jobs()[0].data).unwrap();
+    let px = |x: usize, y: usize| pages[0].pixels[(y * 2834 + x) * 3..][..3].to_vec();
+    // 47 mm above the centre: the red part of the picture.
+    assert_eq!(px(1417, 300), [220, 40, 40], "the picture is printed");
+    // 43 mm left of the centre: inside the clear band.
+    assert_eq!(px(400, 1417), [30, 120, 200], "clear parts show the background colour");
+}

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: washi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-18 20:21+0900\n"
+"POT-Creation-Date: 2026-11-03 12:36+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -379,7 +379,9 @@ msgid "Print"
 msgstr ""
 
 #, no-javascript-format
-msgid "Print this label in %1? Disc type: %2. The disc tray must be loaded."
+msgid ""
+"Print this label on %1? Disc type: %2. Insert the disc tray only when the "
+"printer asks for it."
 msgstr ""
 
 #, no-javascript-format
@@ -1140,7 +1142,7 @@ msgid "Open Printer Page"
 msgstr ""
 
 #, no-javascript-format
-msgid "Load the disc tray"
+msgid "Printing on a disc"
 msgstr ""
 
 #, no-javascript-format
@@ -1148,9 +1150,13 @@ msgid "How to load paper"
 msgstr ""
 
 #, no-javascript-format
+msgid "Keep the disc tray out of the printer for now and start the print here."
+msgstr ""
+
+#, no-javascript-format
 msgid ""
-"Pull out the disc tray guide from the printer's front, the way the printer's "
-"display shows."
+"Wait until the printer's display asks for the disc tray. Inserting it "
+"earlier can damage the printer."
 msgstr ""
 
 #, no-javascript-format
@@ -1160,7 +1166,9 @@ msgid ""
 msgstr ""
 
 #, no-javascript-format
-msgid "Slide the tray in until it stops, then press Print here."
+msgid ""
+"Insert the tray the way the printer's display shows and confirm on the "
+"printer."
 msgstr ""
 
 #, no-javascript-format
@@ -1217,6 +1225,10 @@ msgstr ""
 
 #, no-javascript-format
 msgid "Open the Manual"
+msgstr ""
+
+#, no-javascript-format
+msgid "Next"
 msgstr ""
 
 #, no-javascript-format
@@ -1365,10 +1377,6 @@ msgstr ""
 
 #, no-javascript-format
 msgid "You can print the alignment check sheet to see the result."
-msgstr ""
-
-#, no-javascript-format
-msgid "Next"
 msgstr ""
 
 #, no-javascript-format
@@ -1574,6 +1582,10 @@ msgid "Printing"
 msgstr ""
 
 #, no-javascript-format
+msgid "Keep the printer switched on until this finishes."
+msgstr ""
+
+#, no-javascript-format
 msgid "Checking what the printer accepts…"
 msgstr ""
 
@@ -1602,15 +1614,17 @@ msgid "Printing disc label"
 msgstr ""
 
 #, no-javascript-format
+msgid ""
+"When the printer's display asks for the disc tray, put the disc on it and "
+"insert it. Keep the printer switched on until this finishes."
+msgstr ""
+
+#, no-javascript-format
 msgid "Stopping…"
 msgstr ""
 
 #, no-javascript-format
 msgid "The job was stopped."
-msgstr ""
-
-#, no-javascript-format
-msgid "Keep the printer switched on until this finishes."
 msgstr ""
 
 #, no-javascript-format

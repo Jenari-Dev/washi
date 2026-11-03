@@ -654,6 +654,7 @@ fn disc_dry_or_run(
     let printer = connect(cli)?;
     let run = RunOptions { wait: !no_wait, ..RunOptions::default() };
     println!("Rendering the label ...");
+    println!("Insert the disc tray only when the printer's display asks for it.");
     let r = disc::run_disc(&printer, label, quality, &run, Confirm::explicit(), &mut |ev| {
         if let Some(l) = progress_line(&ev) {
             println!("{l}");

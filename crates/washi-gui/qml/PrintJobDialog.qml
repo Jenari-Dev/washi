@@ -18,7 +18,10 @@ Item {
     property var progressSource: ""
     property var resultSource: ""
     property var titleSource: () => i18n("Printing")
+    // The muted line under the progress: what to do at the printer while the job runs.
+    property var hintSource: () => i18n("Keep the printer switched on until this finishes.")
     readonly property string progress: Fmt.text(progressSource)
+    readonly property string hint: Fmt.text(hintSource)
     readonly property string result: Fmt.text(resultSource)
     readonly property string jobTitle: Fmt.text(titleSource)
     property bool cancelling: false
@@ -53,6 +56,7 @@ Item {
         resultSource = "";
         headline = "";
         progressSource = () => i18n("Sending the job to the service…");
+        hintSource = () => i18n("Keep the printer switched on until this finishes.");
         dlg.open();
     }
 
@@ -75,6 +79,7 @@ Item {
 
     function startDisc(spec, label) {
         begin(() => i18n("Printing disc label"), label);
+        hintSource = () => i18n("When the printer's display asks for the disc tray, put the disc on it and insert it. Keep the printer switched on until this finishes.");
         Store.printDisc(spec, _started);
     }
 
@@ -145,7 +150,8 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 kind: "muted"
                 wrapMode: Text.WordWrap
-                text: i18n("Keep the printer switched on until this finishes.")
+                objectName: "hintText"
+                text: host.hint
             }
         }
 

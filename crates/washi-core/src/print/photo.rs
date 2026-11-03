@@ -47,8 +47,15 @@ pub fn icc_to_srgb(img: RgbImage, icc: Option<&[u8]>) -> RgbImage {
     convert().unwrap_or(img)
 }
 
-/// Decode an image file: EXIF orientation applied, pixels converted to sRGB.
+/// Decode an image file: EXIF orientation applied, pixels converted to sRGB, see-through parts
+/// laid on white paper (no ink), the way a picture viewer shows them.
 pub fn load_photo(path: &Path) -> Result<RgbImage> {
+    load_photo_on(path, WHITE.0)
+}
+
+/// [`load_photo`] with see-through parts laid on `backdrop` (sRGB) instead of white: a disc
+/// label shows its background colour through a transparent picture.
+pub fn load_photo_on(path: &Path, backdrop: [u8; 3]) -> Result<RgbImage> {
     let ctx = |what: &str, e: &dyn std::fmt::Display| {
         Error::Image(format!("{}: {what}: {e}", path.display()))
     };
@@ -63,7 +70,24 @@ pub fn load_photo(path: &Path) -> Result<RgbImage> {
     if let Some(o) = orientation {
         img.apply_orientation(o);
     }
-    Ok(icc_to_srgb(img.to_rgb8(), icc.as_deref()))
+    if !img.color().has_alpha() {
+        return Ok(icc_to_srgb(img.to_rgb8(), icc.as_deref()));
+    }
+    // `to_rgb8` drops the alpha channel, which prints the hidden colour of every clear pixel
+    // (black, for most programs): convert the colour, then blend it over the backdrop.
+    let rgba = img.to_rgba8();
+    let colour = RgbImage::from_fn(rgba.width(), rgba.height(), |x, y| {
+        let [r, g, b, _] = rgba.get_pixel(x, y).0;
+        Rgb([r, g, b])
+    });
+    let mut out = icc_to_srgb(colour, icc.as_deref());
+    for (p, q) in out.pixels_mut().zip(rgba.pixels()) {
+        let a = u32::from(q.0[3]);
+        for (c, b) in p.0.iter_mut().zip(backdrop) {
+            *c = ((u32::from(*c) * a + u32::from(b) * (255 - a) + 127) / 255) as u8;
+        }
+    }
+    Ok(out)
 }
 
 /// Turn the photo when its orientation differs from the target's, so it fills the page.
@@ -335,6 +359,29 @@ mod tests {
         std::fs::write(&junk, b"not an image at all").unwrap();
         assert!(matches!(load_photo(&junk), Err(Error::Image(_))));
         assert!(matches!(load_photo(&dir.path().join("missing.jpg")), Err(Error::Io { .. })));
+    }
+
+    #[test]
+    fn see_through_pixels_are_laid_on_paper_or_the_backdrop() {
+        let dir = tempfile::tempdir().unwrap();
+        // Clear pixels stored as transparent black, the way most programs write them.
+        let mut img = image::RgbaImage::from_pixel(3, 1, image::Rgba([0, 0, 0, 0]));
+        img.put_pixel(1, 0, image::Rgba([200, 40, 40, 255]));
+        img.put_pixel(2, 0, image::Rgba([0, 0, 255, 128]));
+        let png = dir.path().join("clear.png");
+        img.save(&png).unwrap();
+        let white = load_photo(&png).unwrap();
+        assert_eq!(white.get_pixel(0, 0).0, [255, 255, 255], "clear is paper, not black");
+        assert_eq!(white.get_pixel(1, 0).0, [200, 40, 40], "opaque is untouched");
+        assert_eq!(white.get_pixel(2, 0).0, [127, 127, 255], "half see-through blue on white");
+        let on_blue = load_photo_on(&png, [30, 120, 200]).unwrap();
+        assert_eq!(on_blue.get_pixel(0, 0).0, [30, 120, 200]);
+        assert_eq!(on_blue.get_pixel(1, 0).0, [200, 40, 40]);
+        // Grey with alpha takes the same path.
+        let la = image::GrayAlphaImage::from_pixel(2, 2, image::LumaA([10, 0]));
+        let la_png = dir.path().join("la.png");
+        la.save(&la_png).unwrap();
+        assert_eq!(load_photo(&la_png).unwrap().get_pixel(1, 1).0, [255, 255, 255]);
     }
 
     #[test]
