@@ -78,12 +78,20 @@ pub fn pdf_info(tools: &Tools, pdf: &Path) -> Result<PdfInfo> {
     c.arg(pdf);
     let o = run_capture(c, POPPLER_TIMEOUT, "pdfinfo")?;
     if !o.status.success() {
+        if String::from_utf8_lossy(&o.stderr).contains("Incorrect password") {
+            return Err(Error::Invalid(format!(
+                "{} needs a password to open; remove the password first",
+                pdf.display()
+            )));
+        }
         return Err(Error::tool("pdfinfo", format!("{}: {}", pdf.display(), stderr_hint(&o))));
     }
     let text = String::from_utf8_lossy(&o.stdout).into_owned();
-    if text.lines().any(|l| l.starts_with("Encrypted:") && l.contains("yes")) {
+    // Many PDFs (transcripts, statements) are encrypted only to lock copying or editing: they open
+    // without a password and allow printing. Refuse only when printing itself is not allowed.
+    if text.lines().any(|l| l.starts_with("Encrypted:") && l.contains("print:no")) {
         return Err(Error::Invalid(format!(
-            "{} is an encrypted PDF; remove the password first",
+            "{} does not allow printing (its author locked it)",
             pdf.display()
         )));
     }
@@ -661,6 +669,44 @@ mod tests {
             std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap();
         }
         Tools { pdfinfo: Some(pdfinfo), pdftoppm: Some(pdftoppm), ..Tools::default() }
+    }
+
+    /// A `pdfinfo` stand-in that prints `out` to stdout and `err` to stderr and exits with `code`.
+    fn fake_pdfinfo(dir: &Path, out: &str, err: &str, code: i32) -> Tools {
+        let pdfinfo = dir.join("pdfinfo");
+        std::fs::write(
+            &pdfinfo,
+            format!("#!/bin/sh\nprintf '{out}'\nprintf '{err}' >&2\nexit {code}\n"),
+        )
+        .unwrap();
+        std::fs::set_permissions(&pdfinfo, std::fs::Permissions::from_mode(0o755)).unwrap();
+        Tools { pdfinfo: Some(pdfinfo), ..Tools::default() }
+    }
+
+    #[test]
+    fn encrypted_pdfs_print_unless_they_need_a_password_or_forbid_printing() {
+        let dir = tempfile::tempdir().unwrap();
+        // Locked against copying only: opens without a password and allows printing.
+        let tools = fake_pdfinfo(
+            dir.path(),
+            "Pages: 4\\nEncrypted: yes (print:yes copy:no change:no addNotes:no algorithm:AES)\\n",
+            "",
+            0,
+        );
+        assert_eq!(pdf_info(&tools, Path::new("x.pdf")).unwrap().pages, 4);
+
+        let tools = fake_pdfinfo(
+            dir.path(),
+            "Pages: 4\\nEncrypted: yes (print:no copy:no change:no addNotes:no algorithm:AES)\\n",
+            "",
+            0,
+        );
+        let e = pdf_info(&tools, Path::new("x.pdf")).unwrap_err().to_string();
+        assert!(e.contains("does not allow printing"), "{e}");
+
+        let tools = fake_pdfinfo(dir.path(), "", "Command Line Error: Incorrect password\\n", 1);
+        let e = pdf_info(&tools, Path::new("x.pdf")).unwrap_err().to_string();
+        assert!(e.contains("needs a password"), "{e}");
     }
 
     fn spec<'a>(info: &'a PdfInfo, pages: &'a [u32], layout: u8, sides: Sides) -> RasterSpec<'a> {
