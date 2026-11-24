@@ -91,6 +91,12 @@ fn include_dirs() -> Vec<PathBuf> {
     // The first existing candidate; the distribution default when none exists (the compiler
     // then reports the missing header).
     let ki18n = kf6.iter().find(|d| d.join("KLocalizedString").exists()).or(kf6.last()).cloned();
+    // KF 6.32 moved KLocalizedQmlContext from KI18n into its own KI18nQml directory next to it.
+    if let Some(qml) = ki18n.as_ref().and_then(|d| d.parent()).map(|p| p.join("KI18nQml")) {
+        if qml.exists() {
+            dirs.push(qml);
+        }
+    }
     dirs.extend(ki18n);
     dirs
 }
