@@ -4,6 +4,14 @@ All notable changes to Washi are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-11-24
+
+### Fixed
+- **Locked PDFs would not print.** Washi refused every encrypted PDF with "remove the password
+  first", even PDFs that open without a password and allow printing (school transcripts and bank
+  statements are often encrypted only to stop copying or editing). Washi now prints them and
+  refuses only a PDF that needs a password to open or whose author does not allow printing.
+
 ## [0.1.6] - 2026-11-03
 
 ### Fixed

@@ -1,7 +1,7 @@
 # Arch Linux package
 
-`PKGBUILD` builds Washi from the release tarball of the tag `v0.1.6`
-(`https://github.com/Jenari-Dev/washi/archive/refs/tags/v0.1.6.tar.gz`).
+`PKGBUILD` builds Washi from the release tarball of the tag `v0.1.7`
+(`https://github.com/Jenari-Dev/washi/archive/refs/tags/v0.1.7.tar.gz`).
 
 ## Build and install
 

@@ -97,6 +97,13 @@
   </screenshots>
 
   <releases>
+    <release version="0.1.7" date="2026-11-24">
+      <description>
+        <p>PDFs that are locked only against copying or editing, such as transcripts and statements, print again.</p>
+        <p xml:lang="ja">コピーや編集だけが制限された PDF（成績証明書や明細書など）を印刷できるようにしました。</p>
+      </description>
+      <url type="details">https://github.com/Jenari-Dev/washi/blob/main/CHANGELOG.md</url>
+    </release>
     <release version="0.1.6" date="2026-11-03">
       <description>
         <p>Disc labels print their picture, transparent parts of pictures no longer print black, and the disc tray goes in when the printer asks for it.</p>
