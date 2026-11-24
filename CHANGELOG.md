@@ -11,6 +11,9 @@ All notable changes to Washi are listed here. The format follows
   first", even PDFs that open without a password and allow printing (school transcripts and bank
   statements are often encrypted only to stop copying or editing). Washi now prints them and
   refuses only a PDF that needs a password to open or whose author does not allow printing.
+- **Building with KDE Frameworks 6.32.** KF 6.32 moved `KLocalizedQmlContext` into its own
+  `KI18nQml` header directory; the build and the QML tests now find it there as well as in the old
+  place.
 
 ## [0.1.6] - 2026-11-03
 

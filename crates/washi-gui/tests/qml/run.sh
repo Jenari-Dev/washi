@@ -27,7 +27,7 @@ moc=${MOC:-/usr/lib/qt6/moc}
 cp "$here/runner.cpp" "$work/runner.cpp"
 "$moc" "$work/runner.cpp" -o "$work/runner.moc"
 # shellcheck disable=SC2046
-g++ -std=c++20 -fPIC -O0 -I"$work" -I"$gui/src" -I/usr/include/KF6/KI18n \
+g++ -std=c++20 -fPIC -O0 -I"$work" -I"$gui/src" -I/usr/include/KF6/KI18nQml -I/usr/include/KF6/KI18n \
     "$work/runner.cpp" "$gui/src/i18n.cpp" -o "$work/runner" \
     $(pkg-config --cflags --libs Qt6QuickTest Qt6Quick Qt6Qml Qt6Gui Qt6Core) \
     -lKF6I18n -lKF6I18nQml
